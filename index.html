@@ -1597,35 +1597,78 @@ function cardCategory(type){
   if(type==='gold'||type==='gem'||type==='golden_bar')return 4; // Argent/monnaie
   return 3;                     // Ressources / armes / outils
 }
-const CAT_LABELS={0:'👥 Villageois',1:'🌳 Production',2:'🍖 Nourriture',3:'🔩 Ressources',4:'🪙 Argent',5:'👹 Monstres'};
 function tidyCards(){
   if(G.over||G.paused)return;
+
+  // ── Étape 1 : séparer les piles actives (recette en cours) des cartes libres ──
+  const lockedSids=new Set();
+  const sidsToBreak=[];
+  for(const [sid,s] of Object.entries(G.stacks)){
+    if(s.recipe) lockedSids.add(parseInt(sid));
+    else sidsToBreak.push(parseInt(sid));
+  }
+  // Libérer les cartes des piles sans recette
+  const freeSet=new Set();
+  for(const sid of sidsToBreak){
+    const s=G.stacks[sid];if(!s)continue;
+    s.ids.forEach(id=>{if(G.cards[id]){G.cards[id].sid=null;freeSet.add(id);}});
+    delete G.stacks[sid];
+  }
+  // Ajouter les cartes déjà seules
+  for(const [id,c] of Object.entries(G.cards)){if(!c.sid)freeSet.add(parseInt(id));}
+
+  // ── Étape 2 : grouper les cartes libres par type ──
+  const byType={};
+  const loneMonsters=[];
+  for(const id of freeSet){
+    const c=G.cards[id];if(!c)continue;
+    if(CD[c.type]?.monster){loneMonsters.push(id);continue;} // monstres = individuels
+    if(!byType[c.type])byType[c.type]=[];
+    byType[c.type].push(id);
+  }
+
+  // ── Étape 3 : construire les nouvelles piles par type ──
+  const units=[];
+  // Piles actives en premier
+  for(const sid of lockedSids){
+    const s=G.stacks[sid];if(!s)continue;
+    units.push({type:'stack',sid,cat:cardCategory(G.cards[s.ids[0]]?.type||'')});
+  }
+  // Groupes par type
+  for(const [type,ids] of Object.entries(byType)){
+    if(ids.length===1){
+      units.push({type:'card',id:ids[0],cat:cardCategory(type)});
+    }else{
+      // Créer une pile sans déclencher checkRecipe (pas de bruit)
+      const newSid=G.nid++;
+      G.stacks[newSid]={id:newSid,ids:[...ids],rx:0,ry:0,recipe:null,prog:0};
+      ids.forEach(id=>{G.cards[id].sid=newSid;});
+      units.push({type:'stack',sid:newSid,cat:cardCategory(type)});
+    }
+  }
+  // Monstres à la fin
+  loneMonsters.forEach(id=>{if(G.cards[id])units.push({type:'card',id,cat:cardCategory(G.cards[id].type)});});
+
+  // ── Étape 4 : trier par catégorie puis positionner ──
+  units.sort((a,b)=>a.cat-b.cat);
   const tbl=document.getElementById('table').getBoundingClientRect();
   const pad=16,gapX=CW+16,gapY=CH+52;
   const cols=Math.max(1,Math.floor((tbl.width-pad*2)/gapX));
-  // Grouper toutes unités (pile ou carte seule) + leur catégorie
-  const units=[];const seen=new Set();
-  for(const [sid,s] of Object.entries(G.stacks)){
-    const rootType=G.cards[s.ids[0]]?.type||'';
-    units.push({type:'stack',sid:parseInt(sid),cat:cardCategory(rootType)});
-    s.ids.forEach(id=>seen.add(id));
-  }
-  for(const [id,c] of Object.entries(G.cards)){
-    if(!seen.has(parseInt(id)))units.push({type:'card',id:parseInt(id),cat:cardCategory(c.type)});
-  }
-  // Trier par catégorie puis par type
-  units.sort((a,b)=>a.cat-b.cat);
-  // Séparer en sections par catégorie
   let col=0,row=0,lastCat=-1;
   units.forEach(g=>{
-    if(g.cat!==lastCat&&lastCat!==-1){col=0;row++;}// Saut de ligne entre catégories
+    if(g.cat!==lastCat&&lastCat!==-1){col=0;row++;} // saut de ligne entre catégories
     lastCat=g.cat;
     const nx=pad+col*gapX,ny=pad+row*gapY;
-    if(g.type==='stack'){const s=G.stacks[g.sid];if(!s)return;s.rx=nx;s.ry=ny;updateSV(g.sid);}
-    else{G.cards[g.id].x=nx;G.cards[g.id].y=ny;updateCV(g.id);}
+    if(g.type==='stack'){
+      const s=G.stacks[g.sid];if(!s)return;
+      s.rx=nx;s.ry=ny;updateSV(g.sid);
+    }else{
+      G.cards[g.id].x=nx;G.cards[g.id].y=ny;updateCV(g.id);
+    }
     col++;if(col>=cols){col=0;row++;}
   });
-  playSound('menu_click');log('🗂️ Rangé par catégorie : Villageois | Production | Nourriture | Ressources | Argent');
+  playSound('menu_click');
+  log('🗂️ Rangé — cartes identiques empilées, triées par catégorie');
 }
 
 // ── PACK UNLOCK TOAST ────────────────────────────────────────────────────────
