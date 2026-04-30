@@ -1599,76 +1599,80 @@ function cardCategory(type){
 }
 function tidyCards(){
   if(G.over||G.paused)return;
+  const MAX_PILE=10;
 
-  // ── Étape 1 : séparer les piles actives (recette en cours) des cartes libres ──
-  const lockedSids=new Set();
-  const sidsToBreak=[];
-  for(const [sid,s] of Object.entries(G.stacks)){
-    if(s.recipe) lockedSids.add(parseInt(sid));
-    else sidsToBreak.push(parseInt(sid));
-  }
-  // Libérer les cartes des piles sans recette
-  const freeSet=new Set();
-  for(const sid of sidsToBreak){
-    const s=G.stacks[sid];if(!s)continue;
-    s.ids.forEach(id=>{if(G.cards[id]){G.cards[id].sid=null;freeSet.add(id);}});
+  // 1. Repérer les piles actives (craft/expédition en cours) → intouchables
+  const activeSids=new Set();
+  for(const sid in G.stacks){if(G.stacks[sid].recipe)activeSids.add(Number(sid));}
+
+  // 2. Casser toutes les piles INACTIVES et libérer leurs cartes
+  for(const sid in G.stacks){
+    const s=G.stacks[sid];
+    if(activeSids.has(Number(sid)))continue;
+    s.ids.forEach(cid=>{if(G.cards[cid])G.cards[cid].sid=null;});
     delete G.stacks[sid];
   }
-  // Ajouter les cartes déjà seules
-  for(const [id,c] of Object.entries(G.cards)){if(!c.sid)freeSet.add(parseInt(id));}
 
-  // ── Étape 2 : grouper les cartes libres par type ──
+  // 3. Grouper les cartes libres par type (monstres = individuels)
   const byType={};
-  const loneMonsters=[];
-  for(const id of freeSet){
-    const c=G.cards[id];if(!c)continue;
-    if(CD[c.type]?.monster){loneMonsters.push(id);continue;} // monstres = individuels
+  const monsters=[];
+  for(const idStr in G.cards){
+    const c=G.cards[idStr];
+    if(c.sid)continue; // dans pile active
+    if(CD[c.type]&&CD[c.type].monster){monsters.push(Number(idStr));continue;}
     if(!byType[c.type])byType[c.type]=[];
-    byType[c.type].push(id);
+    byType[c.type].push(Number(idStr));
   }
 
-  // ── Étape 3 : construire les nouvelles piles par type ──
+  // 4. Construire les unités à positionner
   const units=[];
-  // Piles actives en premier
-  for(const sid of lockedSids){
+  // Piles actives en tête
+  for(const sid of activeSids){
     const s=G.stacks[sid];if(!s)continue;
-    units.push({type:'stack',sid,cat:cardCategory(G.cards[s.ids[0]]?.type||'')});
+    const t=G.cards[s.ids[0]]?.type||'';
+    units.push({k:'stack',sid,cat:cardCategory(t),tn:t});
   }
-  // Groupes par type
-  for(const [type,ids] of Object.entries(byType)){
-    if(ids.length===1){
-      units.push({type:'card',id:ids[0],cat:cardCategory(type)});
-    }else{
-      // Créer une pile sans déclencher checkRecipe (pas de bruit)
-      const newSid=G.nid++;
-      G.stacks[newSid]={id:newSid,ids:[...ids],rx:0,ry:0,recipe:null,prog:0};
-      ids.forEach(id=>{G.cards[id].sid=newSid;});
-      units.push({type:'stack',sid:newSid,cat:cardCategory(type)});
+  // Créer des piles de max MAX_PILE cartes par type
+  for(const type in byType){
+    const ids=byType[type];
+    for(let i=0;i<ids.length;i+=MAX_PILE){
+      const grp=ids.slice(i,i+MAX_PILE);
+      if(grp.length<2){
+        units.push({k:'card',id:grp[0],cat:cardCategory(type),tn:type});
+      }else{
+        const sid=G.nid++;
+        G.stacks[sid]={id:sid,ids:grp.slice(),rx:0,ry:0,recipe:null,prog:0};
+        grp.forEach(cid=>{if(G.cards[cid])G.cards[cid].sid=sid;});
+        units.push({k:'stack',sid,cat:cardCategory(type),tn:type});
+      }
     }
   }
   // Monstres à la fin
-  loneMonsters.forEach(id=>{if(G.cards[id])units.push({type:'card',id,cat:cardCategory(G.cards[id].type)});});
+  monsters.forEach(id=>{const t=G.cards[id]?.type||'';units.push({k:'card',id,cat:5,tn:t});});
 
-  // ── Étape 4 : trier par catégorie puis positionner ──
-  units.sort((a,b)=>a.cat-b.cat);
+  // 5. Trier par catégorie puis par nom de type
+  units.sort((a,b)=>a.cat!==b.cat?a.cat-b.cat:a.tn.localeCompare(b.tn));
+
+  // 6. Positionner : une colonne par unité, saut de ligne entre catégories
   const tbl=document.getElementById('table').getBoundingClientRect();
-  const pad=16,gapX=CW+16,gapY=CH+52;
+  const pad=14,gapX=CW+14,gapY=CH+50;
   const cols=Math.max(1,Math.floor((tbl.width-pad*2)/gapX));
   let col=0,row=0,lastCat=-1;
   units.forEach(g=>{
-    if(g.cat!==lastCat&&lastCat!==-1){col=0;row++;} // saut de ligne entre catégories
+    if(g.cat!==lastCat&&lastCat!==-1&&col>0){col=0;row++;}
     lastCat=g.cat;
     const nx=pad+col*gapX,ny=pad+row*gapY;
-    if(g.type==='stack'){
-      const s=G.stacks[g.sid];if(!s)return;
-      s.rx=nx;s.ry=ny;updateSV(g.sid);
+    if(g.k==='stack'){
+      const s=G.stacks[g.sid];
+      if(s){s.rx=nx;s.ry=ny;updateSV(g.sid);}
     }else{
-      G.cards[g.id].x=nx;G.cards[g.id].y=ny;updateCV(g.id);
+      const c=G.cards[g.id];
+      if(c){c.x=nx;c.y=ny;updateCV(g.id);}
     }
     col++;if(col>=cols){col=0;row++;}
   });
   playSound('menu_click');
-  log('🗂️ Rangé — cartes identiques empilées, triées par catégorie');
+  log('🗂️ Rangé — piles de '+MAX_PILE+' max, triées par catégorie');
 }
 
 // ── PACK UNLOCK TOAST ────────────────────────────────────────────────────────
