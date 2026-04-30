@@ -1653,15 +1653,16 @@ function tidyCards(){
   // 5. Trier par catégorie puis par nom de type
   units.sort((a,b)=>a.cat!==b.cat?a.cat-b.cat:a.tn.localeCompare(b.tn));
 
-  // 6. Positionner : une colonne par unité, saut de ligne entre catégories
+  // 6. Positionner : toutes les piles en haut (y=pad), une colonne par unité
+  //    petit espace supplémentaire entre les catégories
   const tbl=document.getElementById('table').getBoundingClientRect();
-  const pad=14,gapX=CW+14,gapY=CH+50;
-  const cols=Math.max(1,Math.floor((tbl.width-pad*2)/gapX));
-  let col=0,row=0,lastCat=-1;
+  const pad=14,gapX=CW+14,catGap=22;
+  let col=0,lastCat=-1;
   units.forEach(g=>{
-    if(g.cat!==lastCat&&lastCat!==-1&&col>0){col=0;row++;}
+    // Espace de séparation entre catégories
+    if(g.cat!==lastCat&&lastCat!==-1)col+=1;
     lastCat=g.cat;
-    const nx=pad+col*gapX,ny=pad+row*gapY;
+    const nx=pad+col*gapX,ny=pad;
     if(g.k==='stack'){
       const s=G.stacks[g.sid];
       if(s){s.rx=nx;s.ry=ny;updateSV(g.sid);}
@@ -1669,10 +1670,10 @@ function tidyCards(){
       const c=G.cards[g.id];
       if(c){c.x=nx;c.y=ny;updateCV(g.id);}
     }
-    col++;if(col>=cols){col=0;row++;}
+    col++;
   });
   playSound('menu_click');
-  log('🗂️ Rangé — piles de '+MAX_PILE+' max, triées par catégorie');
+  log('🗂️ Rangé — piles de '+MAX_PILE+' max, toutes en haut');
 }
 
 // ── PACK UNLOCK TOAST ────────────────────────────────────────────────────────
