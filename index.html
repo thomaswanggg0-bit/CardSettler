@@ -171,6 +171,21 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 .diff-btn:hover{opacity:.8;}
 #hdiff{font-size:11px;font-weight:800;color:#ef4444;letter-spacing:1px;margin-left:4px;vertical-align:middle;display:none;}
 .mm-diff-note{font-size:11px;color:#6b7280;text-align:center;min-height:16px;}
+/* ── EVENT TUTORIAL IN-GAME ── */
+#event-tut{display:none;position:fixed;bottom:76px;right:16px;background:rgba(8,16,36,.97);border:1px solid #3b82f6;border-radius:12px;padding:14px 18px 12px;max-width:320px;color:#fff;z-index:9500;box-shadow:0 4px 20px rgba(0,0,0,.7);}
+@keyframes evtIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+.evt-active{animation:evtIn .3s ease forwards;}
+.evt-tut-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.evt-tut-emoji{font-size:24px;flex-shrink:0;}
+.evt-tut-title{font-size:13px;font-weight:800;color:#f7d060;}
+.evt-tut-text{font-size:12px;color:#bfdbfe;line-height:1.65;white-space:pre-line;margin-bottom:4px;}
+.evt-tut-nav{display:flex;justify-content:space-between;align-items:center;margin-top:10px;}
+.evt-tut-close{background:#1e3a8a;color:#93c5fd;border:1px solid #3b82f6;border-radius:6px;padding:5px 14px;cursor:pointer;font-size:12px;font-weight:700;}
+.evt-tut-close:hover{background:#1e40af;}
+.evt-tut-skip{background:transparent;color:#4b5563;border:none;font-size:11px;cursor:pointer;text-decoration:underline;}
+.evt-tut-skip:hover{color:#6b7280;}
+/* ── PILE DRAG ── */
+.stack-dragging{opacity:.93;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6));}
 </style>
 </head>
 <body>
@@ -284,6 +299,16 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   </div>
 </div>
 
+<!-- ── EVENT TUTORIAL IN-GAME ── -->
+<div id="event-tut">
+  <div class="evt-tut-hd"><div class="evt-tut-emoji" id="evt-emoji"></div><div class="evt-tut-title" id="evt-title"></div></div>
+  <div class="evt-tut-text" id="evt-text"></div>
+  <div class="evt-tut-nav">
+    <button class="evt-tut-close" onclick="closeEventTut()">✓ Compris !</button>
+    <button class="evt-tut-skip" onclick="skipAllEventTuts()">Ne plus montrer</button>
+  </div>
+</div>
+
 <!-- ── TUTORIEL ── -->
 <div id="tutorial">
   <div class="tut-box">
@@ -350,7 +375,7 @@ const CD = {
   iron_sword:   {n:'Épée de Fer', e:'🗡️', bg:'#e2e8f0',c:'#0f172a',         desc:'2-3× plus rapide que l\'épée normale'},
   wolf:         {n:'Loup',        e:'🐺', bg:'#374151',c:'#f9fafb',monster:1,aggroMax:15,desc:'Attaque dans 15s'},
   goblin:       {n:'Gobelin',     e:'👺', bg:'#4c1d95',c:'#f5f3ff',monster:1,aggroMax:12,desc:'Attaque dans 12s. Laisse de l\'Or'},
-  troll:        {n:'Troll',       e:'👹', bg:'#7f1d1d',c:'#fef2f2',monster:1,aggroMax:10,desc:'Attaque dans 10s. Résistant'},
+  troll:        {n:'Troll',       e:'👹', bg:'#7f1d1d',c:'#fef2f2',monster:1,aggroMax:10,desc:'Attaque dans 10s. Résistant — Normal: 2⚔️ (13s) | Difficile: 3⚔️ ou 🗡️+⚔️'},
   gem:          {n:'Gemme',          e:'🔮', bg:'#ede9fe',c:'#5b21b6', sellValue:3, desc:'Pierre précieuse. Vaut 3🪙 à la vente'},
   cave_entrance:{n:'Entrée Grotte',  e:'🕳️', bg:'#0f172a',c:'#94a3b8', node:1, desc:'Empile 1-3 🧑 + ⚔️/🗡️ → Expédition (40s). Plus d\'épées = meilleur butin !'},
   // Cartes secrètes
@@ -383,10 +408,12 @@ const RECIPES = [
   {i:['baby'],                        o:['villager'], keep:[],                     t:10, rep:0, d:'Bébé → Villageois'},
   {i:['sword','wolf'],               o:['bone'],        keep:['sword'],            t:4,  rep:0, d:'⚔️ Épée + Loup → Os'},
   {i:['sword','goblin'],             o:['gold'],        keep:['sword'],            t:6,  rep:0, d:'⚔️ Épée + Gobelin → Or'},
-  {i:['sword','sword','troll'],      o:['gold','gold'], keep:['sword','sword'],    t:9,  rep:0, d:'⚔️ 2 Épées + Troll → 2 Or'},
+  {i:['sword','sword','troll'],      o:['gold','gold'], keep:['sword','sword'],    t:13, rep:0, normalOnly:true, d:'⚔️ 2 Épées + Troll → 2 Or (Normal)'},
+  {i:['sword','sword','sword','troll'],o:['gold','gold','gold'],keep:['sword','sword','sword'],t:10,rep:0,hardOnly:true,d:'💀 3 Épées + Troll → 3 Or (Difficile)'},
   {i:['iron_sword','wolf'],          o:['bone'],        keep:['iron_sword'],       t:2,  rep:0, d:'🗡️ Épée de Fer + Loup → Os'},
   {i:['iron_sword','goblin'],        o:['gold'],        keep:['iron_sword'],       t:3,  rep:0, d:'🗡️ Épée de Fer + Gobelin → Or'},
-  {i:['iron_sword','troll'],         o:['gold','gold'], keep:['iron_sword'],       t:5,  rep:0, d:'🗡️ Épée de Fer + Troll → 2 Or'},
+  {i:['iron_sword','troll'],         o:['gold','gold'], keep:['iron_sword'],       t:7,  rep:0, normalOnly:true, d:'🗡️ Épée de Fer + Troll → 2 Or (Normal)'},
+  {i:['iron_sword','sword','troll'], o:['gold','gold'], keep:['iron_sword','sword'],t:5, rep:0, hardOnly:true, d:'💀 Épée Fer + Épée + Troll → 2 Or (Difficile)'},
   {i:['bone','bone','bone'],         o:['gold'],        keep:[],                   t:4,  rep:0, d:'3 Os → Or'},
   {i:['stone','stone','stone','stone','villager'], o:['cave_entrance'], keep:['villager'], t:12, rep:0, d:'4 Pierres + Villageois → Entrée de Grotte'},
   // Cartes secrètes (cachées dans le livre de recettes)
@@ -510,6 +537,19 @@ function playSound(type){
         o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.11);
         g.gain.setValueAtTime(.18,t+i*.11);g.gain.exponentialRampToValueAtTime(.001,t+i*.11+.42);
         o.start(t+i*.11);o.stop(t+i*.11+.48);});
+    }else if(type==='wolf_appear'){
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.connect(g);g.connect(AC.destination);
+      o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(60,t+.5);
+      g.gain.setValueAtTime(.35,t);g.gain.exponentialRampToValueAtTime(.001,t+.55);o.start(t);o.stop(t+.55);
+    }else if(type==='goblin_appear'){
+      [350,420,280,380].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='square';
+        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.07);
+        g.gain.setValueAtTime(.14,t+i*.07);g.gain.exponentialRampToValueAtTime(.001,t+i*.07+.18);
+        o.start(t+i*.07);o.stop(t+i*.07+.2);});
+    }else if(type==='troll_appear'){
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.connect(g);g.connect(AC.destination);
+      o.frequency.setValueAtTime(55,t);o.frequency.exponentialRampToValueAtTime(30,t+.8);
+      g.gain.setValueAtTime(.55,t);g.gain.exponentialRampToValueAtTime(.001,t+.85);o.start(t);o.stop(t+.85);
     }
   }catch(e){}
 }
@@ -531,8 +571,9 @@ function showTooltip(e,type){
     ).join('<br>');
   }else{ttEl.querySelector('.tt-label').textContent='';ttEl.querySelector('.tt-r').textContent='';}
   const sellEl=ttEl.querySelector('.tt-sell');
-  if(!d.node&&!d.monster){const val=d.sellValue||1;sellEl.textContent='💰 Vente : '+val+'🪙 (clic droit)';}
-  else{sellEl.textContent='';}
+  if(d.monster){sellEl.textContent='';}
+  else if(d.node){sellEl.textContent='🗑️ Supprimer : 0🪙 (clic droit)';}
+  else{const val=d.sellValue||1;sellEl.textContent='💰 Vente : '+val+'🪙 (clic droit)';}
   ttEl.style.display='block';posTooltip(e);
 }
 function posTooltip(e){
@@ -547,6 +588,7 @@ function saveGame(){
   if(!G||!G.cards)return;
   const data={
     gold:G.gold, moon:G.moon, moonProg:G.moonProg, moonDur:G.moonDur, nid:G.nid,
+    _babiesGrown:G._babiesGrown||0,
     difficulty:G.difficulty||'normal',
     _stats:G._stats||{},
     cards:Object.fromEntries(Object.entries(G.cards).map(([id,c])=>[id,{id:c.id,type:c.type,x:c.x,y:c.y,sid:c.sid,aggro:c.aggro||0}])),
@@ -565,6 +607,7 @@ function loadGame(){
      cards:{},stacks:{},drag:null,ts:null,over:false,paused:false,secretReveal:false,
      _stats:data._stats||{crafts:0,kills:0,sells:0,blocks:0,babies:0},
      _faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,
+     _babiesGrown:data._babiesGrown||0,
      difficulty:data.difficulty||'normal',
      aggroMult:(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).aggroMult,
      foodPerPop:(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).foodPerPop,
@@ -611,7 +654,7 @@ function buildShop(){
 // ── STATE ────────────────────────────────────────────────────────────────────
 function initG(){
   const dp=DIFF_PARAMS[selectedDifficulty]||DIFF_PARAMS.normal;
-  G={gold:5,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,difficulty:selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult};
+  G={gold:5,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,difficulty:selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult};
   const sb=document.getElementById('speed-btn');if(sb){sb.textContent='⏩ ×1';sb.className='';sb.id='speed-btn';}
   const bb=document.getElementById('bm-btn');if(bb)bb.style.display='none';
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
@@ -645,6 +688,10 @@ function spawn(type,x,y){
   const id=G.nid++;
   G.cards[id]={id,type,x,y,sid:null,aggro:0};
   createCardDOM(id,type);
+  if(CD[type]?.monster){
+    const snd={wolf:'wolf_appear',goblin:'goblin_appear',troll:'troll_appear'}[type];
+    if(snd)setTimeout(()=>playSound(snd),80);
+  }
   checkFirstEncounter(type);
   return id;
 }
@@ -699,7 +746,10 @@ function arrEq(a,b){return a.length===b.length&&a.every((v,i)=>v===b[i]);}
 function checkRecipe(sid){
   const s=G.stacks[sid];if(!s)return;
   const types=sortedTypes(s.ids);
+  const diff=G.difficulty||'normal';
   for(const r of RECIPES){
+    if(r.hardOnly && diff!=='hard') continue;
+    if(r.normalOnly && diff==='hard') continue;
     if(arrEq(types,[...r.i].sort())){if(!s.recipe)playSound('craft_start');s.recipe=r;s.prog=0;updateSV(sid);return;}
   }
   // Détection expédition : cave_entrance + 1-3 villageois + 0-2 épées
@@ -736,6 +786,8 @@ function execRecipe(sid){
   const killCount=goneTypes.filter(t=>CD[t]?.monster).length;
   if(killCount>0)G._stats.kills=(G._stats.kills||0)+killCount;
   if(r.o.includes('baby'))G._stats.babies=(G._stats.babies||0)+1;
+  // Bébé → villageois : villageois devient plus rare dans les paquets
+  if(r.o.includes('villager')&&r.i.includes('baby'))G._babiesGrown=(G._babiesGrown||0)+1;
   if(r.o.includes('forge'))logHint('🔨 Forge prête ! Empile Forge + 2 Minerais + Villageois → 🗡️ Épée de Fer (combat 3× plus rapide !)');
   if(r.o.includes('cave_entrance'))logHint('🕳️ Entrée de Grotte ! Empile 1-3 🧑 + une ⚔️ dessus pour lancer une expédition de 40s et ramener du butin !');
   if(r.o.includes('house'))logHint('🏠 Maison construite ! Empile Maison + 2 Villageois pour avoir des Bébés → plus de main-d\'œuvre !');
@@ -765,18 +817,66 @@ function startDrag(e,id){
   const c=G.cards[id],el=cel(id);if(!el)return;
   if(c.sid&&G.stacks[c.sid]?.recipe?.type==='expedition')return;
   const tr=document.getElementById('table').getBoundingClientRect(),er=el.getBoundingClientRect();
+  // Drag de pile entière si on clique sur la carte racine (ids[0])
+  if(c.sid&&G.stacks[c.sid]?.ids[0]===id){
+    const s=G.stacks[c.sid];
+    G.drag={id,sid:c.sid,stackDrag:true,ox:e.clientX-er.left,oy:e.clientY-er.top,tl:tr.left,tt:tr.top};
+    s.ids.forEach((cid,i)=>{const e2=cel(cid);if(e2){e2.classList.add('dragging');e2.style.zIndex=9990+i;}});
+    return;
+  }
+  // Carte individuelle — extraire de la pile
   if(c.sid)rmFromStack(id);
   G.drag={id,ox:e.clientX-er.left,oy:e.clientY-er.top,tl:tr.left,tt:tr.top};
   el.classList.add('dragging');el.style.zIndex=9999;
 }
 document.addEventListener('mousemove',e=>{
   if(!G.drag)return;
+  if(G.drag.stackDrag){
+    const s=G.stacks[G.drag.sid];if(!s)return;
+    const nx=e.clientX-G.drag.tl-G.drag.ox;
+    const ny=e.clientY-G.drag.tt-G.drag.oy;
+    s.rx=nx;s.ry=ny;
+    s.ids.forEach((cid,i)=>{
+      if(!G.cards[cid])return;
+      G.cards[cid].x=nx;G.cards[cid].y=ny+i*SO;
+      const el=cel(cid);if(el){el.style.left=nx+'px';el.style.top=(ny+i*SO)+'px';}
+    });
+    return;
+  }
   const c=G.cards[G.drag.id],el=cel(G.drag.id);if(!c||!el)return;
   c.x=e.clientX-G.drag.tl-G.drag.ox;c.y=e.clientY-G.drag.tt-G.drag.oy;
   el.style.left=c.x+'px';el.style.top=c.y+'px';
 });
 document.addEventListener('mouseup',()=>{
   if(!G.drag)return;
+  if(G.drag.stackDrag){
+    const dragSid=G.drag.sid;G.drag=null;
+    const s=G.stacks[dragSid];
+    if(s){
+      s.ids.forEach((cid,i)=>{const el=cel(cid);if(el){el.classList.remove('dragging');el.style.zIndex=10+i;}});
+      const tgt=findTargetForStack(dragSid);
+      if(tgt){
+        const allIds=[...s.ids];
+        dissolve(dragSid);
+        let tSid=tgt.sid;
+        if(!tSid){
+          // carte seule → créer nouvelle pile avec la cible + le 1er card dragué
+          if(G.cards[allIds[0]]){tSid=mkStack([tgt.id,allIds[0]]);}
+          allIds.slice(1).forEach(cid=>{if(G.cards[cid]){G.cards[cid].sid=null;if(tSid)addToStack(tSid,cid);}});
+        }else{
+          allIds.forEach(cid=>{if(G.cards[cid]){G.cards[cid].sid=null;addToStack(tSid,cid);}});
+        }
+        // Trembler si pas de recette
+        const finalSid=G.cards[tgt.id]?.sid;
+        if(finalSid&&!G.stacks[finalSid]?.recipe){
+          playSound('error');
+          const root=cel(G.stacks[finalSid]?.ids[0]);
+          if(root){root.classList.remove('shake');void root.offsetWidth;root.classList.add('shake');setTimeout(()=>root.classList.remove('shake'),400);}
+        }
+      } else { updateSV(dragSid); }
+    }
+    updateHUD();return;
+  }
   const id=G.drag.id;G.drag=null;
   const el=cel(id);if(el){el.classList.remove('dragging');el.style.zIndex=10;}
   const tgt=findTarget(id);
@@ -804,12 +904,36 @@ function findTarget(dragId){
   }
   return null;
 }
+function findTargetForStack(dragSid){
+  const s=G.stacks[dragSid];if(!s)return null;
+  const stackIds=new Set(s.ids);
+  const root=G.cards[s.ids[0]];if(!root)return null;
+  for(const [idStr,c] of Object.entries(G.cards)){
+    const id=parseInt(idStr);if(stackIds.has(id))continue;
+    const ox=Math.min(root.x+CW,c.x+CW)-Math.max(root.x,c.x);
+    const oy=Math.min(root.y+CH,c.y+CH)-Math.max(root.y,c.y);
+    if(ox>22&&oy>22){
+      if(c.sid){const st=G.stacks[c.sid];return{id:st.ids[0],sid:c.sid};}
+      return{id,sid:null};
+    }
+  }
+  return null;
+}
 
 // ── SELL ─────────────────────────────────────────────────────────────────────
 function sellCard(id){
   if(G.over||G.paused||!G.cards[id])return;
-  const t=G.cards[id].type;if(CD[t].node||CD[t].monster)return;
-  if(G.cards[id].sid)rmFromStack(id);
+  const t=G.cards[id].type;if(CD[t].monster)return;
+  if(G.cards[id].sid){
+    // Empêcher suppression si expédition active
+    if(G.stacks[G.cards[id].sid]?.recipe?.type==='expedition')return;
+    rmFromStack(id);
+  }
+  if(CD[t].node){
+    // Cartes de production → suppression gratuite (0 or)
+    delCard(id);playSound('sell');log('🗑️ Carte de production supprimée (0🪙)');
+    updateHUD();return;
+  }
   const val=CD[t].sellValue||1;
   delCard(id);G.gold+=val;playSound('sell');log('💰 +'+val+'🪙 (vente)');
   G._stats.sells=(G._stats.sells||0)+1;
@@ -949,16 +1073,20 @@ function buyPack(key){
   const cost=p.cost+(G.packCostAdd||0);
   if(G.gold<cost)return;
   G.gold-=cost;
+  // Réduire le poids des villageois en fonction des bébés grandis (rareté croissante)
+  const grown=G._babiesGrown||0;
+  const adjPool=p.pool.map(e=>e.t==='villager'?{...e,w:Math.max(1,e.w-grown*2)}:e);
   const tbl=document.getElementById('table').getBoundingClientRect();
   const cx=tbl.width/2,cy=tbl.height/2;
   for(let i=0;i<p.cnt;i++){
-    const type=wRand(p.pool);
+    const type=wRand(adjPool);
     spawn(type,Math.max(4,cx+(Math.random()-.5)*220-CW/2),Math.max(4,cy+(Math.random()-.5)*160-CH/2));
   }
-  playSound('buy_pack');log('📦 Ouvert : '+p.n);updateHUD();
+  playSound('buy_pack');log('📦 Ouvert : '+p.n+(grown>0?' (villageois plus rares : '+grown+' bébés grandis)':''));updateHUD();
 }
 function wRand(pool){
-  const tot=pool.reduce((s,e)=>s+e.w,0);let r=Math.random()*tot;
+  const tot=pool.reduce((s,e)=>s+e.w,0);if(tot<=0)return pool[pool.length-1].t;
+  let r=Math.random()*tot;
   for(const e of pool){r-=e.w;if(r<=0)return e.t;}return pool[pool.length-1].t;
 }
 
@@ -1064,6 +1192,15 @@ function showMainMenu(){
 function startNewGame(){
   playSound('menu_click');
   clearSave();
+  // Afficher le tutoriel automatiquement si c'est la première partie
+  if(!localStorage.getItem('cs_tuto_seen')){
+    // Initialiser quand même l'état pour avoir le menu caché
+    document.getElementById('main-menu').style.display='none';
+    tutoStep=0;renderTuto();
+    document.getElementById('tutorial').style.display='flex';
+    // La dernière slide du tuto appellera initG() via "Commencer"
+    return;
+  }
   initG();
 }
 function resumeGame(){
@@ -1110,11 +1247,19 @@ document.addEventListener('keydown',e=>{
 
 // ── RECIPE BOOK ───────────────────────────────────────────────────────────────
 function showRB(){
-  document.getElementById('rlist').innerHTML=RECIPES.filter(r=>!r.secret).map(r=>`
+  const diff=G?.difficulty||selectedDifficulty||'normal';
+  const visible=RECIPES.filter(r=>{
+    if(r.secret)return false;
+    if(r.hardOnly&&diff!=='hard')return false;
+    if(r.normalOnly&&diff==='hard')return false;
+    return true;
+  });
+  const diffLabel=diff==='hard'?'<div style="font-size:11px;color:#fca5a5;margin-bottom:8px;">💀 Mode Difficile — Troll nécessite 3⚔️ ou 🗡️+⚔️</div>':'';
+  document.getElementById('rlist').innerHTML=diffLabel+visible.map(r=>`
     <div style="font-size:13px;padding:6px 0;border-bottom:1px solid #1e3a1e;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-      <span>${r.i.map(t=>CD[t]?.e+'&nbsp;'+CD[t]?.n).join(' + ')}</span>
-      <span>→</span>
-      <span>${r.o.map(t=>CD[t]?.e+'&nbsp;'+CD[t]?.n).join(', ')}</span>
+      <span>${r.i.map(t=>CD[t]?.e+'&nbsp;'+(CD[t]?.n||t)).join(' + ')}</span>
+      <span style="color:#888">→</span>
+      <span>${r.o.map(t=>CD[t]?.e+'&nbsp;'+(CD[t]?.n||t)).join(', ')}</span>
       <span style="color:#888;font-size:11px;">${r.t}s${r.rep?' 🔄':''}</span>
     </div>`).join('');
   document.getElementById('rb').style.display='flex';
@@ -1223,16 +1368,71 @@ function logHint(msg){
   el.className='litem hint';el.textContent=msg;d.appendChild(el);
   setTimeout(()=>el.remove(),9000);
 }
+
+// ── EVENT TUTORIAL IN-GAME ───────────────────────────────────────────────────
+let _evtTutQueue=[];let _evtTutBusy=false;
+function hasSkippedEventTuts(){try{return localStorage.getItem('cs_skip_evt_tut')==='1';}catch(e){return false;}}
+function skipAllEventTuts(){localStorage.setItem('cs_skip_evt_tut','1');closeEventTut();}
+function closeEventTut(){
+  const el=document.getElementById('event-tut');if(el)el.style.display='none';
+  _evtTutBusy=false;
+  if(_evtTutQueue.length>0)setTimeout(_nextEvtTut,600);
+}
+function _nextEvtTut(){
+  if(!_evtTutQueue.length){_evtTutBusy=false;return;}
+  if(hasSkippedEventTuts()){_evtTutQueue=[];_evtTutBusy=false;return;}
+  _evtTutBusy=true;
+  const tut=_evtTutQueue.shift();
+  document.getElementById('evt-emoji').textContent=tut.emoji;
+  document.getElementById('evt-title').textContent=tut.title;
+  document.getElementById('evt-text').textContent=tut.text;
+  const el=document.getElementById('event-tut');
+  el.style.display='block';el.classList.remove('evt-active');
+  void el.offsetWidth;el.classList.add('evt-active');
+  // Auto-close après 18s
+  setTimeout(()=>{if(el.style.display!=='none'&&!_evtTutBusy===false)closeEventTut();},18000);
+}
+function showEventTut(id,emoji,title,text){
+  if(hasSkippedEventTuts())return;
+  if(hasSeenHint('evt_'+id))return;
+  markHintSeen('evt_'+id);
+  _evtTutQueue.push({emoji,title,text});
+  if(!_evtTutBusy)_nextEvtTut();
+}
+
+const EVT_TUTS={
+  node:{emoji:'🌳',title:'Cartes de Production',
+    text:'Ces cartes (point vert •) produisent des ressources en boucle.\n\nEmpile un 🧑 Villageois dessus pour démarrer la production automatique.\n\n🌳 Arbre + 🧑 → Bois en continu\n🪨 Rocher + 🧑 → Pierre\n🫐 Buisson + 🧑 → Baie\n\n💡 Clic droit → supprimer (gratuit).'},
+  food:{emoji:'🍖',title:'La Nourriture',
+    text:'Chaque fin de jour, tes villageois mangent.\n\nIl te faut autant de repas que de villageois.\n\n🫐 Baie = 1 repas  |  🍇 Baie cuite = 3  |  🍲 Ragoût = 5\n\n💡 Cuisine 🫐+🔥 ou 🍎+🔥 pour multiplier tes repas !\n\n⚠️ Pas assez de nourriture = FAMINE !'},
+  wolf:{emoji:'🐺',title:'Attention — Loup !',
+    text:'Un Loup vient d\'apparaître !\n\n⏱️ Il attaque dans 15 secondes.\nEmpile une ⚔️ Épée sur lui pour le combattre.\n\n✅ L\'épée survit après le combat.\n🦴 Il laisse des Os en mourant (3 Os → 🪙 Or).\n\n💡 La barre rouge = temps avant l\'attaque.'},
+  goblin:{emoji:'👺',title:'Attention — Gobelin !',
+    text:'Premier Gobelin !\n\n⏱️ Plus rapide que le loup — attaque en 12 secondes.\nEmpile une ⚔️ Épée sur lui rapidement !\n\n💰 Il laisse de l\'Or en mourant — très précieux !\n\n💡 En mode difficile les monstres attaquent encore plus vite.'},
+  troll:{emoji:'👹',title:'ATTENTION — Troll !',
+    text:'Un Troll ! Le monstre le plus résistant.\n\n⏱️ Il attaque en 10 secondes.\n\n⚔️ Mode Normal : empile 2 épées sur lui\n💀 Mode Difficile : il faut 3 épées !\n\nOu utilise une 🗡️ Épée de Fer (seule en Normal, avec une épée en Difficile).\n\n💡 Prépare tes armes AVANT la vague !'},
+};
+
 function checkFirstEncounter(type){
+  if((type==='berry_bush'||type==='tree'||type==='rock'||type==='farm'||type==='forest_zone'||type==='cave_zone')&&!hasSeenHint('evt_node')){
+    setTimeout(()=>showEventTut('node',EVT_TUTS.node.emoji,EVT_TUTS.node.title,EVT_TUTS.node.text),1200);
+  }
+  if((type==='berry'||type==='apple'||type==='cooked_berry'||type==='stew')&&!hasSeenHint('evt_food')){
+    setTimeout(()=>showEventTut('food',EVT_TUTS.food.emoji,EVT_TUTS.food.title,EVT_TUTS.food.text),1500);
+  }
   if(type==='wolf'&&!hasSeenHint('wolf')){
     markHintSeen('wolf');
-    logHint('🐺 Un Loup apparaît ! Empile une ⚔️ Épée dessus avant qu\'il attaque (15s). L\'épée survit au combat !');
+    showEventTut('wolf',EVT_TUTS.wolf.emoji,EVT_TUTS.wolf.title,EVT_TUTS.wolf.text);
+    logHint('🐺 Loup ! Empile une ⚔️ Épée avant 15s !');
   }else if(type==='goblin'&&!hasSeenHint('goblin')){
     markHintSeen('goblin');
-    logHint('👺 Premier Gobelin ! Plus rapide que le loup (12s). Il laisse de l\'Or en mourant — très précieux !');
+    showEventTut('goblin',EVT_TUTS.goblin.emoji,EVT_TUTS.goblin.title,EVT_TUTS.goblin.text);
+    logHint('👺 Gobelin ! Il laisse de l\'Or (12s pour agir) !');
   }else if(type==='troll'&&!hasSeenHint('troll')){
     markHintSeen('troll');
-    logHint('👹 Un Troll ! Impossible avec une seule épée — empile 2 ⚔️ ou utilise une 🗡️ Épée de Fer pour le battre seul !');
+    const msg=G.difficulty==='hard'?'👹 Troll ! En mode difficile : 3 ⚔️ ou 🗡️+⚔️ !':'👹 Troll ! Empile 2 ⚔️ ou 1 🗡️ Épée de Fer pour le battre !';
+    showEventTut('troll',EVT_TUTS.troll.emoji,EVT_TUTS.troll.title,EVT_TUTS.troll.text);
+    logHint(msg);
   }
 }
 
@@ -1387,24 +1587,45 @@ function spawnConfetti(){
   }
 }
 
-// ── TIDY TABLE ───────────────────────────────────────────────────────────────
+// ── TIDY TABLE (par catégorie) ────────────────────────────────────────────────
+function cardCategory(type){
+  const d=CD[type];if(!d)return 4;
+  if(d.monster)return 5;       // Monstres en dernier
+  if(type==='villager'||type==='baby')return 0; // Villageois en premier
+  if(d.node)return 1;           // Cartes de production
+  if(d.food)return 2;           // Nourriture
+  if(type==='gold'||type==='gem'||type==='golden_bar')return 4; // Argent/monnaie
+  return 3;                     // Ressources / armes / outils
+}
+const CAT_LABELS={0:'👥 Villageois',1:'🌳 Production',2:'🍖 Nourriture',3:'🔩 Ressources',4:'🪙 Argent',5:'👹 Monstres'};
 function tidyCards(){
   if(G.over||G.paused)return;
   const tbl=document.getElementById('table').getBoundingClientRect();
-  const pad=16,gapX=CW+16,gapY=CH+44;
+  const pad=16,gapX=CW+16,gapY=CH+52;
   const cols=Math.max(1,Math.floor((tbl.width-pad*2)/gapX));
-  const groups=[];const seen=new Set();
-  // Stacks first
-  for(const [sid,s] of Object.entries(G.stacks)){groups.push({type:'stack',sid:parseInt(sid)});s.ids.forEach(id=>seen.add(id));}
-  // Lone cards
-  for(const [id,c] of Object.entries(G.cards)){if(!seen.has(parseInt(id)))groups.push({type:'card',id:parseInt(id)});}
-  groups.forEach((g,i)=>{
-    const col=i%cols,row=Math.floor(i/cols);
+  // Grouper toutes unités (pile ou carte seule) + leur catégorie
+  const units=[];const seen=new Set();
+  for(const [sid,s] of Object.entries(G.stacks)){
+    const rootType=G.cards[s.ids[0]]?.type||'';
+    units.push({type:'stack',sid:parseInt(sid),cat:cardCategory(rootType)});
+    s.ids.forEach(id=>seen.add(id));
+  }
+  for(const [id,c] of Object.entries(G.cards)){
+    if(!seen.has(parseInt(id)))units.push({type:'card',id:parseInt(id),cat:cardCategory(c.type)});
+  }
+  // Trier par catégorie puis par type
+  units.sort((a,b)=>a.cat-b.cat);
+  // Séparer en sections par catégorie
+  let col=0,row=0,lastCat=-1;
+  units.forEach(g=>{
+    if(g.cat!==lastCat&&lastCat!==-1){col=0;row++;}// Saut de ligne entre catégories
+    lastCat=g.cat;
     const nx=pad+col*gapX,ny=pad+row*gapY;
     if(g.type==='stack'){const s=G.stacks[g.sid];if(!s)return;s.rx=nx;s.ry=ny;updateSV(g.sid);}
     else{G.cards[g.id].x=nx;G.cards[g.id].y=ny;updateCV(g.id);}
+    col++;if(col>=cols){col=0;row++;}
   });
-  playSound('menu_click');log('🗂️ Table rangée !');
+  playSound('menu_click');log('🗂️ Rangé par catégorie : Villageois | Production | Nourriture | Ressources | Argent');
 }
 
 // ── PACK UNLOCK TOAST ────────────────────────────────────────────────────────
@@ -1576,7 +1797,13 @@ function showTutorial(){
 }
 function closeTutorial(){
   playSound('menu_click');
+  localStorage.setItem('cs_tuto_seen','1');
   document.getElementById('tutorial').style.display='none';
+  // Si le jeu n'est pas encore démarré (premier tutoriel auto), démarrer
+  if(!G||!G.cards||Object.keys(G.cards).length===0){
+    document.getElementById('main-menu').style.display='none';
+    initG();
+  }
 }
 function nextTutoStep(){
   playSound('craft_start');
@@ -1600,7 +1827,7 @@ function renderTuto(){
   const next=document.getElementById('tut-next');
   if(tutoStep===TUTO.length-1){
     next.textContent='🎮 Commencer !';
-    next.onclick=()=>{closeTutorial();startNewGame();};
+    next.onclick=()=>{localStorage.setItem('cs_tuto_seen','1');closeTutorial();if(!G||!G.cards||Object.keys(G.cards).length===0)initG();};
   }else{
     next.textContent='Suivant →';
     next.onclick=nextTutoStep;
