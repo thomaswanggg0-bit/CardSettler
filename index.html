@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>CardSettler</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;}
+body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column;}
+/* HUD */
+#hud{background:#0f2310;border-bottom:2px solid #2d5a2d;padding:8px 14px;display:flex;align-items:center;gap:14px;flex-shrink:0;z-index:100;flex-wrap:wrap;}
+#moon-wrap{flex:1;min-width:80px;height:18px;background:#0a1a0a;border-radius:9px;overflow:hidden;border:1px solid #2d5a2d;}
+#moon-fill{height:100%;width:0%;background:linear-gradient(90deg,#f7d060,#e94560);border-radius:9px;}
+.stat{color:#ccc;font-size:13px;white-space:nowrap;}.stat b{color:#fff;}
+#save-badge{font-size:12px;color:#4ade80;opacity:0;transition:opacity .4s;}
+/* Table */
+#table{flex:1;position:relative;overflow:hidden;background:#1e4a1e;background-image:radial-gradient(circle at 1px 1px,#265226 1px,transparent 0);background-size:28px 28px;cursor:default;}
+/* Cards */
+.card{position:absolute;width:82px;height:104px;border-radius:9px;cursor:grab;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid rgba(0,0,0,0.25);box-shadow:0 3px 8px rgba(0,0,0,0.4);transition:box-shadow .1s;}
+.card:hover{box-shadow:0 0 0 2px #f7d060,0 3px 8px rgba(0,0,0,0.4);}
+.card.monster{border-color:rgba(239,68,68,0.6);}
+.card.monster:hover{box-shadow:0 0 0 2px #ef4444,0 3px 8px rgba(0,0,0,0.6);}
+.card.dragging{box-shadow:0 10px 24px rgba(0,0,0,0.7);z-index:9999!important;cursor:grabbing;}
+.card-emoji{font-size:30px;margin-bottom:3px;pointer-events:none;}
+.card-name{font-size:10px;font-weight:700;text-align:center;padding:0 4px;line-height:1.2;pointer-events:none;}
+.card-bar{position:absolute;bottom:0;left:0;right:0;height:5px;background:rgba(0,0,0,0.2);border-radius:0 0 7px 7px;overflow:hidden;display:none;}
+.card-bar-fill{height:100%;background:#4ade80;width:0%;}
+/* Animations */
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.shake{animation:shake .35s ease;}
+@keyframes pulse-danger{0%,100%{box-shadow:0 0 0 2px rgba(239,68,68,.8),0 3px 8px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 5px rgba(239,68,68,1),0 0 16px rgba(239,68,68,.7)}}
+.danger-pulse{animation:pulse-danger .55s infinite;}
+/* Tooltip */
+#tooltip{position:fixed;background:rgba(10,20,10,.96);color:#fff;padding:9px 12px;border-radius:9px;font-size:12px;pointer-events:none;z-index:99999;max-width:210px;display:none;border:1px solid #2d5a2d;box-shadow:0 4px 12px rgba(0,0,0,.5);}
+#tooltip .tt-name{font-weight:700;font-size:14px;margin-bottom:3px;}
+#tooltip .tt-desc{color:#9ca;margin-bottom:5px;font-size:11px;}
+#tooltip .tt-r{color:#f7d060;font-size:11px;line-height:1.6;}
+#tooltip .tt-label{color:#6b8;font-size:10px;margin-bottom:2px;text-transform:uppercase;letter-spacing:.5px;}
+/* Shop */
+#shop{position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:7px;z-index:100;}
+.pbtn{background:#c0392b;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:700;box-shadow:0 4px 8px rgba(0,0,0,0.4);line-height:1.3;text-align:left;}
+.pbtn:hover{background:#a93226;}.pbtn:disabled{background:#555;cursor:not-allowed;}
+.pbtn small{display:block;font-size:10px;font-weight:400;opacity:.75;margin-top:1px;}
+/* Log */
+#log{position:absolute;bottom:12px;left:12px;z-index:100;max-width:240px;}
+.litem{background:rgba(0,0,0,.75);color:#fff;padding:4px 10px;border-radius:6px;font-size:12px;margin-bottom:4px;animation:fi .3s ease;}
+.litem.hint{background:rgba(15,30,60,.95);border:1px solid #3b82f6;color:#bfdbfe;padding:7px 12px;font-size:12px;}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+/* Overlays jeu */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9000;justify-content:center;align-items:center;flex-direction:column;color:#fff;gap:12px;text-align:center;padding:20px;}
+.overlay h2{font-size:42px;}.overlay p{font-size:16px;color:#ccc;}
+.overlay .btn-row{display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;justify-content:center;}
+.obtn{background:#1a4a1a;color:#fff;border:2px solid #2d5a2d;padding:10px 22px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:700;}
+.obtn:hover{background:#265226;border-color:#4a8a4a;}
+.obtn.red{background:#c0392b;border-color:#e74c3c;}.obtn.red:hover{background:#a93226;}
+.obtn.green{background:#16a34a;border-color:#22c55e;}.obtn.green:hover{background:#15803d;}
+/* Wave alert */
+#wave-alert{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(160,0,0,0.93);color:#fff;font-size:20px;font-weight:700;padding:14px 30px;border-radius:12px;z-index:500;pointer-events:none;text-align:center;border:2px solid #ef4444;}
+#obj{font-size:11px;color:#f7d060;white-space:nowrap;}
+/* ── MENU PRINCIPAL ─────────────────────────────────────────── */
+#main-menu{display:flex;position:fixed;inset:0;background:linear-gradient(160deg,#071407 0%,#0f2a0f 40%,#0a1e0a 100%);z-index:99000;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.mm-logo{font-size:72px;margin-bottom:4px;filter:drop-shadow(0 0 20px rgba(100,200,80,.4));}
+.mm-title{font-size:52px;font-weight:900;color:#f7d060;letter-spacing:4px;text-shadow:0 0 30px rgba(247,208,96,.4);}
+.mm-sub{color:#6b8;font-size:14px;margin-bottom:20px;}
+.mbtn{background:#0f2310;color:#d1fae5;border:2px solid #2d5a2d;border-radius:10px;padding:14px 0;cursor:pointer;font-size:16px;font-weight:700;width:260px;transition:background .15s,border-color .15s,transform .1s;text-align:center;}
+.mbtn:hover{background:#1a3a1a;border-color:#4a8a4a;transform:translateY(-2px);}
+.mbtn:disabled{background:#111;border-color:#333;color:#555;cursor:not-allowed;transform:none;}
+.mbtn.disc{background:#1a0a0a;border-color:#4a1a1a;color:#fca5a5;}
+.mbtn.disc:hover{background:#2a1010;border-color:#8a2d2d;}
+#resume-info{color:#6b8;font-size:12px;margin-top:-8px;height:16px;}
+.mm-version{position:absolute;bottom:16px;color:#2d5a2d;font-size:11px;}
+/* ── TUTORIEL ─────────────────────────────────────────────── */
+#tutorial{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:99500;justify-content:center;align-items:center;}
+.tut-box{background:linear-gradient(160deg,#0a1e0a,#142814);border:2px solid #2d5a2d;border-radius:16px;padding:36px 38px 28px;max-width:500px;width:92%;color:#fff;text-align:center;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.6);}
+.tut-emoji{font-size:60px;margin-bottom:10px;line-height:1;}
+.tut-title{font-size:21px;font-weight:800;color:#f7d060;margin-bottom:14px;}
+.tut-text{font-size:13.5px;line-height:1.8;color:#d1fae5;white-space:pre-line;min-height:130px;text-align:left;}
+.tut-dots{display:flex;gap:6px;justify-content:center;margin:18px 0 12px;}
+.tut-dot{width:8px;height:8px;border-radius:50%;background:#2d5a2d;transition:background .2s;}
+.tut-dot.active{background:#f7d060;}
+.tut-nav{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.tbtn{border:2px solid #2d5a2d;border-radius:8px;padding:9px 22px;cursor:pointer;font-size:14px;font-weight:700;background:#0f2310;color:#d1fae5;transition:background .15s,border-color .15s;}
+.tbtn:hover{background:#1a3a1a;border-color:#4a8a4a;}
+.tbtn.next{background:#16a34a;border-color:#22c55e;color:#fff;}
+.tbtn.next:hover{background:#15803d;}
+.tbtn.close-tut{position:absolute;top:12px;right:12px;background:rgba(120,0,0,.6);border-color:rgba(200,0,0,.5);color:#fca5a5;font-size:12px;padding:5px 12px;}
+.tbtn.close-tut:hover{background:rgba(180,0,0,.8);}
+/* ── SECRET REVEAL ─────────────────────────────────────────────── */
+@keyframes srIn{from{opacity:0;transform:scale(.7) rotate(-3deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+#secret-reveal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:99800;justify-content:center;align-items:center;}
+.sr-box{background:linear-gradient(160deg,#1a0d2e,#2d1657,#1a0d2e);border:2px solid #7c3aed;border-radius:18px;padding:36px 40px 28px;max-width:440px;width:92%;color:#fff;text-align:center;animation:srIn .45s cubic-bezier(.17,.67,.36,1.3) forwards;box-shadow:0 0 60px rgba(124,58,237,.5);}
+.sr-tag{background:#7c3aed;color:#fff;font-size:11px;font-weight:700;letter-spacing:2px;padding:4px 12px;border-radius:12px;display:inline-block;margin-bottom:14px;}
+.sr-emoji{font-size:64px;margin:10px 0;line-height:1;}
+.sr-name{font-size:26px;font-weight:900;color:#f7d060;margin-bottom:16px;text-shadow:0 0 20px rgba(247,208,96,.5);}
+.sr-desc{font-size:14px;line-height:1.7;color:#ddd5fe;margin-bottom:14px;}
+.sr-advice{background:rgba(124,58,237,.2);border:1px solid rgba(124,58,237,.4);border-radius:10px;padding:10px 14px;margin-bottom:12px;font-size:13px;color:#c4b5fd;}
+.sr-bonus{font-size:12px;color:#a78bfa;margin-bottom:20px;}
+.sr-close{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:11px 28px;cursor:pointer;font-size:14px;font-weight:700;box-shadow:0 4px 12px rgba(124,58,237,.4);}
+.sr-close:hover{background:#6d28d9;}
+.sr-hint{font-size:11px;color:#6b7280;margin-top:10px;}
+/* ── ACHIEVEMENTS ───────────────────────────────────────────────── */
+#ach-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:99200;overflow-y:auto;padding:20px;}
+.ach-inner{background:#0f2310;border:2px solid #2d5a2d;border-radius:14px;max-width:560px;margin:auto;padding:24px;}
+.ach-inner h3{color:#f7d060;font-size:20px;margin-bottom:16px;text-align:center;}
+.ach-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;margin-bottom:16px;}
+.ach-item{background:#0a1a0a;border:1px solid #1e3a1e;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px;}
+.ach-item.done{border-color:#16a34a;background:#0d2a1a;}
+.ach-item .ach-ico{font-size:22px;min-width:28px;text-align:center;opacity:.3;}
+.ach-item.done .ach-ico{opacity:1;}
+.ach-item .ach-n{font-size:13px;font-weight:700;color:#555;}
+.ach-item.done .ach-n{color:#d1fae5;}
+.ach-item .ach-d{font-size:11px;color:#2d4a2d;}
+.ach-item.done .ach-d{color:#86efac;}
+@keyframes toastIn{from{opacity:0;transform:translateX(120%)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(120%)}}
+.ach-toast{position:fixed;right:16px;top:72px;background:linear-gradient(135deg,#14532d,#16a34a);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;z-index:99900;box-shadow:0 4px 16px rgba(0,0,0,.5);border:1px solid #22c55e;max-width:260px;animation:toastIn .4s ease forwards;}
+.ach-toast.out{animation:toastOut .4s ease forwards;}
+.ach-toast small{display:block;font-size:11px;font-weight:400;opacity:.8;margin-top:2px;}
+#mm-stats{color:#4ade80;font-size:12px;text-align:center;max-width:340px;line-height:1.7;min-height:18px;}
+@keyframes expedition-pulse{0%,100%{box-shadow:0 0 0 2px rgba(139,92,246,.8),0 3px 8px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 6px rgba(139,92,246,1),0 0 22px rgba(139,92,246,.6)}}
+.expedition-active{animation:expedition-pulse .9s infinite;border-color:rgba(139,92,246,.8)!important;}
+/* ── MARCHÉ NOIR ─────────────────────────────────────────────────── */
+#bm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9100;justify-content:center;align-items:center;}
+.bm-box{background:linear-gradient(160deg,#07000f,#120020,#07000f);border:2px solid #7c3aed;border-radius:16px;padding:24px 26px 20px;max-width:500px;width:94%;color:#fff;box-shadow:0 0 50px rgba(124,58,237,.4);}
+.bm-header{text-align:center;margin-bottom:14px;}
+.bm-title-txt{font-size:22px;font-weight:900;color:#f7d060;letter-spacing:2px;}
+.bm-sub{font-size:12px;color:#9ca3af;margin-top:3px;}
+.bm-tier-badge{display:inline-block;margin-top:6px;background:rgba(124,58,237,.3);border:1px solid #7c3aed;border-radius:12px;padding:3px 12px;font-size:11px;color:#c4b5fd;}
+.bm-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.bm-item{background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.35);border-radius:10px;padding:12px 10px;text-align:center;transition:border-color .15s;}
+.bm-item:not(.bm-sold):hover{border-color:#a78bfa;}
+.bm-item.bm-sold{opacity:.35;border-color:rgba(75,85,99,.4);}
+.bm-emoji{font-size:28px;margin-bottom:4px;}
+.bm-name{font-size:12px;font-weight:700;color:#e2e8f0;margin-bottom:5px;}
+.bm-price{font-size:13px;color:#f7d060;margin-bottom:8px;font-weight:700;}
+.bm-buy{background:#7c3aed;color:#fff;border:none;border-radius:6px;padding:6px 16px;cursor:pointer;font-size:12px;font-weight:700;width:100%;}
+.bm-buy:hover{background:#6d28d9;}.bm-buy:disabled{background:#374151;cursor:not-allowed;}
+@keyframes bm-appear{0%{opacity:0;transform:scale(.7) rotate(-2deg)}70%{transform:scale(1.04)}100%{opacity:1;transform:scale(1) rotate(0)}}
+.bm-box{animation:bm-appear .4s cubic-bezier(.17,.67,.36,1.3) forwards;}
+@keyframes bm-btn-pulse{0%,100%{box-shadow:0 0 0 0 rgba(124,58,237,.6)}50%{box-shadow:0 0 0 5px rgba(124,58,237,0)}}
+#bm-btn{animation:bm-btn-pulse 1.4s infinite;}
+/* ── VITESSE ─────────────────────────────────────────────────────── */
+#speed-btn{background:#0f1a0f;color:#86efac;border:1px solid #2d5a2d;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;font-weight:700;min-width:56px;text-align:center;}
+#speed-btn.fast{border-color:#f7d060;color:#f7d060;}
+#speed-btn.faster{border-color:#ef4444;color:#ef4444;}
+@keyframes famine-blink{0%,100%{color:#fca5a5}50%{color:#ef4444;text-shadow:0 0 8px rgba(239,68,68,.7);}}
+.famine-warn{animation:famine-blink .7s infinite;}
+/* ── SPAWN CARTE ── */
+@keyframes cardSpawn{0%{opacity:0;transform:scale(.3) translateY(-8px)}65%{transform:scale(1.07)}100%{opacity:1;transform:scale(1) translateY(0)}}
+.card-spawn{animation:cardSpawn .38s cubic-bezier(.17,.67,.36,1.3) forwards;}
+/* ── CARTE CATEGORIE ── */
+.card-cat{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;}
+.cat-node{background:#4ade80;box-shadow:0 0 4px #4ade80;}.cat-food{background:#fb923c;box-shadow:0 0 4px #fb923c;}
+.cat-monster{background:#ef4444;box-shadow:0 0 4px #ef4444;}.cat-craft{background:#60a5fa;box-shadow:0 0 4px #60a5fa;}
+/* ── GRADIENT CARTE ── */
+.card::after{content:'';position:absolute;inset:0;border-radius:7px;background:linear-gradient(135deg,rgba(255,255,255,.13) 0%,transparent 55%);pointer-events:none;}
+/* ── FLASH JOUR ── */
+#day-flash{position:fixed;inset:0;background:rgba(5,10,30,.55);pointer-events:none;z-index:8000;opacity:0;transition:opacity .12s ease-in;}
+/* ── CONFETTI ── */
+.confetti-piece{position:fixed;pointer-events:none;z-index:8999;border-radius:2px;}
+/* ── VICTOIRE STATS ── */
+#victory-stats{font-size:14px;color:#86efac;letter-spacing:.5px;margin-top:4px;}
+#tooltip .tt-sell{color:#fbbf24;font-size:11px;margin-top:5px;border-top:1px solid rgba(255,255,255,.08);padding-top:4px;}
+/* ── SCORE FINAL ── */
+.final-score{font-size:28px;font-weight:900;color:#f7d060;margin:6px 0;text-shadow:0 0 20px rgba(247,208,96,.5);}
+.score-breakdown{font-size:12px;color:#94a3b8;margin-top:4px;line-height:1.8;}
+/* ── DIFFICULTÉ ── */
+.diff-selector{display:flex;gap:10px;justify-content:center;margin-bottom:2px;}
+.diff-btn{background:#0f2310;color:#6b8;border:2px solid #2d5a2d;border-radius:9px;padding:10px 28px;cursor:pointer;font-size:14px;font-weight:700;transition:all .15s;width:140px;}
+.diff-btn.active-normal{border-color:#16a34a;color:#4ade80;background:#0d2a1a;}
+.diff-btn.active-hard{border-color:#ef4444;color:#fca5a5;background:#2a0a0a;box-shadow:0 0 12px rgba(239,68,68,.3);}
+.diff-btn:hover{opacity:.8;}
+#hdiff{font-size:11px;font-weight:800;color:#ef4444;letter-spacing:1px;margin-left:4px;vertical-align:middle;display:none;}
+.mm-diff-note{font-size:11px;color:#6b7280;text-align:center;min-height:16px;}
+</style>
+</head>
+<body>
+<!-- HUD -->
+<div id="hud">
+  <span class="stat">📅 Jour <b id="hday">1</b>/25<span id="hdiff">💀 HARD</span></span>
+  <div id="moon-wrap"><div id="moon-fill"></div></div>
+  <span class="stat">🪙 <b id="hgold">5</b></span>
+  <span class="stat" id="hfood-wrap">🍖 <b id="hfood">0</b>/<b id="hpop">0</b></span>
+  <span id="obj"></span>
+  <span id="save-badge">💾</span>
+  <button onclick="showRB()" style="background:#1a4a1a;color:#8f8;border:1px solid #4a8a4a;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">📖 Recettes</button>
+  <button onclick="tidyCards()" style="background:#1a2a4a;color:#93c5fd;border:1px solid #2d4a8a;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">🗂️ Ranger</button>
+  <button onclick="showConseilPopup()" style="background:#1a1a0a;color:#fde68a;border:1px solid #78716c;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">💡 Conseil</button>
+  <button id="bm-btn" onclick="showBlackMarket()" style="display:none;background:#07000f;color:#a78bfa;border:1px solid #7c3aed;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">🏴‍☠️ Marché</button>
+  <button id="speed-btn" onclick="toggleSpeed()">⏩ ×1</button>
+  <span style="color:#666;font-size:11px;">Clic-droit=vendre | Échap=Pause</span>
+</div>
+
+<div id="day-flash"></div>
+<!-- Table de jeu -->
+<div id="table"><div id="wave-alert"></div></div>
+<div id="shop"></div>
+<div id="log"></div>
+<div id="tooltip"><div class="tt-name"></div><div class="tt-desc"></div><div class="tt-label"></div><div class="tt-r"></div><div class="tt-sell"></div></div>
+
+<!-- Overlay Défaite / Famine -->
+<div class="overlay" id="overlay">
+  <h2 id="over-title">☠️ Défaite !</h2>
+  <p id="over-msg"></p>
+  <p id="fscore"></p>
+  <div class="final-score" id="over-score"></div>
+  <div class="score-breakdown" id="over-breakdown"></div>
+  <div class="btn-row">
+    <button class="obtn green" onclick="startNewGame()">🔄 Recommencer</button>
+    <button class="obtn" onclick="showMainMenu()">🏠 Menu Principal</button>
+  </div>
+</div>
+
+<!-- Overlay Victoire -->
+<div class="overlay" id="victory">
+  <h2>🏆 Victoire !</h2>
+  <p>Tu as survécu 25 jours et repoussé toutes les vagues !</p>
+  <p id="vscore"></p>
+  <div class="final-score" id="vic-score"></div>
+  <div class="score-breakdown" id="vic-breakdown"></div>
+  <p id="victory-stats"></p>
+  <div class="btn-row">
+    <button class="obtn green" onclick="startNewGame()">🔄 Rejouer</button>
+    <button class="obtn" onclick="showMainMenu()">🏠 Menu Principal</button>
+  </div>
+</div>
+
+<!-- Overlay Pause -->
+<div class="overlay" id="pause">
+  <h2>⏸ Pause</h2>
+  <p id="pause-info"></p>
+  <div class="btn-row">
+    <button class="obtn green" onclick="togglePause()">▶ Reprendre</button>
+    <button class="obtn" onclick="manualSave()">💾 Sauvegarder</button>
+    <button class="obtn" onclick="showConseilPopup()" style="background:#1a1a0a;border-color:#78716c;color:#fde68a;">💡 Conseil</button>
+  </div>
+  <div class="btn-row">
+    <button class="obtn red" onclick="startNewGame()">🔄 Recommencer</button>
+    <button class="obtn" onclick="goMainMenu()">🏠 Menu Principal</button>
+  </div>
+</div>
+
+<!-- Livre de recettes -->
+<div id="rb" onclick="closeRB()">
+  <div id="rbc" onclick="event.stopPropagation()" style="background:#0f2310;border:2px solid #2d5a2d;border-radius:12px;padding:20px;max-width:500px;width:92%;color:#fff;max-height:80vh;overflow-y:auto;z-index:8001;position:relative;">
+    <h3 style="margin-bottom:12px;font-size:18px;">📖 Recettes</h3>
+    <div id="rlist"></div>
+    <button onclick="closeRB()" style="margin-top:14px;background:#c0392b;color:#fff;border:none;padding:7px 18px;border-radius:6px;cursor:pointer;">Fermer</button>
+  </div>
+</div>
+
+<!-- ── MARCHÉ NOIR ── -->
+<div id="bm-overlay">
+  <div class="bm-box">
+    <div class="bm-header">
+      <div class="bm-title-txt">🏴‍☠️ MARCHÉ NOIR</div>
+      <div class="bm-sub" id="bm-sub"></div>
+      <div class="bm-tier-badge" id="bm-tier"></div>
+    </div>
+    <div class="bm-grid" id="bm-grid"></div>
+    <button onclick="closeBlackMarket()" style="background:#1a0a2a;color:#a78bfa;border:1px solid #7c3aed;border-radius:8px;padding:8px 0;width:100%;cursor:pointer;font-size:13px;font-weight:700;">Fermer ✕</button>
+  </div>
+</div>
+
+<!-- ── SECRET REVEAL ── -->
+<div id="secret-reveal">
+  <div class="sr-box">
+    <div class="sr-tag">🔓 CARTE SECRÈTE DÉCOUVERTE !</div>
+    <div class="sr-emoji" id="sr-emoji"></div>
+    <div class="sr-name" id="sr-name"></div>
+    <div class="sr-desc" id="sr-desc"></div>
+    <div class="sr-advice" id="sr-advice"></div>
+    <div class="sr-bonus" id="sr-bonus"></div>
+    <button class="sr-close" onclick="closeSecretReveal()">✓ Compris, continuer !</button>
+    <div class="sr-hint">Ou appuie sur n'importe quelle touche</div>
+  </div>
+</div>
+
+<!-- ── SUCCÈS ── -->
+<div id="ach-overlay">
+  <div class="ach-inner">
+    <h3>🏅 Succès</h3>
+    <div class="ach-grid" id="ach-grid"></div>
+    <button onclick="closeAchOverlay()" style="background:#c0392b;color:#fff;border:none;padding:8px 20px;border-radius:6px;cursor:pointer;font-size:14px;display:block;margin:0 auto;">Fermer</button>
+  </div>
+</div>
+
+<!-- ── TUTORIEL ── -->
+<div id="tutorial">
+  <div class="tut-box">
+    <button class="tbtn close-tut" onclick="closeTutorial()">✕ Quitter le tuto</button>
+    <div class="tut-emoji" id="tut-emoji"></div>
+    <div class="tut-title" id="tut-title"></div>
+    <div class="tut-text" id="tut-text"></div>
+    <div class="tut-dots" id="tut-dots"></div>
+    <div class="tut-nav">
+      <button class="tbtn" id="tut-prev" onclick="prevTutoStep()">← Précédent</button>
+      <button class="tbtn next" id="tut-next" onclick="nextTutoStep()">Suivant →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── MENU PRINCIPAL ── -->
+<div id="main-menu">
+  <div class="mm-logo">🏘️</div>
+  <div class="mm-title">CARDSETTLER</div>
+  <div class="mm-sub">Survive 25 jours, repousse les vagues</div>
+  <div id="mm-stats"></div>
+  <div class="diff-selector">
+    <button class="diff-btn active-normal" id="diff-normal" onclick="setDifficulty('normal')">⚔️ Normal</button>
+    <button class="diff-btn" id="diff-hard" onclick="setDifficulty('hard')">💀 Difficile</button>
+  </div>
+  <div class="mm-diff-note" id="mm-diff-note">Mode Normal</div>
+  <button class="mbtn" onclick="startNewGame()">🆕 Nouvelle Partie</button>
+  <button class="mbtn" id="btn-resume" onclick="resumeGame()" disabled>▶ Reprendre la partie</button>
+  <p id="resume-info"></p>
+  <button class="mbtn" onclick="showTutorial()" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📖 Tutoriel</button>
+  <button class="mbtn" onclick="showAchOverlay()" style="background:#071e14;border-color:#1a4a2a;color:#4ade80;">🏅 Succès</button>
+  <button class="mbtn disc" onclick="disconnect()">🚪 Déconnexion</button>
+  <div class="mm-version">CardSettler v1.0</div>
+</div>
+
+<script>
+// ── DEFINITIONS ───────────────────────────────────────────────────────────────
+const CD = {
+  berry_bush:   {n:'Buisson',     e:'🫐', bg:'#bbf7d0',c:'#14532d',node:1,   desc:'Produit des baies avec un villageois'},
+  tree:         {n:'Arbre',       e:'🌳', bg:'#dcfce7',c:'#14532d',node:1,   desc:'Produit du bois avec un villageois'},
+  rock:         {n:'Rocher',      e:'🪨', bg:'#e2e8f0',c:'#334155',node:1,   desc:'Produit de la pierre avec un villageois'},
+  berry:        {n:'Baie',        e:'🫐', bg:'#f3e8ff',c:'#6b21a8',food:1,   desc:'Nourriture : +1'},
+  wood:         {n:'Bois',        e:'🪵', bg:'#fef3c7',c:'#92400e',          desc:'Matériau de base'},
+  stone:        {n:'Pierre',      e:'🪨', bg:'#f1f5f9',c:'#475569',          desc:'Matériau pour construire'},
+  flint:        {n:'Silex',       e:'🔷', bg:'#dbeafe',c:'#1e40af',          desc:'Pour faire du feu ou une arme'},
+  gold:         {n:'Or',          e:'🪙', bg:'#fef9c3',c:'#a16207',          desc:'Monnaie pour acheter des paquets'},
+  villager:     {n:'Villageois',  e:'🧑', bg:'#dbeafe',c:'#1e3a8a',          desc:'Travaille sur ressources et craft'},
+  baby:         {n:'Bébé',        e:'👶', bg:'#fce7f3',c:'#9d174d',          desc:'Grandit en villageois'},
+  plank:        {n:'Planche',     e:'🟫', bg:'#fef3c7',c:'#78350f',          desc:'Bois transformé'},
+  brick:        {n:'Brique',      e:'🧱', bg:'#fee2e2',c:'#991b1b',          desc:'Pierre transformée'},
+  campfire:     {n:'Feu de camp', e:'🔥', bg:'#fff7ed',c:'#c2410c',node:1,   desc:'Permet de cuisiner'},
+  house:        {n:'Maison',      e:'🏠', bg:'#d1fae5',c:'#065f46',node:1,   desc:'Permet d\'avoir des bébés'},
+  cooked_berry: {n:'Baie cuite',  e:'🍇', bg:'#f5d0fe',c:'#86198f',food:3,   desc:'Nourriture : +3'},
+  stew:         {n:'Ragoût',      e:'🍲', bg:'#fef3c7',c:'#92400e',food:5,   desc:'Nourriture : +5'},
+  apple:        {n:'Pomme',       e:'🍎', bg:'#fee2e2',c:'#b91c1c',food:2,   desc:'Nourriture : +2'},
+  sword:        {n:'Épée',        e:'⚔️', bg:'#e2e8f0',c:'#1e293b',          desc:'Combat les monstres (empile sur eux)'},
+  farm:         {n:'Ferme',       e:'🌾', bg:'#fef9c3',c:'#854d0e',node:1,   desc:'Produit des pommes'},
+  bone:         {n:'Os',          e:'🦴', bg:'#f1f5f9',c:'#64748b',          desc:'Butin du loup. 3 Os → Or'},
+  shield:       {n:'Bouclier',    e:'🛡️', bg:'#cbd5e1',c:'#0f172a',          desc:'Bloque une attaque de monstre'},
+  forest_zone:  {n:'Zone Forêt',  e:'🌿', bg:'#bbf7d0',c:'#14532d',node:1,  desc:'Exploration : Bois + Baie en boucle'},
+  cave_zone:    {n:'Grotte',      e:'⛰️', bg:'#94a3b8',c:'#0f172a',node:1,  desc:'Exploration : Minerai en boucle'},
+  iron_ore:     {n:'Minerai',     e:'🔩', bg:'#64748b',c:'#f8fafc',          desc:'Pour forger une Épée de Fer'},
+  forge:        {n:'Forge',       e:'🔨', bg:'#fef3c7',c:'#7c2d12',node:1,  desc:'Fabrique l\'Épée de Fer'},
+  iron_sword:   {n:'Épée de Fer', e:'🗡️', bg:'#e2e8f0',c:'#0f172a',         desc:'2-3× plus rapide que l\'épée normale'},
+  wolf:         {n:'Loup',        e:'🐺', bg:'#374151',c:'#f9fafb',monster:1,aggroMax:15,desc:'Attaque dans 15s'},
+  goblin:       {n:'Gobelin',     e:'👺', bg:'#4c1d95',c:'#f5f3ff',monster:1,aggroMax:12,desc:'Attaque dans 12s. Laisse de l\'Or'},
+  troll:        {n:'Troll',       e:'👹', bg:'#7f1d1d',c:'#fef2f2',monster:1,aggroMax:10,desc:'Attaque dans 10s. Résistant'},
+  gem:          {n:'Gemme',          e:'🔮', bg:'#ede9fe',c:'#5b21b6', sellValue:3, desc:'Pierre précieuse. Vaut 3🪙 à la vente'},
+  cave_entrance:{n:'Entrée Grotte',  e:'🕳️', bg:'#0f172a',c:'#94a3b8', node:1, desc:'Empile 1-3 🧑 + ⚔️/🗡️ → Expédition (40s). Plus d\'épées = meilleur butin !'},
+  // Cartes secrètes
+  elixir:       {n:'Élixir Vital',    e:'🧪', bg:'#d1fae5',c:'#065f46', food:10, secret:1, desc:'Nourriture : +10', sdesc:'Un élixir magique qui nourrit instantanément tout ton village.', skeep:'Garde-le pour une urgence de famine, ou utilise-le quand tu as beaucoup de villageois.', sbonus:'Nourrit 10 villageois en une seule fois !'},
+  golden_bar:   {n:'Lingot d\'Or',    e:'💛', bg:'#fef9c3',c:'#a16207', sellValue:8, secret:1, desc:'Vaut 8 pièces à la vente', sdesc:'Un lingot d\'or pur forgé par alchimie.', skeep:'Revends-le immédiatement (clic droit) pour 8 pièces d\'or !', sbonus:'8× la valeur d\'une carte normale (1 pièce)'},
+  war_potion:   {n:'Potion de Guerre',e:'⚡', bg:'#fce7f3',c:'#9d174d', secret:1, desc:'Accélère le combat ×10 (empile sur épée+monstre)', sdesc:'Une potion alchimique qui décuple la vitesse au combat.', skeep:'Empile-la avec ton épée et un monstre pour un combat ultra-rapide !', sbonus:'Combat 10× plus vite — parfait contre les Trolls !'},
+  phil_stone:   {n:'Pierre Philo.',   e:'💎', bg:'#dbeafe',c:'#1e3a8a', node:1, secret:1, desc:'Produit de l\'Or avec un Villageois (en boucle)', sdesc:'La légendaire pierre philosophale transforme le travail en or.', skeep:'Garde-la ! Elle produit de l\'or en boucle avec un villageois.', sbonus:'Source d\'or infinie — la clé de la victoire !'},
+};
+
+const RECIPES = [
+  {i:['berry_bush','villager'],      o:['berry'],   keep:['berry_bush','villager'], t:4,  rep:1, d:'Buisson + Villageois → Baie'},
+  {i:['tree','villager'],            o:['wood'],    keep:['tree','villager'],       t:5,  rep:1, d:'Arbre + Villageois → Bois'},
+  {i:['rock','villager'],            o:['stone'],   keep:['rock','villager'],       t:6,  rep:1, d:'Rocher + Villageois → Pierre'},
+  {i:['farm','villager'],            o:['apple'],   keep:['farm','villager'],       t:7,  rep:1, d:'Ferme + Villageois → Pomme'},
+  {i:['forest_zone','villager'],     o:['wood','berry'],keep:['forest_zone','villager'],t:8,rep:1,d:'Zone Forêt + Villageois → Bois + Baie'},
+  {i:['cave_zone','villager'],       o:['iron_ore'],keep:['cave_zone','villager'],  t:10, rep:1, d:'Grotte + Villageois → Minerai'},
+  {i:['flint','wood'],               o:['campfire'],           keep:[],             t:3,  rep:0, d:'Silex + Bois → Feu de camp'},
+  {i:['berry','campfire'],           o:['cooked_berry'],       keep:['campfire'],   t:2,  rep:0, d:'Feu + Baie → Baie cuite'},
+  {i:['apple','campfire'],           o:['stew'],               keep:['campfire'],   t:3,  rep:0, d:'Feu + Pomme → Ragoût'},
+  {i:['berry','berry','campfire'],   o:['stew'],               keep:['campfire'],   t:4,  rep:0, d:'Feu + 2 Baies → Ragoût'},
+  {i:['villager','wood','wood','wood'],            o:['plank'],  keep:['villager'], t:6,  rep:0, d:'Villageois + 3 Bois → Planche'},
+  {i:['stone','stone','stone','villager'],         o:['brick'],  keep:['villager'], t:6,  rep:0, d:'Villageois + 3 Pierres → Brique'},
+  {i:['brick','brick','plank','plank','villager'], o:['house'],  keep:[],           t:10, rep:0, d:'Villageois + 2 Planches + 2 Briques → Maison'},
+  {i:['brick','plank','plank','villager'],         o:['farm'],   keep:['villager'], t:8,  rep:0, d:'Villageois + 2 Planches + Brique → Ferme'},
+  {i:['flint','plank','villager'],                o:['sword'],  keep:['villager'], t:5,  rep:0, d:'Villageois + Planche + Silex → Épée'},
+  {i:['plank','plank','villager'],                o:['shield'], keep:['villager'], t:5,  rep:0, d:'2 Planches + Villageois → Bouclier'},
+  {i:['stone','stone','stone','plank','villager'], o:['forge'],  keep:['villager'], t:12, rep:0, d:'3 Pierres + Planche + Villageois → Forge'},
+  {i:['forge','iron_ore','iron_ore','villager'],   o:['iron_sword'],keep:['forge','villager'],t:8,rep:0,d:'Forge + 2 Minerais + Villageois → Épée de Fer'},
+  {i:['house','villager','villager'], o:['baby'],  keep:['house','villager','villager'], t:15,rep:0,d:'Maison + 2 Villageois → Bébé'},
+  {i:['baby'],                        o:['villager'], keep:[],                     t:10, rep:0, d:'Bébé → Villageois'},
+  {i:['sword','wolf'],               o:['bone'],        keep:['sword'],            t:4,  rep:0, d:'⚔️ Épée + Loup → Os'},
+  {i:['sword','goblin'],             o:['gold'],        keep:['sword'],            t:6,  rep:0, d:'⚔️ Épée + Gobelin → Or'},
+  {i:['sword','sword','troll'],      o:['gold','gold'], keep:['sword','sword'],    t:9,  rep:0, d:'⚔️ 2 Épées + Troll → 2 Or'},
+  {i:['iron_sword','wolf'],          o:['bone'],        keep:['iron_sword'],       t:2,  rep:0, d:'🗡️ Épée de Fer + Loup → Os'},
+  {i:['iron_sword','goblin'],        o:['gold'],        keep:['iron_sword'],       t:3,  rep:0, d:'🗡️ Épée de Fer + Gobelin → Or'},
+  {i:['iron_sword','troll'],         o:['gold','gold'], keep:['iron_sword'],       t:5,  rep:0, d:'🗡️ Épée de Fer + Troll → 2 Or'},
+  {i:['bone','bone','bone'],         o:['gold'],        keep:[],                   t:4,  rep:0, d:'3 Os → Or'},
+  {i:['stone','stone','stone','stone','villager'], o:['cave_entrance'], keep:['villager'], t:12, rep:0, d:'4 Pierres + Villageois → Entrée de Grotte'},
+  // Cartes secrètes (cachées dans le livre de recettes)
+  {i:['apple','berry','berry','campfire'],              o:['elixir'],      keep:['campfire'], t:8,  rep:0, secret:1, d:'🧪 Pomme + 2 Baies + Feu → Élixir Vital'},
+  {i:['campfire','iron_ore','iron_ore','iron_ore'],     o:['golden_bar'],  keep:['campfire'], t:6,  rep:0, secret:1, d:'💛 Feu + 3 Minerais → Lingot d\'Or'},
+  {i:['bone','bone','stew'],                           o:['war_potion'],  keep:[],           t:5,  rep:0, secret:1, d:'⚡ 2 Os + Ragoût → Potion de Guerre'},
+  {i:['iron_ore','iron_ore','iron_ore','iron_ore'],     o:['phil_stone'],  keep:[],           t:15, rep:0, secret:1, d:'💎 4 Minerais → Pierre Philosophale'},
+  // War potion combat (ultra-rapide)
+  {i:['war_potion','sword','wolf'],    o:['bone'],        keep:['sword'],       t:.5, rep:0, d:'⚡ Potion+Épée+Loup → Os'},
+  {i:['war_potion','sword','goblin'],  o:['gold'],        keep:['sword'],       t:.5, rep:0, d:'⚡ Potion+Épée+Gobelin → Or'},
+  {i:['war_potion','sword','troll'],   o:['gold','gold'], keep:['sword'],       t:.5, rep:0, d:'⚡ Potion+Épée+Troll → 2 Or'},
+  {i:['war_potion','iron_sword','wolf'],   o:['bone'],       keep:['iron_sword'],t:.3, rep:0, d:'⚡ Potion+Épée Fer+Loup → Os'},
+  {i:['war_potion','iron_sword','goblin'], o:['gold'],       keep:['iron_sword'],t:.3, rep:0, d:'⚡ Potion+Épée Fer+Gobelin → Or'},
+  {i:['war_potion','iron_sword','troll'],  o:['gold','gold'],keep:['iron_sword'],t:.3, rep:0, d:'⚡ Potion+Épée Fer+Troll → 2 Or'},
+  // Phil stone production
+  {i:['phil_stone','villager'],        o:['gold'],        keep:['phil_stone','villager'], t:5, rep:1, d:'💎 Pierre Philo + Villageois → Or (boucle)'},
+];
+
+const PACKS = {
+  starter:{n:'Paquet de base', cost:3, cnt:3, unlock:0, hint:'🫐 🌳 🪨 🧑', pool:[
+    {t:'berry_bush',w:20},{t:'tree',w:15},{t:'rock',w:12},
+    {t:'berry',w:35},{t:'wood',w:30},{t:'stone',w:25},
+    {t:'flint',w:8},{t:'gold',w:12},{t:'villager',w:6},{t:'apple',w:18},
+  ]},
+  forest:{n:'Paquet Forêt', cost:5, cnt:4, unlock:0, hint:'🌳 🪵 🔷 🧑', pool:[
+    {t:'tree',w:40},{t:'wood',w:45},{t:'flint',w:25},
+    {t:'berry_bush',w:30},{t:'villager',w:14},{t:'stone',w:18},{t:'apple',w:22},
+  ]},
+  adv:{n:'Paquet Avancé', cost:8, cnt:5, unlock:0, hint:'🟫 🧱 🔷 ⚔️', pool:[
+    {t:'plank',w:30},{t:'brick',w:25},{t:'flint',w:20},
+    {t:'villager',w:18},{t:'gold',w:20},{t:'stone',w:20},{t:'apple',w:15},{t:'sword',w:8},
+  ]},
+  combat:{n:'Paquet Combat', cost:6, cnt:4, unlock:3, hint:'⚔️ 🟫 🔷 🪙', pool:[
+    {t:'sword',w:30},{t:'plank',w:20},{t:'flint',w:20},
+    {t:'stone',w:15},{t:'gold',w:15},{t:'bone',w:10},
+  ]},
+  explor:{n:'Paquet Exploration', cost:7, cnt:4, unlock:8, hint:'🌿 ⛰️ 🔩 🔮', pool:[
+    {t:'forest_zone',w:25},{t:'cave_zone',w:20},{t:'iron_ore',w:28},
+    {t:'plank',w:18},{t:'stone',w:14},{t:'gold',w:10},{t:'gem',w:7},{t:'cave_entrance',w:5},
+  ]},
+};
+
+const WIN_DAY=25, CW=82, CH=104, SO=24;
+let G={};
+let selectedDifficulty=localStorage.getItem('cs_difficulty')||'normal';
+const DIFF_PARAMS={
+  normal:{moonDur:60,aggroMult:1.0,foodPerPop:1,packCostAdd:0,scoreMult:1},
+  hard:  {moonDur:45,aggroMult:0.6,foodPerPop:2,packCostAdd:2,scoreMult:2},
+};
+function setDifficulty(d){
+  selectedDifficulty=d;localStorage.setItem('cs_difficulty',d);
+  document.getElementById('diff-normal').className='diff-btn'+(d==='normal'?' active-normal':'');
+  document.getElementById('diff-hard').className='diff-btn'+(d==='hard'?' active-hard':'');
+  const notes={normal:'Mode Normal — paramètres standards',hard:'💀 Difficile — jours courts, monstres rapides, double ration ×2 pack'};
+  document.getElementById('mm-diff-note').textContent=notes[d];
+  playSound('menu_click');
+}
+
+// ── AUDIO ────────────────────────────────────────────────────────────────────
+const AC=new(window.AudioContext||window.webkitAudioContext)();
+document.addEventListener('mousedown',()=>{if(AC.state==='suspended')AC.resume();},{passive:true});
+function playSound(type){
+  if(!AC)return;
+  try{
+    const t=AC.currentTime;
+    if(type==='craft_start'){
+      const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);
+      o.frequency.setValueAtTime(300,t);o.frequency.exponentialRampToValueAtTime(520,t+.12);
+      g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);o.start(t);o.stop(t+.15);
+    }else if(type==='craft_done'){
+      [523,659,784].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sine';
+        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.09);
+        g.gain.setValueAtTime(.22,t+i*.09);g.gain.exponentialRampToValueAtTime(.001,t+i*.09+.28);
+        o.start(t+i*.09);o.stop(t+i*.09+.3);});
+    }else if(type==='monster_attack'){
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.connect(g);g.connect(AC.destination);
+      o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(40,t+.35);
+      g.gain.setValueAtTime(.5,t);g.gain.exponentialRampToValueAtTime(.001,t+.35);o.start(t);o.stop(t+.35);
+    }else if(type==='shield_block'){
+      [900,1400,700].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='square';
+        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.025);
+        g.gain.setValueAtTime(.12,t+i*.025);g.gain.exponentialRampToValueAtTime(.001,t+i*.025+.22);
+        o.start(t+i*.025);o.stop(t+i*.025+.25);});
+    }else if(type==='buy_pack'){
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.connect(g);g.connect(AC.destination);
+      o.frequency.setValueAtTime(880,t);o.frequency.setValueAtTime(1100,t+.07);
+      g.gain.setValueAtTime(.28,t);g.gain.exponentialRampToValueAtTime(.001,t+.28);o.start(t);o.stop(t+.3);
+    }else if(type==='wave_start'){
+      for(let i=0;i<3;i++){const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';
+        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(i%2===0?240:190,t+i*.22);
+        g.gain.setValueAtTime(.32,t+i*.22);g.gain.exponentialRampToValueAtTime(.001,t+i*.22+.2);
+        o.start(t+i*.22);o.stop(t+i*.22+.22);}
+    }else if(type==='error'){
+      const o=AC.createOscillator(),g=AC.createGain();o.type='square';o.connect(g);g.connect(AC.destination);
+      o.frequency.setValueAtTime(110,t);g.gain.setValueAtTime(.13,t);g.gain.exponentialRampToValueAtTime(.001,t+.13);
+      o.start(t);o.stop(t+.14);
+    }else if(type==='sell'){
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.connect(g);g.connect(AC.destination);
+      o.frequency.setValueAtTime(440,t);o.frequency.exponentialRampToValueAtTime(330,t+.12);
+      g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);o.start(t);o.stop(t+.15);
+    }else if(type==='save'){
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.connect(g);g.connect(AC.destination);
+      o.frequency.setValueAtTime(440,t);o.frequency.setValueAtTime(554,t+.06);o.frequency.setValueAtTime(660,t+.12);
+      g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.start(t);o.stop(t+.25);
+    }else if(type==='victory'){
+      [523,659,784,1047].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();
+        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.1);
+        g.gain.setValueAtTime(.28,t+i*.1);g.gain.exponentialRampToValueAtTime(.001,t+i*.1+.4);
+        o.start(t+i*.1);o.stop(t+i*.1+.45);});
+    }else if(type==='menu_click'){
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.connect(g);g.connect(AC.destination);
+      o.frequency.setValueAtTime(660,t);g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.1);
+      o.start(t);o.stop(t+.1);
+    }else if(type==='achievement'){
+      [784,880,1047].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sine';
+        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.08);
+        g.gain.setValueAtTime(.2,t+i*.08);g.gain.exponentialRampToValueAtTime(.001,t+i*.08+.3);
+        o.start(t+i*.08);o.stop(t+i*.08+.35);});
+    }else if(type==='secret'){
+      [392,494,587,740,880].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sine';
+        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.11);
+        g.gain.setValueAtTime(.18,t+i*.11);g.gain.exponentialRampToValueAtTime(.001,t+i*.11+.42);
+        o.start(t+i*.11);o.stop(t+i*.11+.48);});
+    }
+  }catch(e){}
+}
+
+// ── TOOLTIP ───────────────────────────────────────────────────────────────────
+const ttEl=document.getElementById('tooltip');
+function showTooltip(e,type){
+  if(G.drag)return;const d=CD[type];if(!d)return;
+  ttEl.querySelector('.tt-name').textContent=d.e+' '+d.n;
+  ttEl.querySelector('.tt-desc').textContent=d.desc||'';
+  const uses=RECIPES.filter(r=>r.i.includes(type)&&!r.secret);
+  if(type==='cave_entrance'){
+    ttEl.querySelector('.tt-label').textContent='Expédition (40s) :';
+    ttEl.querySelector('.tt-r').innerHTML='🧑 → minerais/flint/gemmes (risque !)<br>🧑+⚔️ → gemmes/or/lingots (sûr)<br>🧑🧑+⚔️⚔️ → butin rare + chance pierre philo<br><span style="color:#888">Max 3 villageois / 2 épées</span>';
+  }else if(uses.length>0){
+    ttEl.querySelector('.tt-label').textContent='Recettes :';
+    ttEl.querySelector('.tt-r').innerHTML=uses.slice(0,4).map(r=>
+      r.i.map(t=>CD[t]?.e||t).join('+')+' → '+r.o.map(t=>CD[t]?.e||t).join(',')+'<span style="color:#888"> ('+r.t+'s'+(r.rep?' 🔄':'')+')</span>'
+    ).join('<br>');
+  }else{ttEl.querySelector('.tt-label').textContent='';ttEl.querySelector('.tt-r').textContent='';}
+  const sellEl=ttEl.querySelector('.tt-sell');
+  if(!d.node&&!d.monster){const val=d.sellValue||1;sellEl.textContent='💰 Vente : '+val+'🪙 (clic droit)';}
+  else{sellEl.textContent='';}
+  ttEl.style.display='block';posTooltip(e);
+}
+function posTooltip(e){
+  ttEl.style.left=Math.min(e.clientX+16,window.innerWidth-220)+'px';
+  ttEl.style.top=Math.max(8,e.clientY-10)+'px';
+}
+function hideTooltip(){ttEl.style.display='none';}
+document.addEventListener('mousemove',e=>{if(ttEl.style.display!=='none')posTooltip(e);});
+
+// ── SAVE / LOAD ───────────────────────────────────────────────────────────────
+function saveGame(){
+  if(!G||!G.cards)return;
+  const data={
+    gold:G.gold, moon:G.moon, moonProg:G.moonProg, moonDur:G.moonDur, nid:G.nid,
+    difficulty:G.difficulty||'normal',
+    _stats:G._stats||{},
+    cards:Object.fromEntries(Object.entries(G.cards).map(([id,c])=>[id,{id:c.id,type:c.type,x:c.x,y:c.y,sid:c.sid,aggro:c.aggro||0}])),
+    stacks:Object.fromEntries(Object.entries(G.stacks).map(([sid,s])=>[sid,{id:s.id,ids:[...s.ids],rx:s.rx,ry:s.ry}]))
+  };
+  localStorage.setItem('stacklands_save',JSON.stringify(data));
+}
+function hasSave(){return!!localStorage.getItem('stacklands_save');}
+function clearSave(){localStorage.removeItem('stacklands_save');}
+
+function loadGame(){
+  const raw=localStorage.getItem('stacklands_save');
+  if(!raw)return false;
+  const data=JSON.parse(raw);
+  G={gold:data.gold,moon:data.moon,moonProg:data.moonProg,moonDur:data.moonDur,nid:data.nid,
+     cards:{},stacks:{},drag:null,ts:null,over:false,paused:false,secretReveal:false,
+     _stats:data._stats||{crafts:0,kills:0,sells:0,blocks:0,babies:0},
+     _faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,
+     difficulty:data.difficulty||'normal',
+     aggroMult:(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).aggroMult,
+     foodPerPop:(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).foodPerPop,
+     packCostAdd:(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).packCostAdd,
+     scoreMult:(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).scoreMult};
+  document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
+  document.getElementById('log').innerHTML='';
+  ['overlay','victory','pause','main-menu'].forEach(id=>document.getElementById(id).style.display='none');
+  buildShop();
+  // Cartes
+  Object.values(data.cards).forEach(c=>{
+    G.cards[c.id]={id:c.id,type:c.type,x:c.x,y:c.y,sid:null,aggro:c.aggro||0};
+    createCardDOM(c.id,c.type);
+  });
+  // Piles
+  Object.values(data.stacks).forEach(s=>{
+    G.stacks[s.id]={id:s.id,ids:[...s.ids],rx:s.rx,ry:s.ry,recipe:null,prog:0};
+    s.ids.forEach(cid=>{if(G.cards[cid])G.cards[cid].sid=s.id;});
+    updateSV(s.id); checkRecipe(s.id);
+  });
+  // Débloquer paquets (silencieux au chargement)
+  Object.entries(PACKS).forEach(([k,p])=>{
+    if(p.unlock>0&&G.moon>=p.unlock){const b=document.getElementById('b-'+k);if(b)b.style.display='block';G._unlockedPacks.add(k);}
+  });
+  updateHUD();
+  log('💾 Partie chargée — Jour '+G.moon);
+  requestAnimationFrame(loop);
+  return true;
+}
+
+// ── SHOP ─────────────────────────────────────────────────────────────────────
+function buildShop(){
+  const el=document.getElementById('shop');el.innerHTML='';
+  for(const [key,p] of Object.entries(PACKS)){
+    const btn=document.createElement('button');
+    btn.className='pbtn';btn.id='b-'+key;btn.onclick=()=>buyPack(key);
+    const dispCost=p.cost+(G.packCostAdd||0);
+    btn.innerHTML=p.n+' — '+dispCost+'🪙<small>'+p.hint+'</small>';
+    btn.style.display=(p.unlock>0)?'none':'block';
+    el.appendChild(btn);
+  }
+}
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+function initG(){
+  const dp=DIFF_PARAMS[selectedDifficulty]||DIFF_PARAMS.normal;
+  G={gold:5,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,difficulty:selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult};
+  const sb=document.getElementById('speed-btn');if(sb){sb.textContent='⏩ ×1';sb.className='';sb.id='speed-btn';}
+  const bb=document.getElementById('bm-btn');if(bb)bb.style.display='none';
+  document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
+  document.getElementById('log').innerHTML='';
+  ['overlay','victory','pause','main-menu'].forEach(id=>document.getElementById(id).style.display='none');
+  buildShop();
+  spawn('berry_bush',70,70);spawn('tree',200,70);spawn('villager',330,70);
+  spawn('berry',460,70);spawn('berry',460,180);spawn('flint',330,180);
+  updateHUD();
+  log('🌅 Empile les cartes pour crafter !');
+  log('⚔️ Première vague de monstres au Jour 5 !');
+  requestAnimationFrame(loop);
+}
+
+// ── CARDS ────────────────────────────────────────────────────────────────────
+function createCardDOM(id,type){
+  const d=CD[type];
+  const el=document.createElement('div');
+  const catCls=d.monster?'cat-monster':d.node?'cat-node':d.food?'cat-food':'cat-craft';
+  el.className='card card-spawn'+(d.monster?' monster':'');el.id='c'+id;
+  el.style.cssText=`left:${G.cards[id].x}px;top:${G.cards[id].y}px;background:${d.bg};color:${d.c};z-index:10;`;
+  el.innerHTML=`<div class="card-cat ${catCls}"></div><div class="card-emoji">${d.e}</div><div class="card-name">${d.n}</div><div class="card-bar"><div class="card-bar-fill"></div></div>`;
+  setTimeout(()=>el.classList.remove('card-spawn'),420);
+  el.addEventListener('mousedown',e=>{e.preventDefault();startDrag(e,id);});
+  el.addEventListener('contextmenu',e=>{e.preventDefault();sellCard(id);});
+  el.addEventListener('mouseenter',e=>showTooltip(e,type));
+  el.addEventListener('mouseleave',hideTooltip);
+  document.getElementById('table').appendChild(el);
+}
+function spawn(type,x,y){
+  const id=G.nid++;
+  G.cards[id]={id,type,x,y,sid:null,aggro:0};
+  createCardDOM(id,type);
+  checkFirstEncounter(type);
+  return id;
+}
+function cel(id){return document.getElementById('c'+id);}
+function delCard(id){const e=cel(id);if(e)e.remove();delete G.cards[id];}
+
+// ── STACKS ───────────────────────────────────────────────────────────────────
+function mkStack(ids){
+  const sid=G.nid++;const root=G.cards[ids[0]];
+  G.stacks[sid]={id:sid,ids:[...ids],rx:root.x,ry:root.y,recipe:null,prog:0};
+  ids.forEach(id=>{G.cards[id].sid=sid;});
+  updateSV(sid);checkRecipe(sid);return sid;
+}
+function dissolve(sid){
+  const s=G.stacks[sid];if(!s)return;
+  s.ids.forEach(id=>{if(G.cards[id])G.cards[id].sid=null;});
+  delete G.stacks[sid];
+}
+function addToStack(sid,cid){
+  rmFromStack(cid);const s=G.stacks[sid];s.ids.push(cid);G.cards[cid].sid=sid;
+  s.recipe=null;s.prog=0;updateSV(sid);checkRecipe(sid);
+}
+function rmFromStack(cid){
+  const c=G.cards[cid];if(!c||!c.sid)return;
+  const s=G.stacks[c.sid];if(!s){c.sid=null;return;}
+  s.ids=s.ids.filter(i=>i!==cid);c.sid=null;s.recipe=null;s.prog=0;
+  if(s.ids.length===0){dissolve(s.id);}
+  else if(s.ids.length===1){
+    const last=s.ids[0];G.cards[last].x=s.rx;G.cards[last].y=s.ry;
+    G.cards[last].sid=null;dissolve(s.id);updateCV(last);
+  }else{updateSV(s.id);checkRecipe(s.id);}
+}
+function updateSV(sid){
+  const s=G.stacks[sid];if(!s)return;
+  s.ids.forEach((cid,i)=>{
+    const el=cel(cid);if(!el)return;
+    el.style.left=s.rx+'px';el.style.top=(s.ry+i*SO)+'px';el.style.zIndex=10+i;
+    G.cards[cid].x=s.rx;G.cards[cid].y=s.ry+i*SO;
+    const bar=el.querySelector('.card-bar');
+    if(bar)bar.style.display=(i===0&&s.recipe)?'block':'none';
+  });
+}
+function updateCV(id){
+  const c=G.cards[id],el=cel(id);if(!el||!c)return;
+  el.style.left=c.x+'px';el.style.top=c.y+'px';
+  el.querySelector('.card-bar').style.display='none';
+}
+
+// ── RECIPES ──────────────────────────────────────────────────────────────────
+function sortedTypes(ids){return ids.map(i=>G.cards[i].type).sort();}
+function arrEq(a,b){return a.length===b.length&&a.every((v,i)=>v===b[i]);}
+function checkRecipe(sid){
+  const s=G.stacks[sid];if(!s)return;
+  const types=sortedTypes(s.ids);
+  for(const r of RECIPES){
+    if(arrEq(types,[...r.i].sort())){if(!s.recipe)playSound('craft_start');s.recipe=r;s.prog=0;updateSV(sid);return;}
+  }
+  // Détection expédition : cave_entrance + 1-3 villageois + 0-2 épées
+  if(types.includes('cave_entrance')){
+    const vCount=types.filter(t=>t==='villager').length;
+    const sCount=types.filter(t=>t==='sword'||t==='iron_sword').length;
+    const others=types.filter(t=>t!=='cave_entrance'&&t!=='villager'&&t!=='sword'&&t!=='iron_sword');
+    if(vCount>=1&&vCount<=3&&sCount<=2&&others.length===0){
+      if(!s.recipe)playSound('craft_start');
+      s.recipe={type:'expedition',t:40,vCount,sCount,keep:[]};
+      s.prog=0;updateSV(sid);return;
+    }
+  }
+  s.recipe=null;updateSV(sid);
+}
+function execRecipe(sid){
+  const s=G.stacks[sid];if(!s||!s.recipe)return;
+  if(s.recipe.type==='expedition'){execExpedition(sid);return;}
+  const r=s.recipe,rx=s.rx,ry=s.ry;
+  const keepQ=[...r.keep],kept=[],gone=[];
+  s.ids.forEach(cid=>{const t=G.cards[cid].type,ki=keepQ.indexOf(t);
+    if(ki!==-1){kept.push(cid);keepQ.splice(ki,1);}else gone.push(cid);});
+  const goneTypes=gone.map(cid=>G.cards[cid]?.type).filter(Boolean);
+  kept.forEach(cid=>{G.cards[cid].sid=null;});
+  dissolve(sid);gone.forEach(cid=>delCard(cid));
+  const stackH=kept.length*SO+CH;
+  r.o.forEach((type,i)=>{spawn(type,rx+(i%3)*(CW+8),ry+stackH+16+Math.floor(i/3)*(CH+8));});
+  if(kept.length>0){
+    kept.forEach((cid,i)=>{G.cards[cid].x=rx;G.cards[cid].y=ry+i*SO;updateCV(cid);});
+    if(kept.length>1){const ns=mkStack(kept);if(r.rep)checkRecipe(ns);}
+  }
+  // Stats tracking
+  G._stats.crafts=(G._stats.crafts||0)+1;
+  const killCount=goneTypes.filter(t=>CD[t]?.monster).length;
+  if(killCount>0)G._stats.kills=(G._stats.kills||0)+killCount;
+  if(r.o.includes('baby'))G._stats.babies=(G._stats.babies||0)+1;
+  if(r.o.includes('forge'))logHint('🔨 Forge prête ! Empile Forge + 2 Minerais + Villageois → 🗡️ Épée de Fer (combat 3× plus rapide !)');
+  if(r.o.includes('cave_entrance'))logHint('🕳️ Entrée de Grotte ! Empile 1-3 🧑 + une ⚔️ dessus pour lancer une expédition de 40s et ramener du butin !');
+  if(r.o.includes('house'))logHint('🏠 Maison construite ! Empile Maison + 2 Villageois pour avoir des Bébés → plus de main-d\'œuvre !');
+  if(r.o.includes('campfire')&&!hasSeenHint('campfire_tip')){markHintSeen('campfire_tip');logHint('🔥 Feu de camp ! Empile 🫐+🔥 → Baie cuite (×3 nourriture) ou 🍎+🔥 → Ragoût (×5 !)');}
+  if(r.o.includes('sword'))G._stats.madeSword=true;
+  if(r.o.includes('iron_sword'))G._stats.madeIronSword=true;
+  if(r.o.includes('shield'))G._stats.madeShield=true;
+  if(r.o.includes('campfire'))G._stats.madeCampfire=true;
+  if(r.o.includes('house'))G._stats.madeHouse=true;
+  spawnParticles(rx,ry);
+  // Secret card reveal
+  r.o.forEach(type=>{
+    if(CD[type]?.secret&&!hasDiscoveredSecret(type)){
+      markSecretDiscovered(type);
+      setTimeout(()=>showSecretReveal(type),600);
+    }
+  });
+  checkAchievements();
+  playSound('craft_done');
+  log('✨ '+r.o.map(t=>CD[t].e+CD[t].n).join(', ')+' créé !');
+  updateHUD();
+}
+
+// ── DRAG ─────────────────────────────────────────────────────────────────────
+function startDrag(e,id){
+  if(G.over||G.paused)return;hideTooltip();
+  const c=G.cards[id],el=cel(id);if(!el)return;
+  if(c.sid&&G.stacks[c.sid]?.recipe?.type==='expedition')return;
+  const tr=document.getElementById('table').getBoundingClientRect(),er=el.getBoundingClientRect();
+  if(c.sid)rmFromStack(id);
+  G.drag={id,ox:e.clientX-er.left,oy:e.clientY-er.top,tl:tr.left,tt:tr.top};
+  el.classList.add('dragging');el.style.zIndex=9999;
+}
+document.addEventListener('mousemove',e=>{
+  if(!G.drag)return;
+  const c=G.cards[G.drag.id],el=cel(G.drag.id);if(!c||!el)return;
+  c.x=e.clientX-G.drag.tl-G.drag.ox;c.y=e.clientY-G.drag.tt-G.drag.oy;
+  el.style.left=c.x+'px';el.style.top=c.y+'px';
+});
+document.addEventListener('mouseup',()=>{
+  if(!G.drag)return;
+  const id=G.drag.id;G.drag=null;
+  const el=cel(id);if(el){el.classList.remove('dragging');el.style.zIndex=10;}
+  const tgt=findTarget(id);
+  if(tgt){
+    if(tgt.sid)addToStack(tgt.sid,id);else mkStack([tgt.id,id]);
+    const sid=G.cards[id]?.sid;
+    if(sid&&!G.stacks[sid]?.recipe){
+      playSound('error');
+      const root=cel(G.stacks[sid]?.ids[0]);
+      if(root){root.classList.remove('shake');void root.offsetWidth;root.classList.add('shake');setTimeout(()=>root.classList.remove('shake'),400);}
+    }
+  }
+  updateHUD();
+});
+function findTarget(dragId){
+  const dc=G.cards[dragId];
+  for(const [idStr,c] of Object.entries(G.cards)){
+    const id=parseInt(idStr);if(id===dragId)continue;
+    const ox=Math.min(dc.x+CW,c.x+CW)-Math.max(dc.x,c.x);
+    const oy=Math.min(dc.y+CH,c.y+CH)-Math.max(dc.y,c.y);
+    if(ox>22&&oy>22){
+      if(c.sid){const s=G.stacks[c.sid];return{id:s.ids[0],sid:c.sid};}
+      return{id,sid:null};
+    }
+  }
+  return null;
+}
+
+// ── SELL ─────────────────────────────────────────────────────────────────────
+function sellCard(id){
+  if(G.over||G.paused||!G.cards[id])return;
+  const t=G.cards[id].type;if(CD[t].node||CD[t].monster)return;
+  if(G.cards[id].sid)rmFromStack(id);
+  const val=CD[t].sellValue||1;
+  delCard(id);G.gold+=val;playSound('sell');log('💰 +'+val+'🪙 (vente)');
+  G._stats.sells=(G._stats.sells||0)+1;
+  checkAchievements();
+  updateHUD();
+}
+
+// ── COMBAT ───────────────────────────────────────────────────────────────────
+function monsterAttack(mid){
+  const c=G.cards[mid];if(!c)return;
+  const mName=CD[c.type].n;
+  if(c.sid)rmFromStack(mid);delCard(mid);
+  const shields=Object.values(G.cards).filter(c=>c.type==='shield');
+  if(shields.length>0){
+    const sh=shields[0];if(sh.sid)rmFromStack(sh.id);delCard(sh.id);
+    G._stats.blocks=(G._stats.blocks||0)+1;
+    if(!hasAchievement('block1')&&unlockAchievement('block1')){const a=ACHIEVEMENTS.find(a=>a.id==='block1');if(a)showAchievementToast(a);}
+    playSound('shield_block');log('🛡️ Bouclier : '+mName+' bloqué !');updateHUD();return;
+  }
+  playSound('monster_attack');
+  const villagers=Object.values(G.cards).filter(c=>c.type==='villager'&&(!c.sid||G.stacks[c.sid]?.recipe?.type!=='expedition'));
+  if(villagers.length>0){
+    const v=villagers[0];if(v.sid)rmFromStack(v.id);delCard(v.id);
+    log('💀 Le '+mName+' a tué un villageois !');
+    if(countT('villager')+countT('baby')===0){G.over=true;showOverMonster();return;}
+  }else{log('💀 Le '+mName+' ravage le village !');G.over=true;showOverMonster();return;}
+  updateHUD();
+}
+
+function spawnWave(){
+  const waveNum=Math.floor(G.moon/5);
+  let monsters;
+  if(waveNum===1)monsters=['wolf'];
+  else if(waveNum===2)monsters=['wolf','wolf'];
+  else if(waveNum===3)monsters=['wolf','goblin'];
+  else if(waveNum===4)monsters=['goblin','goblin'];
+  else if(waveNum===5)monsters=['goblin','goblin','troll'];
+  else monsters=['troll',...Array(Math.min(waveNum-3,4)).fill('goblin')];
+  const tbl=document.getElementById('table').getBoundingClientRect();
+  monsters.forEach(type=>{spawn(type,40+Math.random()*(tbl.width-180),40+Math.random()*(tbl.height-180));});
+  playSound('wave_start');
+  const el=document.getElementById('wave-alert');
+  el.textContent='⚔️ Vague '+waveNum+' ! '+monsters.map(t=>CD[t].e+' '+CD[t].n).join(', ')+' !';
+  el.style.display='block';setTimeout(()=>el.style.display='none',3500);
+  log('⚔️ Vague '+waveNum+' ! Empile une Épée sur les monstres !');
+}
+
+// ── GAME LOOP ────────────────────────────────────────────────────────────────
+function loop(ts){
+  if(G.over||G.paused||G.secretReveal)return;
+  if(!G.ts)G.ts=ts;
+  const dt=((ts-G.ts)/1000)*(G.speed||1);G.ts=ts;
+  G.moonProg+=dt/G.moonDur;
+  if(G.moonProg>=.8&&!G._faminWarned){
+    G._faminWarned=true;
+    const pop=countT('villager')+countT('baby');
+    const food=Object.values(G.cards).filter(c=>CD[c.type]?.food).reduce((s,c)=>s+(CD[c.type].food||0),0);
+    const needed2=pop*(G.foodPerPop||1);
+    if(food<needed2&&pop>0){log('⚠️ Famine proche ! Il faut '+needed2+' repas, tu en as '+food+' !');playSound('error');}
+  }
+  if(G.moonProg>=1){G.moonProg=0;G.moon++;G._faminWarned=false;endMoon();if(G.over)return;}
+  document.getElementById('moon-fill').style.width=(G.moonProg*100)+'%';
+  const toExec=[];
+  for(const [sidStr,s] of Object.entries(G.stacks)){
+    if(!s.recipe)continue;s.prog+=dt/s.recipe.t;
+    const isExp=s.recipe.type==='expedition';
+    const rootEl=cel(s.ids[0]);
+    if(rootEl){isExp?rootEl.classList.add('expedition-active'):rootEl.classList.remove('expedition-active');}
+    const fill=rootEl?.querySelector('.card-bar-fill');
+    if(fill){fill.style.background=isExp?'#8b5cf6':'#4ade80';fill.style.width=(Math.min(s.prog,1)*100)+'%';}
+    if(s.prog>=1){s.prog=0;toExec.push(parseInt(sidStr));}
+  }
+  toExec.forEach(sid=>{if(G.stacks[sid])execRecipe(sid);});
+  const toAttack=[];
+  for(const [idStr,c] of Object.entries(G.cards)){
+    const id=parseInt(idStr),d=CD[c.type];if(!d||!d.monster)continue;
+    const inCombat=c.sid&&G.stacks[c.sid]?.recipe;
+    const el=cel(id);
+    if(!inCombat){
+      const effMax=d.aggroMax*(G.aggroMult||1);
+      c.aggro=(c.aggro||0)+dt;const pct=c.aggro/effMax;
+      if(el){
+        const bar=el.querySelector('.card-bar'),fill=el.querySelector('.card-bar-fill');
+        if(bar)bar.style.display='block';
+        if(fill){fill.style.background='#ef4444';fill.style.width=Math.min(pct*100,100)+'%';}
+        if(pct>=.7)el.classList.add('danger-pulse');else el.classList.remove('danger-pulse');
+      }
+      if(c.aggro>=effMax)toAttack.push(id);
+    }else{if(el)el.classList.remove('danger-pulse');}
+  }
+  toAttack.forEach(id=>{if(G.cards[id])monsterAttack(id);});
+  if(G.over)return;
+  requestAnimationFrame(loop);
+}
+
+// ── MOON / FOOD ───────────────────────────────────────────────────────────────
+function endMoon(){
+  if(G.moon>WIN_DAY){G.over=true;showVictory();return;}
+  const fl=document.getElementById('day-flash');
+  if(fl){fl.style.opacity=G.moon%5===0?'.7':'.35';setTimeout(()=>fl.style.opacity='0',G.moon%5===0?500:220);}
+  const pop=countT('villager')+countT('baby');
+  if(pop>0){
+    const fCards=Object.values(G.cards).filter(c=>CD[c.type]?.food).sort((a,b)=>(CD[b.type].food||0)-(CD[a.type].food||0));
+    const total=fCards.reduce((s,c)=>s+(CD[c.type].food||0),0);
+    const needed=pop*(G.foodPerPop||1);
+    if(total<needed){G.over=true;showOverFamine();return;}
+    let need=needed;
+    for(const fc of fCards){if(need<=0)break;if(fc.sid)rmFromStack(fc.id);delCard(fc.id);need-=CD[fc.type].food;}
+    log('🌙 Jour '+G.moon+' — '+pop+' villageois nourris'+(G.foodPerPop>1?' (×'+G.foodPerPop+' en difficile)':'')+'!');
+  }else{log('🌙 Jour '+G.moon);}
+  if(G.moon%5===0)spawnWave();
+  Object.entries(PACKS).forEach(([k,p])=>{
+    if(p.unlock>0&&G.moon>=p.unlock){
+      const b=document.getElementById('b-'+k);if(b)b.style.display='block';
+      if(!G._unlockedPacks.has(k)){G._unlockedPacks.add(k);showPackUnlockToast(p);}
+    }
+  });
+  // Expiry marché noir
+  if(G.blackMarket&&G.moon>G.blackMarket.expiresDay){
+    G.blackMarket=null;
+    const bb=document.getElementById('bm-btn');if(bb)bb.style.display='none';
+    document.getElementById('bm-overlay').style.display='none';
+    log('🏴‍☠️ Le Marché Noir a fermé ses portes.');
+  }
+  checkAchievements();
+  // Auto-save
+  saveGame();
+  const badge=document.getElementById('save-badge');
+  badge.style.opacity='1';setTimeout(()=>badge.style.opacity='0',1500);
+  updateHUD();
+}
+function countT(t){return Object.values(G.cards).filter(c=>c.type===t).length;}
+
+// ── PACKS ────────────────────────────────────────────────────────────────────
+function buyPack(key){
+  const p=PACKS[key];if(!p)return;
+  const cost=p.cost+(G.packCostAdd||0);
+  if(G.gold<cost)return;
+  G.gold-=cost;
+  const tbl=document.getElementById('table').getBoundingClientRect();
+  const cx=tbl.width/2,cy=tbl.height/2;
+  for(let i=0;i<p.cnt;i++){
+    const type=wRand(p.pool);
+    spawn(type,Math.max(4,cx+(Math.random()-.5)*220-CW/2),Math.max(4,cy+(Math.random()-.5)*160-CH/2));
+  }
+  playSound('buy_pack');log('📦 Ouvert : '+p.n);updateHUD();
+}
+function wRand(pool){
+  const tot=pool.reduce((s,e)=>s+e.w,0);let r=Math.random()*tot;
+  for(const e of pool){r-=e.w;if(r<=0)return e.t;}return pool[pool.length-1].t;
+}
+
+// ── HUD ───────────────────────────────────────────────────────────────────────
+function updateHUD(){
+  const pop=countT('villager')+countT('baby');
+  const food=Object.values(G.cards).filter(c=>CD[c.type]?.food).reduce((s,c)=>s+(CD[c.type].food||0),0);
+  document.getElementById('hday').textContent=G.moon;
+  document.getElementById('hgold').textContent=G.gold;
+  document.getElementById('hfood').textContent=food;
+  document.getElementById('hpop').textContent=pop;
+  const foodWrap=document.getElementById('hfood-wrap');
+  foodWrap.style.color=food>=pop?'#86efac':'#fca5a5';
+  if(food<pop&&pop>0)foodWrap.classList.add('famine-warn');else foodWrap.classList.remove('famine-warn');
+  const nextWave=G.moon%5===0?G.moon+5:Math.ceil(G.moon/5)*5;
+  document.getElementById('obj').textContent='⚔️ Vague J'+Math.min(nextWave,WIN_DAY)+' | 🎯 Objectif : J'+WIN_DAY;
+  const hdiff=document.getElementById('hdiff');
+  if(hdiff)hdiff.style.display=G.difficulty==='hard'?'inline':'none';
+  Object.keys(PACKS).forEach(k=>{const b=document.getElementById('b-'+k);if(b)b.disabled=G.gold<(PACKS[k].cost+(G.packCostAdd||0));});
+}
+
+// ── LOG ───────────────────────────────────────────────────────────────────────
+function log(msg){
+  const d=document.getElementById('log'),el=document.createElement('div');
+  el.className='litem';el.textContent=msg;d.appendChild(el);setTimeout(()=>el.remove(),5000);
+}
+
+// ── OVERLAYS ──────────────────────────────────────────────────────────────────
+function calcScore(){
+  const s=G._stats||{};
+  const pop=countT('villager')+countT('baby');
+  const base=G.moon*100;
+  const bonus=(s.crafts||0)*15+(s.kills||0)*20+(s.expeditions||0)*30+pop*50;
+  return Math.round((base+bonus)*(G.scoreMult||1));
+}
+function scoreBreakdown(){
+  const s=G._stats||{};
+  const pop=countT('villager')+countT('baby');
+  const mult=G.scoreMult||1;
+  return `📅 ${G.moon} jours ×100  |  ⚒️ ${s.crafts||0} crafts ×15  |  💀 ${s.kills||0} kills ×20  |  ⛏️ ${s.expeditions||0} expéditions ×30  |  👥 ${pop} survivants ×50${mult>1?' | 💀 ×'+mult+' (Difficile)':''}`;
+}
+function showOverFamine(){
+  updateGlobalStats(false);
+  document.getElementById('over-title').textContent='☠️ Famine !';
+  document.getElementById('over-msg').textContent='Tes villageois sont morts de faim.';
+  document.getElementById('fscore').textContent='Tu as survécu '+G.moon+' jours.';
+  const sc=calcScore();
+  document.getElementById('over-score').textContent='Score : '+sc.toLocaleString();
+  document.getElementById('over-breakdown').textContent=scoreBreakdown();
+  document.getElementById('overlay').style.display='flex';
+}
+function showOverMonster(){
+  updateGlobalStats(false);
+  document.getElementById('over-title').textContent='💀 Défaite !';
+  document.getElementById('over-msg').textContent='Tous tes villageois ont été tués par des monstres.';
+  document.getElementById('fscore').textContent='Tu as survécu '+G.moon+' jours.';
+  const sc=calcScore();
+  document.getElementById('over-score').textContent='Score : '+sc.toLocaleString();
+  document.getElementById('over-breakdown').textContent=scoreBreakdown();
+  document.getElementById('overlay').style.display='flex';
+}
+function showVictory(){
+  updateGlobalStats(true);
+  if(!hasAchievement('victory_u')&&unlockAchievement('victory_u')){
+    const a=ACHIEVEMENTS.find(a=>a.id==='victory_u');if(a)setTimeout(()=>showAchievementToast(a),800);
+  }
+  playSound('victory');
+  const sc=calcScore();
+  document.getElementById('vscore').textContent='Tu as repoussé toutes les vagues et survécu '+WIN_DAY+' jours !';
+  document.getElementById('vic-score').textContent='Score : '+sc.toLocaleString();
+  document.getElementById('vic-breakdown').textContent=scoreBreakdown();
+  document.getElementById('victory-stats').textContent='⚒️ '+(G._stats?.crafts||0)+' crafts  |  💀 '+(G._stats?.kills||0)+' monstres  |  🏅 '+getAchievements().length+'/'+ACHIEVEMENTS.length+' succès';
+  document.getElementById('victory').style.display='flex';
+  spawnConfetti();
+}
+
+// ── MENU PRINCIPAL ────────────────────────────────────────────────────────────
+function showMainMenu(){
+  ['overlay','victory','pause'].forEach(id=>document.getElementById(id).style.display='none');
+  const hasS=hasSave();
+  const btn=document.getElementById('btn-resume');
+  btn.disabled=!hasS;
+  const info=document.getElementById('resume-info');
+  if(hasS){
+    try{const d=JSON.parse(localStorage.getItem('stacklands_save'));
+      info.textContent='Partie sauvegardée — Jour '+d.moon+' / '+WIN_DAY;}
+    catch(e){info.textContent='';}
+  }else{info.textContent='Aucune sauvegarde';}
+  // Stats globales
+  const gs=getGlobalStats();
+  const achCount=getAchievements().length;
+  const statsEl=document.getElementById('mm-stats');
+  if(statsEl){
+    const parts=[];
+    if(gs.bestDays)parts.push('🏆 Record : '+gs.bestDays+' jours');
+    if(gs.totalCrafts)parts.push('⚒️ '+gs.totalCrafts+' crafts');
+    if(gs.totalKills)parts.push('💀 '+gs.totalKills+' monstres');
+    parts.push('🏅 '+achCount+'/'+ACHIEVEMENTS.length+' succès');
+    statsEl.textContent=parts.join(' | ');
+  }
+  document.getElementById('main-menu').style.display='flex';
+}
+function startNewGame(){
+  playSound('menu_click');
+  clearSave();
+  initG();
+}
+function resumeGame(){
+  playSound('menu_click');
+  if(!loadGame())startNewGame();
+}
+function goMainMenu(){
+  if(G&&!G.over)saveGame();
+  G={over:true,paused:false,cards:{},stacks:{}};
+  document.getElementById('pause').style.display='none';
+  showMainMenu();
+}
+function manualSave(){
+  saveGame();playSound('save');
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;top:56px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:99999;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.4);';
+  t.textContent='💾 Sauvegarde effectuée !';document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2000);
+}
+function disconnect(){
+  playSound('menu_click');
+  if(G&&G.cards&&Object.keys(G.cards).length>0&&!G.over)try{saveGame();}catch(e){}
+  document.body.style.transition='opacity .6s';document.body.style.opacity='0';
+  setTimeout(()=>{
+    document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#071407;color:#d1fae5;font-family:Segoe UI,sans-serif;gap:20px;"><div style="font-size:72px">👋</div><div style="font-size:28px;font-weight:700;">À bientôt !</div><div style="font-size:14px;color:#4ade80;">Ta partie a été sauvegardée.</div></div>';
+    document.body.style.opacity='1';
+  },600);
+}
+
+// ── PAUSE ─────────────────────────────────────────────────────────────────────
+function togglePause(){
+  if(G.over)return;G.paused=!G.paused;
+  const po=document.getElementById('pause');
+  if(G.paused){
+    const nextWave=G.moon%5===0?G.moon+5:Math.ceil(G.moon/5)*5;
+    document.getElementById('pause-info').textContent='Jour '+G.moon+' / '+WIN_DAY+' — Prochaine vague : Jour '+Math.min(nextWave,WIN_DAY);
+    po.style.display='flex';
+  }else{po.style.display='none';G.ts=null;requestAnimationFrame(loop);}
+}
+document.addEventListener('keydown',e=>{
+  if(G&&G.secretReveal){closeSecretReveal();return;}
+  if(e.key==='Escape'&&G&&!G.over)togglePause();
+});
+
+// ── RECIPE BOOK ───────────────────────────────────────────────────────────────
+function showRB(){
+  document.getElementById('rlist').innerHTML=RECIPES.filter(r=>!r.secret).map(r=>`
+    <div style="font-size:13px;padding:6px 0;border-bottom:1px solid #1e3a1e;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <span>${r.i.map(t=>CD[t]?.e+'&nbsp;'+CD[t]?.n).join(' + ')}</span>
+      <span>→</span>
+      <span>${r.o.map(t=>CD[t]?.e+'&nbsp;'+CD[t]?.n).join(', ')}</span>
+      <span style="color:#888;font-size:11px;">${r.t}s${r.rep?' 🔄':''}</span>
+    </div>`).join('');
+  document.getElementById('rb').style.display='flex';
+}
+function closeRB(){document.getElementById('rb').style.display='none';}
+
+// ── VITESSE ───────────────────────────────────────────────────────────────────
+function toggleSpeed(){
+  G.speed=(G.speed===1)?2:(G.speed===2)?3:1;
+  const btn=document.getElementById('speed-btn');
+  if(btn){
+    btn.textContent='⏩ ×'+G.speed;
+    btn.className='';btn.id='speed-btn';
+    if(G.speed===2)btn.classList.add('fast');
+    else if(G.speed===3)btn.classList.add('faster');
+  }
+  playSound('menu_click');
+}
+
+// ── MARCHÉ NOIR ───────────────────────────────────────────────────────────────
+const BM_POOLS={
+  gems:[
+    {type:'plank',   price:1,cur:'gem'},{type:'brick',      price:1,cur:'gem'},
+    {type:'iron_ore',price:1,cur:'gem'},{type:'flint',      price:1,cur:'gem'},
+    {type:'bone',    price:1,cur:'gem'},{type:'cooked_berry',price:1,cur:'gem'},
+    {type:'stone',   price:1,cur:'gem'},{type:'wood',       price:1,cur:'gem'},
+  ],
+  gold:[
+    {type:'sword',    price:4,cur:'gold'},{type:'shield',  price:3,cur:'gold'},
+    {type:'iron_ore', price:2,cur:'gold'},{type:'apple',   price:2,cur:'gold'},
+    {type:'plank',    price:2,cur:'gold'},{type:'stew',    price:3,cur:'gold'},
+    {type:'villager', price:6,cur:'gold'},{type:'brick',   price:2,cur:'gold'},
+  ],
+  both:[
+    {type:'iron_sword',price:3,cur:'gem'}, {type:'forge',   price:4,cur:'gem'},
+    {type:'farm',      price:3,cur:'gem'}, {type:'elixir',  price:2,cur:'gem'},
+    {type:'iron_sword',price:7,cur:'gold'},{type:'shield',  price:3,cur:'gold'},
+    {type:'stew',      price:2,cur:'gold'},{type:'iron_ore',price:2,cur:'gold'},
+    {type:'gem',       price:4,cur:'gold'},{type:'farm',    price:5,cur:'gold'},
+  ],
+};
+function generateBlackMarket(){
+  const exp=G._stats.expeditions||0;
+  const tier=exp<=2?'gems':exp<=4?'gold':'both';
+  const pool=[...BM_POOLS[tier]].sort(()=>Math.random()-.5);
+  const items=pool.slice(0,4).map(it=>({...it,sold:false}));
+  G.blackMarket={items,tier,expiresDay:G.moon+1};
+  const bb=document.getElementById('bm-btn');if(bb)bb.style.display='block';
+  log('🏴‍☠️ Un Marché Noir s\'est ouvert ! Disponible 1 jour.');
+  playSound('secret');
+}
+function showBlackMarket(){
+  if(!G.blackMarket)return;
+  playSound('menu_click');
+  const tierTxt={gems:'Accepte les 🔮 Gemmes',gold:'Accepte l\'🪙 Or',both:'Accepte 🔮 Gemmes & 🪙 Or'};
+  document.getElementById('bm-sub').textContent='Ferme au Jour '+(G.blackMarket.expiresDay+1)+' — Jour actuel : '+G.moon;
+  document.getElementById('bm-tier').textContent=tierTxt[G.blackMarket.tier];
+  renderBlackMarket();
+  document.getElementById('bm-overlay').style.display='flex';
+}
+function closeBlackMarket(){
+  document.getElementById('bm-overlay').style.display='none';
+  playSound('menu_click');
+}
+function renderBlackMarket(){
+  if(!G.blackMarket)return;
+  const curIcon={gem:'🔮',gold:'🪙'};
+  document.getElementById('bm-grid').innerHTML=G.blackMarket.items.map((it,i)=>{
+    const d=CD[it.type];if(!d)return'';
+    return`<div class="bm-item${it.sold?' bm-sold':''}">
+      <div class="bm-emoji">${d.e}</div>
+      <div class="bm-name">${d.n}</div>
+      <div class="bm-price">${it.price} ${curIcon[it.cur]}</div>
+      <button class="bm-buy" ${it.sold?'disabled':''} onclick="buyMarketItem(${i})">${it.sold?'Vendu':'Acheter'}</button>
+    </div>`;
+  }).join('');
+}
+function buyMarketItem(idx){
+  if(!G.blackMarket)return;
+  const it=G.blackMarket.items[idx];if(!it||it.sold)return;
+  if(it.cur==='gem'){
+    const gems=Object.values(G.cards).filter(c=>c.type==='gem');
+    if(gems.length<it.price){log('❌ Pas assez de gemmes !');playSound('error');return;}
+    gems.slice(0,it.price).forEach(c=>{if(c.sid)rmFromStack(c.id);delCard(c.id);});
+  }else{
+    if(G.gold<it.price){log('❌ Pas assez d\'or !');playSound('error');return;}
+    G.gold-=it.price;
+  }
+  const tbl=document.getElementById('table').getBoundingClientRect();
+  spawn(it.type,tbl.width/2+(Math.random()-.5)*140,tbl.height/2+(Math.random()-.5)*100);
+  it.sold=true;
+  log('🏴‍☠️ Acheté : '+CD[it.type].e+' '+CD[it.type].n);
+  playSound('buy_pack');
+  renderBlackMarket();
+  updateHUD();
+}
+
+// ── HINTS CONTEXTUELS ────────────────────────────────────────────────────────
+function hasSeenHint(id){try{return JSON.parse(localStorage.getItem('stacklands_hints')||'[]').includes(id);}catch(e){return false;}}
+function markHintSeen(id){
+  try{const a=JSON.parse(localStorage.getItem('stacklands_hints')||'[]');
+    if(!a.includes(id)){a.push(id);localStorage.setItem('stacklands_hints',JSON.stringify(a));}}catch(e){}
+}
+function logHint(msg){
+  const d=document.getElementById('log'),el=document.createElement('div');
+  el.className='litem hint';el.textContent=msg;d.appendChild(el);
+  setTimeout(()=>el.remove(),9000);
+}
+function checkFirstEncounter(type){
+  if(type==='wolf'&&!hasSeenHint('wolf')){
+    markHintSeen('wolf');
+    logHint('🐺 Un Loup apparaît ! Empile une ⚔️ Épée dessus avant qu\'il attaque (15s). L\'épée survit au combat !');
+  }else if(type==='goblin'&&!hasSeenHint('goblin')){
+    markHintSeen('goblin');
+    logHint('👺 Premier Gobelin ! Plus rapide que le loup (12s). Il laisse de l\'Or en mourant — très précieux !');
+  }else if(type==='troll'&&!hasSeenHint('troll')){
+    markHintSeen('troll');
+    logHint('👹 Un Troll ! Impossible avec une seule épée — empile 2 ⚔️ ou utilise une 🗡️ Épée de Fer pour le battre seul !');
+  }
+}
+
+// ── CONSEIL ───────────────────────────────────────────────────────────────────
+function getAdvice(){
+  if(!G||!G.cards)return'Commence une nouvelle partie !';
+  const pop=countT('villager')+countT('baby');
+  const food=Object.values(G.cards).filter(c=>CD[c.type]?.food).reduce((s,c)=>s+(CD[c.type].food||0),0);
+  const swords=countT('sword')+countT('iron_sword');
+  const nextWave=G.moon%5===0?G.moon+5:Math.ceil(G.moon/5)*5;
+  const daysToWave=nextWave-G.moon;
+  const monsters=Object.values(G.cards).filter(c=>CD[c.type]?.monster);
+  if(monsters.length>0&&swords===0)
+    return'⚔️ URGENT : des monstres sont là sans épée ! Craft : Silex + Planche + Villageois → Épée';
+  if(monsters.length>0)
+    return'⚔️ Empile une ⚔️ sur chaque monstre avant qu\'il attaque !';
+  if(food<pop&&pop>0)
+    return'🍖 Tu manques de nourriture ce soir ! Cuisine des baies sur le feu (🫐+🔥) ou récolte des pommes.';
+  if(food<pop*1.5&&pop>0)
+    return'🍖 Stock de nourriture juste. Prépare un Ragoût (🍎+🔥 = 5 repas) pour avoir de la marge.';
+  if(daysToWave<=2&&swords===0)
+    return'⚠️ Vague dans '+daysToWave+' jour(s) ! Fabrique vite : Silex + Planche + Villageois → Épée';
+  if(daysToWave<=2)
+    return'⚠️ Vague dans '+daysToWave+' jour(s). Garde ton épée libre et prépare un Bouclier si possible.';
+  if(pop<=1)
+    return'👥 Un seul villageois, c\'est risqué ! Construis une 🏠 Maison pour avoir des Bébés.';
+  if(countT('campfire')===0)
+    return'🔥 Pas de Feu de camp ! Craft : Silex + Bois → Feu. Il double la valeur de ta nourriture.';
+  if(countT('forge')===0&&G.moon>=8&&countT('iron_ore')>0)
+    return'🔨 Tu as des Minerais ! Construis une Forge (3 Pierres + Planche + Villageois) pour l\'Épée de Fer.';
+  if(countT('cave_entrance')===0&&G.moon>=10)
+    return'🕳️ Essaie l\'expédition ! Craft : 4 Pierres + Villageois → Entrée de Grotte, puis empile des villageois dessus.';
+  if(countT('farm')===0&&G.moon>=6)
+    return'🌾 Construis une Ferme (2 Planches + Brique + Villageois) : elle produit des pommes en continu.';
+  return'✅ Tu gères bien ! Prépare-toi pour la prochaine vague au Jour '+nextWave+'. Stocke de la nourriture et des armes.';
+}
+function showConseilPopup(){
+  playSound('menu_click');
+  const old=document.getElementById('conseil-popup');if(old)old.remove();
+  const advice=getAdvice();
+  const el=document.createElement('div');
+  el.id='conseil-popup';
+  el.style.cssText='position:fixed;top:58px;left:50%;transform:translateX(-50%);background:rgba(10,20,50,.97);color:#bfdbfe;padding:14px 20px 12px;border-radius:12px;font-size:13.5px;z-index:99990;max-width:400px;width:92%;text-align:center;border:1px solid #3b82f6;box-shadow:0 4px 24px rgba(0,0,0,.7);line-height:1.7;cursor:pointer;';
+  el.innerHTML='<div style="font-size:11px;color:#6b7280;margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;">💡 Conseil</div><div>'+advice+'</div><div style="font-size:10px;color:#4b5563;margin-top:8px;">Cliquer pour fermer</div>';
+  el.onclick=()=>el.remove();
+  document.body.appendChild(el);
+  setTimeout(()=>{if(el.parentNode)el.remove();},7000);
+}
+
+// ── EXPÉDITION ───────────────────────────────────────────────────────────────
+function execExpedition(sid){
+  const s=G.stacks[sid];if(!s||!s.recipe)return;
+  const {vCount,sCount}=s.recipe;
+  const rx=s.rx,ry=s.ry;
+  const caveId=s.ids.find(id=>G.cards[id]?.type==='cave_entrance');
+  const villagerIds=s.ids.filter(id=>G.cards[id]?.type==='villager');
+  const swordIds=s.ids.filter(id=>['sword','iron_sword'].includes(G.cards[id]?.type));
+  const hasIronSword=swordIds.some(id=>G.cards[id]?.type==='iron_sword');
+  // Risque : sans épée, 25% chance de perdre un villageois
+  let deadId=null;
+  if(sCount===0&&Math.random()<.25)deadId=villagerIds[0]||null;
+  const returnIds=[...villagerIds,...swordIds].filter(id=>id!==deadId);
+  // Nettoyer la pile
+  s.ids.forEach(id=>{if(G.cards[id])G.cards[id].sid=null;});
+  dissolve(sid);
+  const caveEl=cel(caveId);if(caveEl)caveEl.classList.remove('expedition-active');
+  // Repositionner la grotte
+  if(caveId&&G.cards[caveId]){G.cards[caveId].x=rx;G.cards[caveId].y=ry;updateCV(caveId);}
+  // Supprimer le villageois mort
+  if(deadId)delCard(deadId);
+  // Retourner les autres
+  returnIds.forEach((id,i)=>{if(G.cards[id]){G.cards[id].x=rx+(CW+12);G.cards[id].y=ry+i*SO;updateCV(id);}});
+  // Butin
+  const loot=generateExpeditionLoot(vCount,sCount,hasIronSword);
+  loot.forEach((type,i)=>{spawn(type,rx+(i%4)*(CW+10),ry+CH+48+Math.floor(i/4)*(CH+10));});
+  spawnParticles(rx,ry);
+  G._stats.expeditions=(G._stats.expeditions||0)+1;
+  // Chance de marché noir
+  const bmChance=(G._stats.expeditions<=1)?0.55:0.38;
+  if(!G.blackMarket&&Math.random()<bmChance)generateBlackMarket();
+  if(deadId){
+    log('⛏️ Expédition : un villageois n\'est pas revenu... Butin : '+loot.map(t=>CD[t].e).join(' '));
+    playSound('monster_attack');
+    if(countT('villager')+countT('baby')===0){G.over=true;showOverMonster();return;}
+  }else{
+    log('⛏️ Expédition terminée ! Butin : '+loot.map(t=>CD[t].e+' '+CD[t].n).join(', '));
+    playSound('craft_done');
+  }
+  checkAchievements();updateHUD();
+}
+function generateExpeditionLoot(vCount,sCount,hasIronSword){
+  const loot=[];
+  const power=vCount+(sCount*(hasIronSword?2:1.5));
+  const rolls=Math.max(1,Math.round(power));
+  for(let i=0;i<rolls;i++){
+    const r=Math.random();
+    if(sCount>0){
+      if(r<.28)loot.push('iron_ore');
+      else if(r<.50)loot.push('gem');
+      else if(r<.68)loot.push('gold');
+      else if(r<.80)loot.push('bone');
+      else if(r<.90)loot.push('stone');
+      else if(r<.97)loot.push('golden_bar');
+      else loot.push('gem');
+    }else{
+      if(r<.45)loot.push('iron_ore');
+      else if(r<.65)loot.push('stone');
+      else if(r<.80)loot.push('flint');
+      else if(r<.93)loot.push('gem');
+      else loot.push('gold');
+    }
+  }
+  if(vCount>=2&&sCount>=1&&Math.random()<.18)loot.push('gem');
+  if(vCount>=2&&sCount>=2&&Math.random()<.05)loot.push('phil_stone');
+  return loot.slice(0,7);
+}
+
+// ── PARTICLES & CONFETTI ─────────────────────────────────────────────────────
+function spawnParticles(x,y){
+  const tbl=document.getElementById('table');if(!tbl)return;
+  const colors=['#f7d060','#4ade80','#60a5fa','#fb7185','#a78bfa','#fbbf24','#34d399'];
+  const cx=x+CW/2,cy=y+CH/2;
+  for(let i=0;i<10;i++){
+    const p=document.createElement('div');
+    const angle=(i/10)*Math.PI*2,dist=36+Math.random()*28;
+    const dx=Math.cos(angle)*dist,dy=Math.sin(angle)*dist;
+    const sz=4+Math.random()*4;
+    p.style.cssText=`position:absolute;width:${sz}px;height:${sz}px;border-radius:50%;background:${colors[i%colors.length]};left:${cx}px;top:${cy}px;pointer-events:none;z-index:9997;`;
+    tbl.appendChild(p);
+    requestAnimationFrame(()=>{
+      p.style.transition='transform .55s ease-out, opacity .55s ease-out';
+      p.style.transform=`translate(${dx}px,${dy}px)`;
+      p.style.opacity='0';
+    });
+    setTimeout(()=>p.remove(),650);
+  }
+}
+function spawnConfetti(){
+  const colors=['#f7d060','#4ade80','#60a5fa','#fb7185','#a78bfa','#fbbf24','#f97316'];
+  for(let i=0;i<70;i++){
+    const c=document.createElement('div');
+    c.className='confetti-piece';
+    const sz=4+Math.random()*7;
+    c.style.cssText=`width:${sz}px;height:${sz*(Math.random()>.5?.4:1)}px;background:${colors[Math.floor(Math.random()*colors.length)]};left:${Math.random()*100}vw;top:-12px;border-radius:${Math.random()>.5?'50%':'2px'};`;
+    document.body.appendChild(c);
+    const dur=1800+Math.random()*2000,delay=Math.random()*1200;
+    c.animate([
+      {transform:'translateY(0) rotate(0deg)',opacity:1},
+      {transform:`translateY(105vh) rotate(${Math.random()*720-360}deg)`,opacity:.2}
+    ],{duration:dur,delay,easing:'ease-in',fill:'forwards'});
+    setTimeout(()=>c.remove(),dur+delay+200);
+  }
+}
+
+// ── TIDY TABLE ───────────────────────────────────────────────────────────────
+function tidyCards(){
+  if(G.over||G.paused)return;
+  const tbl=document.getElementById('table').getBoundingClientRect();
+  const pad=16,gapX=CW+16,gapY=CH+44;
+  const cols=Math.max(1,Math.floor((tbl.width-pad*2)/gapX));
+  const groups=[];const seen=new Set();
+  // Stacks first
+  for(const [sid,s] of Object.entries(G.stacks)){groups.push({type:'stack',sid:parseInt(sid)});s.ids.forEach(id=>seen.add(id));}
+  // Lone cards
+  for(const [id,c] of Object.entries(G.cards)){if(!seen.has(parseInt(id)))groups.push({type:'card',id:parseInt(id)});}
+  groups.forEach((g,i)=>{
+    const col=i%cols,row=Math.floor(i/cols);
+    const nx=pad+col*gapX,ny=pad+row*gapY;
+    if(g.type==='stack'){const s=G.stacks[g.sid];if(!s)return;s.rx=nx;s.ry=ny;updateSV(g.sid);}
+    else{G.cards[g.id].x=nx;G.cards[g.id].y=ny;updateCV(g.id);}
+  });
+  playSound('menu_click');log('🗂️ Table rangée !');
+}
+
+// ── PACK UNLOCK TOAST ────────────────────────────────────────────────────────
+function showPackUnlockToast(pack){
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;right:16px;top:72px;background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;z-index:99900;box-shadow:0 4px 16px rgba(0,0,0,.5);border:1px solid #60a5fa;max-width:260px;animation:toastIn .4s ease forwards;';
+  t.innerHTML='📦 Nouveau paquet débloqué !<small style="display:block;font-size:11px;font-weight:400;opacity:.8;margin-top:2px;">'+pack.n+' — '+pack.hint+'</small>';
+  document.body.appendChild(t);
+  playSound('buy_pack');
+  setTimeout(()=>{t.style.animation='toastOut .4s ease forwards';setTimeout(()=>t.remove(),400);},3500);
+}
+
+// ── ACHIEVEMENTS ─────────────────────────────────────────────────────────────
+const ACHIEVEMENTS=[
+  {id:'first_craft',   n:'Premier Craft',         d:'Crafte ton premier objet',            e:'⚒️'},
+  {id:'campfire_made', n:'Feu Allumé',             d:'Fabrique un Feu de camp',             e:'🔥'},
+  {id:'first_house',   n:'Chez Soi',               d:'Construis ta première Maison',        e:'🏠'},
+  {id:'first_baby',    n:'Nouveau Villageois',     d:'Obtiens un Bébé',                     e:'👶'},
+  {id:'pop5',          n:'Village Peuplé',         d:'Atteins 5 villageois en même temps',  e:'👥'},
+  {id:'first_sword',   n:'En Garde !',             d:'Fabrique une Épée',                   e:'⚔️'},
+  {id:'iron_sword_u',  n:'Forgeron',               d:'Fabrique l\'Épée de Fer',             e:'🗡️'},
+  {id:'first_shield',  n:'Défense !',              d:'Fabrique un Bouclier',                e:'🛡️'},
+  {id:'block1',        n:'Paré !',                 d:'Bloque une attaque avec le bouclier', e:'🛡️'},
+  {id:'kill1',         n:'Première Victoire',      d:'Tue ton premier monstre',             e:'💀'},
+  {id:'kill10',        n:'Chasseur',               d:'Tue 10 monstres',                     e:'⚔️'},
+  {id:'wave1_surv',    n:'Survivant I',            d:'Survie à la première vague (Jour 5)', e:'🌊'},
+  {id:'wave3_surv',    n:'Survivant III',          d:'Survie à la vague 3 (Jour 15)',       e:'🌊'},
+  {id:'day10_surv',    n:'Dix Jours',              d:'Atteins le Jour 10',                  e:'📅'},
+  {id:'day20_surv',    n:'Vingt Jours',            d:'Atteins le Jour 20',                  e:'📅'},
+  {id:'victory_u',     n:'Légende',                d:'Termine la partie (25 jours)',        e:'🏆'},
+  {id:'sell10_u',      n:'Marchand',               d:'Vends 10 cartes',                     e:'💰'},
+  {id:'expedition1',   n:'Explorateur',            d:'Complète ta première expédition',     e:'⛏️'},
+  {id:'secret1',       n:'Découverte Secrète',     d:'Crafte ta première carte secrète',    e:'🔓'},
+  {id:'all_secrets',   n:'Alchimiste',             d:'Découvre les 4 cartes secrètes',      e:'💎'},
+];
+function getAchievements(){try{return JSON.parse(localStorage.getItem('stacklands_achievements')||'[]');}catch(e){return[];}}
+function hasAchievement(id){return getAchievements().includes(id);}
+function unlockAchievement(id){
+  const arr=getAchievements();if(arr.includes(id))return false;
+  arr.push(id);localStorage.setItem('stacklands_achievements',JSON.stringify(arr));return true;
+}
+let _toastQ=[],_toastBusy=false;
+function showAchievementToast(ach){_toastQ.push(ach);if(!_toastBusy)_nextToast();}
+function _nextToast(){
+  if(!_toastQ.length){_toastBusy=false;return;}
+  _toastBusy=true;const ach=_toastQ.shift();
+  const t=document.createElement('div');t.className='ach-toast';
+  t.innerHTML=ach.e+' Succès débloqué !<small>'+ach.n+' — '+ach.d+'</small>';
+  document.body.appendChild(t);playSound('achievement');
+  setTimeout(()=>{t.classList.add('out');setTimeout(()=>{t.remove();_nextToast();},400);},3200);
+}
+function checkAchievements(){
+  if(!G||!G.cards)return;
+  const s=G._stats||{};
+  const c=(id,cond)=>{if(cond&&!hasAchievement(id)){if(unlockAchievement(id)){const a=ACHIEVEMENTS.find(a=>a.id===id);if(a)showAchievementToast(a);}}};
+  c('first_craft',   (s.crafts||0)>=1);
+  c('campfire_made', s.madeCampfire||countT('campfire')>0);
+  c('first_house',   s.madeHouse||countT('house')>0);
+  c('first_baby',    (s.babies||0)>=1);
+  c('pop5',          countT('villager')>=5);
+  c('first_sword',   s.madeSword||s.madeIronSword||countT('sword')>0||countT('iron_sword')>0);
+  c('iron_sword_u',  s.madeIronSword||countT('iron_sword')>0);
+  c('first_shield',  s.madeShield||countT('shield')>0);
+  c('kill1',         (s.kills||0)>=1);
+  c('kill10',        (s.kills||0)>=10);
+  c('wave1_surv',    G.moon>5);
+  c('wave3_surv',    G.moon>15);
+  c('day10_surv',    G.moon>=10);
+  c('day20_surv',    G.moon>=20);
+  c('sell10_u',      (s.sells||0)>=10);
+  c('expedition1',   (s.expeditions||0)>=1);
+}
+function showAchOverlay(){
+  const arr=getAchievements();
+  document.getElementById('ach-grid').innerHTML=ACHIEVEMENTS.map(a=>
+    `<div class="ach-item${arr.includes(a.id)?' done':''}"><div class="ach-ico">${a.e}</div><div><div class="ach-n">${a.n}</div><div class="ach-d">${a.d}</div></div></div>`
+  ).join('');
+  document.getElementById('ach-overlay').style.display='block';
+}
+function closeAchOverlay(){document.getElementById('ach-overlay').style.display='none';}
+
+// ── CARTES SECRÈTES ───────────────────────────────────────────────────────────
+function hasDiscoveredSecret(type){try{return JSON.parse(localStorage.getItem('stacklands_secrets')||'[]').includes(type);}catch(e){return false;}}
+function markSecretDiscovered(type){
+  try{const arr=JSON.parse(localStorage.getItem('stacklands_secrets')||'[]');
+    if(!arr.includes(type)){arr.push(type);localStorage.setItem('stacklands_secrets',JSON.stringify(arr));}}catch(e){}
+}
+function getSecretsCount(){try{return JSON.parse(localStorage.getItem('stacklands_secrets')||'[]').length;}catch(e){return 0;}}
+function showSecretReveal(type){
+  const d=CD[type];if(!d||!d.secret)return;
+  G.secretReveal=true;
+  document.getElementById('sr-emoji').textContent=d.e;
+  document.getElementById('sr-name').textContent=d.n;
+  document.getElementById('sr-desc').textContent=d.sdesc||d.desc||'';
+  document.getElementById('sr-advice').textContent='💡 '+(d.skeep||'');
+  document.getElementById('sr-bonus').textContent='✨ Bonus : '+(d.sbonus||'');
+  document.getElementById('secret-reveal').style.display='flex';
+  playSound('secret');
+  const sc=getSecretsCount();
+  if(sc>=1&&!hasAchievement('secret1')){if(unlockAchievement('secret1')){const a=ACHIEVEMENTS.find(a=>a.id==='secret1');if(a)setTimeout(()=>showAchievementToast(a),1200);}}
+  if(sc>=4&&!hasAchievement('all_secrets')){if(unlockAchievement('all_secrets')){const a=ACHIEVEMENTS.find(a=>a.id==='all_secrets');if(a)setTimeout(()=>showAchievementToast(a),2000);}}
+}
+function closeSecretReveal(){
+  document.getElementById('secret-reveal').style.display='none';
+  G.secretReveal=false;G.ts=null;requestAnimationFrame(loop);
+}
+
+// ── STATS GLOBALES ────────────────────────────────────────────────────────────
+function getGlobalStats(){try{return JSON.parse(localStorage.getItem('stacklands_global_stats')||'{}');}catch(e){return{};}}
+function updateGlobalStats(won){
+  const s=getGlobalStats();
+  s.totalGames=(s.totalGames||0)+1;
+  s.bestDays=Math.max(s.bestDays||0,G.moon||1);
+  s.totalCrafts=(s.totalCrafts||0)+(G._stats?.crafts||0);
+  s.totalKills=(s.totalKills||0)+(G._stats?.kills||0);
+  if(won)s.wins=(s.wins||0)+1;
+  localStorage.setItem('stacklands_global_stats',JSON.stringify(s));
+}
+
+// ── TUTORIEL ──────────────────────────────────────────────────────────────────
+const TUTO = [
+  {
+    emoji:'🏘️',
+    title:'Bienvenue dans Stacklands !',
+    text:'Stacklands est un jeu de cartes à empiler.\n\nTu gères un petit village : récolte des ressources, fabrique des objets, nourris tes villageois et repousse les vagues de monstres.\n\n🎯 Objectif : survivre 25 jours !'
+  },
+  {
+    emoji:'🃏',
+    title:'Empiler des cartes',
+    text:'Glisse une carte sur une autre pour les empiler.\n\n✅ Si la combinaison correspond à une recette → une barre verte apparaît et le craft démarre automatiquement.\n\n❌ Si les cartes tremblent en rouge → aucune recette, mauvaise combinaison.\n\n💡 Survole une carte pour voir ses recettes dans le tooltip !'
+  },
+  {
+    emoji:'🧑',
+    title:'Récolter des ressources',
+    text:'Empile un Villageois 🧑 sur une ressource pour produire en boucle :\n\n🌳 + 🧑 → Bois (en continu)\n🪨 + 🧑 → Pierre\n🫐 + 🧑 → Baie\n🌾 + 🧑 → Pomme\n🌿 + 🧑 → Bois + Baie (zone forêt)\n⛰️ + 🧑 → Minerai de fer (grotte)\n\nLe villageois reste toujours sur la ressource !'
+  },
+  {
+    emoji:'⚒️',
+    title:'Fabriquer des objets',
+    text:'Empile plusieurs cartes pour crafter :\n\n🔷 + 🪵 → 🔥 Feu de camp\n🪵×3 + 🧑 → 🟫 Planche\n🪨×3 + 🧑 → 🧱 Brique\n🔷 + 🟫 + 🧑 → ⚔️ Épée\n🟫×2 + 🧑 → 🛡️ Bouclier\n🪨×3 + 🟫 + 🧑 → 🔨 Forge\n\n📖 Ouvre le Livre de Recettes (en haut) pour voir tout !'
+  },
+  {
+    emoji:'🍖',
+    title:'La nourriture & les jours',
+    text:'La barre en haut = le temps avant la fin du jour (60s).\n\nÀ chaque fin de jour, tes villageois mangent autant de nourriture que leur nombre.\n\n🍖 Nourriture insuffisante → ☠️ FAMINE → partie perdue !\n\n💡 Cuisine tes baies sur un 🔥 feu de camp pour obtenir plus :\n🫐 Baie = 1 repas\n🍇 Baie cuite = 3 repas\n🍲 Ragoût = 5 repas'
+  },
+  {
+    emoji:'⚔️',
+    title:'Combattre les monstres',
+    text:'Tous les 5 jours, une vague de monstres arrive !\n\n🐺 Loup → attaque en 15 secondes\n👺 Gobelin → attaque en 12 secondes\n👹 Troll → attaque en 10 secondes\n\nPour combattre : empile une ⚔️ Épée sur le monstre.\n\n⚠️ La barre rouge = temps avant l\'attaque.\nQuand la carte pulse en rouge → URGENT, agis vite !\n\nL\'épée survit après le combat 👍'
+  },
+  {
+    emoji:'🛡️',
+    title:'Se protéger & progresser',
+    text:'🛡️ Bouclier (2 Planches + 🧑) → bloque une attaque de monstre\n\n🔨 Forge (3 Pierres + Planche + 🧑) → nécessaire pour l\'épée de fer\n\n🗡️ Épée de Fer (Forge + 2 Minerais + 🧑) → 2-3× plus rapide que l\'épée normale, bat les trolls seule !\n\n💰 Achète des Paquets avec l\'Or 🪙 pour obtenir de nouvelles cartes. Le Paquet Combat se débloque au Jour 3, le Paquet Exploration au Jour 8.'
+  },
+  {
+    emoji:'🎮',
+    title:'Tu es prêt !',
+    text:'Résumé des règles :\n\n1️⃣ Récolte ressources avec 🧑 villageois\n2️⃣ Nourris tes villageois chaque jour\n3️⃣ Fabrique des outils et bâtiments\n4️⃣ Combats les vagues avec des épées\n5️⃣ Utilise boucliers et forge pour progresser\n\n🎯 Survive 25 jours = VICTOIRE !\n\nLa partie est sauvegardée automatiquement chaque jour. Bonne chance ! 🍀'
+  },
+];
+let tutoStep=0;
+
+function showTutorial(){
+  playSound('menu_click');
+  tutoStep=0; renderTuto();
+  document.getElementById('tutorial').style.display='flex';
+}
+function closeTutorial(){
+  playSound('menu_click');
+  document.getElementById('tutorial').style.display='none';
+}
+function nextTutoStep(){
+  playSound('craft_start');
+  if(tutoStep<TUTO.length-1){tutoStep++;renderTuto();}
+}
+function prevTutoStep(){
+  playSound('craft_start');
+  if(tutoStep>0){tutoStep--;renderTuto();}
+}
+function renderTuto(){
+  const s=TUTO[tutoStep];
+  document.getElementById('tut-emoji').textContent=s.emoji;
+  document.getElementById('tut-title').textContent=s.title;
+  document.getElementById('tut-text').textContent=s.text;
+  // Points de progression
+  const dots=document.getElementById('tut-dots');
+  dots.innerHTML=TUTO.map((_,i)=>`<div class="tut-dot${i===tutoStep?' active':''}"></div>`).join('');
+  // Bouton précédent
+  document.getElementById('tut-prev').style.visibility=tutoStep>0?'visible':'hidden';
+  // Bouton suivant / commencer
+  const next=document.getElementById('tut-next');
+  if(tutoStep===TUTO.length-1){
+    next.textContent='🎮 Commencer !';
+    next.onclick=()=>{closeTutorial();startNewGame();};
+  }else{
+    next.textContent='Suivant →';
+    next.onclick=nextTutoStep;
+  }
+}
+
+// ── START ─────────────────────────────────────────────────────────────────────
+showMainMenu();
+</script>
+</body>
+</html>
