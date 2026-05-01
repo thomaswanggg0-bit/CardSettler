@@ -324,6 +324,11 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 .evt-tut-skip:hover{color:#6b7280;}
 /* ── PILE DRAG ── */
 .stack-dragging{opacity:.93;filter:drop-shadow(0 8px 20px rgba(0,0,0,.6));}
+/* ── RENAME VILLAGER ── */
+#rename-wrap{position:fixed;display:none;z-index:10001;flex-direction:column;align-items:center;gap:4px;pointer-events:all;}
+#rename-input{background:#0a1a0a;color:#f7d060;border:2px solid #f7d060;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;text-align:center;width:82px;outline:none;box-shadow:0 0 12px rgba(247,208,96,.4);}
+.rename-hint{font-size:9px;color:#6b7280;background:rgba(0,0,0,.8);padding:2px 6px;border-radius:4px;}
+.card-edit-dot{position:absolute;bottom:10px;right:5px;font-size:8px;color:rgba(255,255,255,.35);pointer-events:none;line-height:1;}
 </style>
 </head>
 <body>
@@ -355,6 +360,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   <div id="log-body"></div>
 </div>
 <div id="tooltip"><div class="tt-name"></div><div class="tt-desc"></div><div class="tt-label"></div><div class="tt-r"></div><div class="tt-sell"></div></div>
+<div id="rename-wrap"><input id="rename-input" maxlength="11" placeholder="Prénom…" autocomplete="off"><div class="rename-hint">↵ Valider &nbsp;·&nbsp; Échap Annuler &nbsp;·&nbsp; max 10 car.</div></div>
 
 <!-- Overlay Défaite / Famine -->
 <div class="overlay" id="overlay">
@@ -836,7 +842,7 @@ function saveGame(){
     _lastEvent:G._lastEvent||null,
     difficulty:G.difficulty||'normal',
     _stats:G._stats||{},
-    cards:Object.fromEntries(Object.entries(G.cards).map(([id,c])=>[id,{id:c.id,type:c.type,x:c.x,y:c.y,sid:c.sid,aggro:c.aggro||0}])),
+    cards:Object.fromEntries(Object.entries(G.cards).map(([id,c])=>[id,{id:c.id,type:c.type,x:c.x,y:c.y,sid:c.sid,aggro:c.aggro||0,name:c.name||null}])),
     stacks:Object.fromEntries(Object.entries(G.stacks).map(([sid,s])=>[sid,{id:s.id,ids:[...s.ids],rx:s.rx,ry:s.ry}]))
   };
   localStorage.setItem('stacklands_save',JSON.stringify(data));
@@ -865,7 +871,7 @@ function loadGame(){
   buildShop();applyBoardSkin();
   // Cartes
   Object.values(data.cards).forEach(c=>{
-    G.cards[c.id]={id:c.id,type:c.type,x:c.x,y:c.y,sid:null,aggro:c.aggro||0};
+    G.cards[c.id]={id:c.id,type:c.type,x:c.x,y:c.y,sid:null,aggro:c.aggro||0,name:c.name||null};
     createCardDOM(c.id,c.type);
   });
   // Piles
@@ -930,17 +936,20 @@ function createCardDOM(id,type){
   el.className='card card-spawn'+(d.monster?' monster':'')+(d.boss?' boss':'');el.id='c'+id;
   el.style.cssText=`left:${G.cards[id].x}px;top:${G.cards[id].y}px;background:${d.bg};color:${d.c};z-index:10;`;
   const hatHtml=(type==='villager')?`<div class="vhat">${getEquippedHatEmoji()}</div>`:'';
-  el.innerHTML=`<div class="stack-badge"></div>${hatHtml}<div class="card-cat ${catCls}"></div><div class="card-emoji">${d.e}</div><div class="card-name">${d.n}</div><div class="card-bar"><div class="card-bar-fill"></div></div>`;
+  const displayName=(type==='villager'&&G.cards[id]?.name)||d.n;
+  const editDot=(type==='villager')?'<div class="card-edit-dot">✏️</div>':'';
+  el.innerHTML=`<div class="stack-badge"></div>${hatHtml}<div class="card-cat ${catCls}"></div><div class="card-emoji">${d.e}</div><div class="card-name">${displayName}</div>${editDot}<div class="card-bar"><div class="card-bar-fill"></div></div>`;
   setTimeout(()=>el.classList.remove('card-spawn'),420);
   el.addEventListener('mousedown',e=>{e.preventDefault();startDrag(e,id);});
+  if(type==='villager')el.addEventListener('dblclick',e=>showRenameInput(id,e));
   el.addEventListener('contextmenu',e=>{e.preventDefault();sellCard(id);});
-  el.addEventListener('mouseenter',e=>showTooltip(e,type));
+  el.addEventListener('mouseenter',e=>{showTooltip(e,type);if(type==='villager'){const desc=ttEl.querySelector('.tt-desc');if(desc)desc.textContent=(desc.textContent||'')+' · ✏️ Double-clic pour renommer';}});
   el.addEventListener('mouseleave',hideTooltip);
   document.getElementById('table').appendChild(el);
 }
 function spawn(type,x,y){
   const id=G.nid++;
-  G.cards[id]={id,type,x,y,sid:null,aggro:0};
+  G.cards[id]={id,type,x,y,sid:null,aggro:0,name:null};
   createCardDOM(id,type);
   if(CD[type]?.monster){
     const snd={wolf:'wolf_appear',goblin:'goblin_appear',troll:'troll_appear',goblin_king:'goblin_king_appear',dragon:'dragon_appear'}[type];
@@ -1399,6 +1408,13 @@ function wRand(pool){
 
 // ── HUD ───────────────────────────────────────────────────────────────────────
 function updateHUD(){
+  // Speed button: show lock if next speed is not unlocked
+  const sbtn=document.getElementById('speed-btn');
+  if(sbtn&&G.speed){
+    const next=(G.speed===1)?2:(G.speed===2)?3:1;
+    const locked=next>1&&!canUseSpeed(next);
+    sbtn.title=locked?'Vitesse ×'+next+' — débloque dans la Boutique ('+((next===2)?6000:15000)+' ☄️)':'';
+  }
   const pop=countT('villager')+countT('baby');
   const food=Object.values(G.cards).filter(c=>CD[c.type]?.food).reduce((s,c)=>s+(CD[c.type].food||0),0);
   document.getElementById('hday').textContent=G.moon;
@@ -1586,8 +1602,17 @@ function showRB(){
 function closeRB(){document.getElementById('rb').style.display='none';}
 
 // ── VITESSE ───────────────────────────────────────────────────────────────────
+function canUseSpeed(s){
+  if(s<=1)return true;
+  if(s===2)return hasPermaBonus('speed2');
+  if(s===3)return hasPermaBonus('speed3');
+  return false;
+}
 function toggleSpeed(){
-  G.speed=(G.speed===1)?2:(G.speed===2)?3:1;
+  let next=(G.speed===1)?2:(G.speed===2)?3:1;
+  if(next===2&&!canUseSpeed(2)){showDustToast('🔒 ×2 — débloque dans la Boutique !');return;}
+  if(next===3&&!canUseSpeed(3)){showDustToast('🔒 ×3 — débloque dans la Boutique !');return;}
+  G.speed=next;
   const btn=document.getElementById('speed-btn');
   if(btn){
     btn.textContent='⏩ ×'+G.speed;
@@ -2705,6 +2730,8 @@ const PERMA_BONUSES=[
   {id:'iron',   e:'⚒️', n:'Forge des Étoiles',      cost:2000, desc:'Commence avec 1 minerai de fer en bonus'},
   {id:'revive', e:'💙', n:'Cristal de Survie',      cost:3000, desc:'Une résurrection gratuite par partie (50% des villageois)'},
   {id:'soul',   e:'🌟', n:'Âme de la Comète',       cost:5000, desc:'Toutes les Poussières gagnées sont doublées (×2)'},
+  {id:'speed2', e:'⚡', n:'Vitesse ×2',             cost:6000, desc:'Débloque la vitesse ×2 (bouton ⏩ en jeu)'},
+  {id:'speed3', e:'🚀', n:'Vitesse ×3',             cost:15000,desc:'Débloque la vitesse ×3 (bouton ⏩ en jeu) — nécessite ×2'},
 ];
 function getOwnedBonuses(){try{return JSON.parse(localStorage.getItem('cs_perma_bonuses')||'[]');}catch(e){return[];}}
 function hasPermaBonus(id){return getOwnedBonuses().includes(id);}
@@ -2715,6 +2742,7 @@ function unlockPermaBonus(id){
 function buyPermaBonus(id){
   if(hasPermaBonus(id))return;
   const b=PERMA_BONUSES.find(b=>b.id===id);if(!b)return;
+  if(id==='speed3'&&!hasPermaBonus('speed2')){showDustToast('❌ Débloque Vitesse ×2 d\'abord !');return;}
   if(!spendCometDust(b.cost)){showDustToast('❌ Pas assez de Poussières !');return;}
   unlockPermaBonus(id);
   renderPermaShop();
@@ -2784,6 +2812,60 @@ function closeConclusion(){
   document.getElementById('conclusion').style.display='none';
   if(_pendingConclusion){_pendingConclusion();_pendingConclusion=null;}
 }
+
+// ── VILLAGER RENAME ───────────────────────────────────────────────────────────
+let _renameId=null;
+function showRenameInput(id,e){
+  if(G.drag||!G.cards[id]||G.cards[id].type!=='villager')return;
+  e.preventDefault();e.stopPropagation();
+  _renameId=id;
+  const el=cel(id);if(!el)return;
+  const r=el.getBoundingClientRect();
+  const wrap=document.getElementById('rename-wrap');
+  const inp=document.getElementById('rename-input');
+  inp.value=G.cards[id].name||'';
+  wrap.style.display='flex';
+  wrap.style.left=Math.round(r.left)+'px';
+  wrap.style.top=Math.round(r.top+28)+'px';
+  requestAnimationFrame(()=>{inp.focus();inp.select();});
+}
+function _validateName(v){
+  // Lettres (y compris accentuées), chiffres, tiret — max 10 — pas de tiret en début/fin/doublé
+  return v.replace(/[^a-zA-ZÀ-ÿ0-9-]/g,'')
+          .replace(/-{2,}/g,'-')
+          .replace(/^-+|-+$/g,'')
+          .slice(0,10);
+}
+function applyRename(){
+  const inp=document.getElementById('rename-input');
+  const raw=inp.value.trim();
+  const name=_validateName(raw)||null;
+  if(_renameId&&G.cards[_renameId]){
+    G.cards[_renameId].name=name;
+    const el=cel(_renameId);
+    if(el){const nm=el.querySelector('.card-name');if(nm)nm.textContent=name||CD['villager'].n;}
+  }
+  closeRenameInput();
+}
+function closeRenameInput(){
+  document.getElementById('rename-wrap').style.display='none';
+  _renameId=null;
+}
+(function(){
+  const inp=document.getElementById('rename-input');
+  if(!inp)return;
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){e.preventDefault();applyRename();}
+    else if(e.key==='Escape'){e.preventDefault();closeRenameInput();}
+  });
+  inp.addEventListener('input',()=>{
+    const v=_validateName(inp.value);
+    if(v!==inp.value)inp.value=v;
+  });
+  document.addEventListener('mousedown',e=>{
+    if(_renameId&&!e.target.closest('#rename-wrap'))closeRenameInput();
+  });
+})();
 
 // ── START ─────────────────────────────────────────────────────────────────────
 showMainMenu();
