@@ -550,7 +550,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   <button class="mbtn" onclick="startNewGame()">🆕 Nouvelle Partie</button>
   <button class="mbtn" id="btn-resume" onclick="resumeGame()" disabled>▶ Reprendre la partie</button>
   <p id="resume-info"></p>
-  <button class="mbtn" onclick="showBoutique()" style="background:#07000f;border-color:#7c3aed;color:#c4b5fd;">🛍️ Boutique</button>
+  <button class="mbtn" id="btn-boutique" onclick="showBoutique()" style="background:#07000f;border-color:#7c3aed;color:#c4b5fd;">🛍️ Boutique</button>
   <button class="mbtn" onclick="showTutorial()" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📖 Tutoriel</button>
   <button class="mbtn" onclick="showAchOverlay()" style="background:#071e14;border-color:#1a4a2a;color:#4ade80;">🏅 Succès</button>
   <button class="mbtn disc" onclick="disconnect()">🚪 Déconnexion</button>
@@ -1503,6 +1503,9 @@ function showMainMenu(){
   }
   document.getElementById('main-menu').style.display='flex';
   updateDustUI();
+  // Badge chapeau gratuit si non réclamé
+  const btnB=document.getElementById('btn-boutique');
+  if(btnB){const weekly=getCurrentWeekHat();const free=!hasClaimedThisWeek()&&!ownsHat(weekly.id);btnB.textContent=free?'🛍️ Boutique  🎁':'🛍️ Boutique';}
   checkAndUpdateStreak();
 }
 function startNewGame(){
@@ -2394,13 +2397,46 @@ function applyBoardSkin(){
 
 // ── VILLAGER HATS ─────────────────────────────────────────────────────────────
 const HATS=[
-  {id:'none',       e:'',   n:'Sans chapeau',    desc:'Au naturel', cost:0},
-  {id:'tophat',     e:'🎩', n:'Haut-de-Forme',   desc:'Classe et élégance', cost:150},
-  {id:'straw',      e:'👒', n:'Chapeau de Paille',desc:'Pour les paysans stylés', cost:120},
-  {id:'helmet',     e:'🪖', n:'Casque Guerrier',  desc:'Protection assurée', cost:200},
-  {id:'crown',      e:'👑', n:'Couronne Royale',  desc:'Dignité maximale', cost:350},
-  {id:'graduation', e:'🎓', n:'Toque du Sage',    desc:'Connaissance infinie', cost:180},
+  // Basiques permanents
+  {id:'none',       e:'',   n:'Sans chapeau',      desc:'Au naturel', cost:0},
+  {id:'tophat',     e:'🎩', n:'Haut-de-Forme',     desc:'Classe et élégance', cost:150},
+  {id:'straw',      e:'👒', n:'Chapeau de Paille',  desc:'Pour les paysans stylés', cost:120},
+  {id:'helmet',     e:'🪖', n:'Casque Guerrier',    desc:'Protection assurée', cost:200},
+  {id:'crown',      e:'👑', n:'Couronne Royale',    desc:'Dignité maximale', cost:350},
+  {id:'graduation', e:'🎓', n:'Toque du Sage',      desc:'Connaissance infinie', cost:180},
+  // Thématiques permanents
+  {id:'lava',       e:'🔥', n:'Casque de Lave',     desc:'Thème Volcan — forgé dans la lave', cost:400, theme:'volcano'},
+  {id:'astro',      e:'🛸', n:'Casque Spatial',     desc:'Thème Cosmique — venu des étoiles', cost:500, theme:'space'},
+  {id:'pirate',     e:'🏴‍☠️', n:'Chapeau de Pirate', desc:'Thème Sous-Marin — maître des mers', cost:350, theme:'underwater'},
+  {id:'dragon_hat', e:'🐉', n:'Couronne du Dragon', desc:'Pour les grands vainqueurs', cost:800},
+  {id:'comet_hat',  e:'☄️', n:'Halo Cosmique',      desc:'La comète te couronne', cost:600},
 ];
+// Chapeaux hebdomadaires (rotation sur 8 semaines)
+const WEEKLY_HATS=[
+  {id:'wh_cap',     e:'🧢', n:'Casquette Bleue'},
+  {id:'wh_cowboy',  e:'🤠', n:'Chapeau de Cowboy'},
+  {id:'wh_flower',  e:'🌸', n:'Couronne Florale'},
+  {id:'wh_shroom',  e:'🍄', n:'Champignon Magique'},
+  {id:'wh_moon',    e:'🌙', n:'Croissant Mystique'},
+  {id:'wh_ghost',   e:'👻', n:'Bonnet Fantôme'},
+  {id:'wh_star',    e:'⭐', n:'Étoile Filante'},
+  {id:'wh_rainbow', e:'🌈', n:'Bandeau Arc-en-ciel'},
+];
+function getCurrentWeekIdx(){return Math.floor(Date.now()/(7*24*60*60*1000));}
+function getCurrentWeekHat(){return WEEKLY_HATS[getCurrentWeekIdx()%WEEKLY_HATS.length];}
+function hasClaimedThisWeek(){
+  try{return JSON.parse(localStorage.getItem('cs_claimed_weeks')||'[]').includes(getCurrentWeekIdx());}
+  catch(e){return false;}
+}
+function claimWeeklyHat(){
+  const hat=getCurrentWeekHat();
+  const owned=getOwnedHats();
+  if(!owned.includes(hat.id)){owned.push(hat.id);localStorage.setItem('cs_owned_hats',JSON.stringify(owned));}
+  const claimed=JSON.parse(localStorage.getItem('cs_claimed_weeks')||'[]');
+  claimed.push(getCurrentWeekIdx());localStorage.setItem('cs_claimed_weeks',JSON.stringify(claimed));
+  playSound('achievement');showDustToast('🎁 '+hat.e+' '+hat.n+' reçu !');
+  equipHat(hat.id);
+}
 function getEquippedHat(){return localStorage.getItem('cs_equipped_hat')||'none';}
 function getEquippedHatEmoji(){const h=HATS.find(h=>h.id===getEquippedHat());return h?h.e:'';}
 function getOwnedHats(){try{return JSON.parse(localStorage.getItem('cs_owned_hats')||'["none"]');}catch(e){return['none'];}}
@@ -2436,7 +2472,7 @@ function showBoutique(tab){
     titleEl.addEventListener('click',()=>{
       _bqSecretClicks++;clearTimeout(_bqSecretTimer);
       _bqSecretTimer=setTimeout(()=>_bqSecretClicks=0,3000);
-      if(_bqSecretClicks>=7){_bqSecretClicks=0;triggerEaster('bq_secret','☄️','Obsession Cosmique','Tu as cliqué 7 fois sur l\'emblème... et la comète t\'a répondu.',400);}
+      if(_bqSecretClicks>=7){_bqSecretClicks=0;triggerEaster('bq_secret','☄️','Obsession Cosmique','Tu as cliqué 7 fois sur l\'emblème... et la comète t\'a répondu.',300);}
     });
   }
 }
@@ -2474,18 +2510,52 @@ function renderBoutiqueTab(tab){
     }).join('')+'</div>';
   }else if(tab==='hats'){
     const active=getEquippedHat();
-    el.innerHTML='<div style="font-size:11px;color:#9ca3af;margin-bottom:10px;text-align:center;">Le chapeau équipé apparaît sur tous tes villageois 🧑</div>'
-      +'<div class="hat-grid">'+HATS.map(h=>{
+    const weekly=getCurrentWeekHat();const claimed=hasClaimedThisWeek();const weeklyOwned=ownsHat(weekly.id);
+    // ── Chapeau de la semaine ──
+    const weeklySect=`<div class="bq-info-section" style="margin-bottom:14px;">
+      <div class="bq-info-title">🎁 Chapeau de la semaine — gratuit !</div>
+      <div style="display:flex;align-items:center;gap:14px;padding:8px 4px;">
+        <div style="font-size:40px;flex-shrink:0;">${weekly.e}</div>
+        <div style="flex:1;"><div style="font-weight:700;color:#e2e8f0;margin-bottom:2px;">${weekly.n}</div>
+          <div style="font-size:11px;color:#9ca3af;">Disponible cette semaine — change chaque lundi</div></div>
+        ${claimed||weeklyOwned
+          ?`<div class="ps-owned-badge">✅ Réclamé</div>`
+          :`<button class="ps-equip" onclick="claimWeeklyHat()">🎁 Réclamer</button>`}
+      </div>
+    </div>`;
+    // ── Thématiques ──
+    const thematics=HATS.filter(h=>h.theme||h.id==='dragon_hat'||h.id==='comet_hat');
+    const basics=HATS.filter(h=>!h.theme&&h.id!=='dragon_hat'&&h.id!=='comet_hat');
+    const renderHatGrid=(list)=>list.map(h=>{
       const owned=ownsHat(h.id);const isActive=active===h.id;
       return `<div class="hat-card${isActive?' active-hat':''}" onclick="${owned?`equipHat('${h.id}')`:`buyHat('${h.id}')`}">
         ${isActive?'<div class="hat-active-badge">✓</div>':''}
         <div class="hat-emoji">${h.e||'🧑'}</div>
         <div class="hat-name">${h.n}</div>
-        <div class="hat-cost">${owned?'<span style="color:#4ade80">✓</span>':(h.cost===0?'Gratuit':`${h.cost} ☄️`)}</div>
+        <div class="hat-cost">${owned?'<span style="color:#4ade80">✓</span>':(h.cost===0?'Gratuit':`${h.cost} ☄️${dust<h.cost?' <span style="color:#ef4444;font-size:9px;">❌</span>':''}`)}</div>
       </div>`;
-    }).join('')+'</div>';
+    }).join('');
+    // ── Chapeaux hebdo possédés ──
+    const ownedWeekly=WEEKLY_HATS.filter(h=>ownsHat(h.id));
+    const weeklyOwnedSect=ownedWeekly.length>0?`
+      <div style="font-size:10px;color:#6b7280;margin:12px 0 6px;letter-spacing:1px;text-transform:uppercase;">Hebdomadaires collectés</div>
+      <div class="hat-grid">${ownedWeekly.map(h=>{const isActive=active===h.id;return `<div class="hat-card${isActive?' active-hat':''}" onclick="equipHat('${h.id}')">
+        ${isActive?'<div class="hat-active-badge">✓</div>':''}
+        <div class="hat-emoji">${h.e}</div><div class="hat-name">${h.n}</div><div class="hat-cost"><span style="color:#4ade80">✓</span></div>
+      </div>`;}).join('')}</div>`:'';
+    el.innerHTML=`<div style="font-size:11px;color:#9ca3af;margin-bottom:10px;text-align:center;">Le chapeau équipé apparaît sur tous tes villageois 🧑</div>`
+      +weeklySect
+      +`<div style="font-size:10px;color:#6b7280;margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;">🎨 Thématiques</div><div class="hat-grid">${renderHatGrid(thematics)}</div>`
+      +`<div style="font-size:10px;color:#6b7280;margin:12px 0 6px;letter-spacing:1px;text-transform:uppercase;">Classiques</div><div class="hat-grid">${renderHatGrid(basics)}</div>`
+      +weeklyOwnedSect;
   }else if(tab==='info'){
+    const wh=getCurrentWeekHat();const whClaimed=hasClaimedThisWeek()||ownsHat(wh.id);
     el.innerHTML=`
+      <div class="bq-info-section" style="border-color:${whClaimed?'rgba(124,58,237,.25)':'#16a34a'};background:${whClaimed?'':'rgba(0,80,40,.15)'};">
+        <div class="bq-info-title">🎁 Chapeau hebdomadaire</div>
+        <div class="bq-info-row">${wh.e} ${wh.n} cette semaine <span>${whClaimed?'✅ Réclamé':'<span style="color:#4ade80;font-weight:700;">Disponible !</span>'}</span></div>
+        <div class="bq-info-row">Change chaque lundi — 8 chapeaux en rotation <span>Gratuit</span></div>
+      </div>
       <div class="bq-info-section">
         <div class="bq-info-title">🌅 Sources quotidiennes</div>
         <div class="bq-info-row">Connexion du jour <span>+5 ☄️</span></div>
@@ -2541,14 +2611,14 @@ let _logoClicks=0;let _logoTimer=null;
 function eggLogoClick(){
   _logoClicks++;clearTimeout(_logoTimer);
   _logoTimer=setTimeout(()=>_logoClicks=0,2500);
-  if(_logoClicks>=10){_logoClicks=0;triggerEaster('logo10','🏘️','Fondateur Dévoué','10 clics sur le village... tu es vraiment attaché à lui !',300);}
+  if(_logoClicks>=10){_logoClicks=0;triggerEaster('logo10','🏘️','Fondateur Dévoué','10 clics sur le village... tu es vraiment attaché à lui !',200);}
 }
 // 3. Stack 3 gold — hooked in mkStack
 function checkGoldStackEgg(ids){
   if(eggFound('gold3'))return;
   const types=ids.map(id=>G.cards[id]?.type);
   if(types.length>=3&&types.every(t=>t==='gold'))
-    setTimeout(()=>triggerEaster('gold3','💰','L\'Alchimiste Fou','3 pièces d\'or empilées... tu as découvert l\'alchimie cosmique !',200),400);
+    setTimeout(()=>triggerEaster('gold3','💰','L\'Alchimiste Fou','3 pièces d\'or empilées... tu as découvert l\'alchimie cosmique !',100),400);
 }
 
 // ── REVIVE (Cristal de Survie) ───────────────────────────────────────────────
