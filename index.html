@@ -198,7 +198,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 /* ── BOSS ── */
 .card.boss{border-color:rgba(251,191,36,.8)!important;}
 /* ── POUSSIÈRES DE COMÈTE ── */
-#hcomet{background:rgba(139,92,246,.18);border:1px solid #7c3aed;border-radius:6px;padding:2px 8px;font-size:12px;color:#c4b5fd;white-space:nowrap;cursor:pointer;}
+#hcomet{background:rgba(139,92,246,.18);border:1px solid #7c3aed;border-radius:6px;padding:2px 8px;font-size:12px;color:#c4b5fd;white-space:nowrap;}
 #hcomet b{color:#e9d5ff;}
 /* ── NARRATIVE INTRO ── */
 @keyframes narIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
@@ -220,22 +220,67 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 .streak-reward{font-size:14px;color:#86efac;font-weight:700;margin-bottom:16px;background:rgba(0,100,50,.2);border:1px solid #16a34a;border-radius:8px;padding:8px 16px;}
 #streak-popup .sp-btn{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:10px 28px;cursor:pointer;font-size:13px;font-weight:700;}
 #streak-popup .sp-btn:hover{background:#6d28d9;}
-/* ── PERMA SHOP ── */
-#perma-shop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:99400;justify-content:center;align-items:center;padding:20px;}
-.ps-box{background:linear-gradient(160deg,#07000f,#120020,#07000f);border:2px solid #7c3aed;border-radius:18px;padding:26px 28px 22px;max-width:580px;width:100%;color:#fff;box-shadow:0 0 60px rgba(124,58,237,.4);max-height:90vh;overflow-y:auto;}
-.ps-header{text-align:center;margin-bottom:6px;}
-.ps-title{font-size:22px;font-weight:900;color:#f7d060;letter-spacing:2px;}
-.ps-dust{font-size:14px;color:#c4b5fd;margin:4px 0 16px;}
-.ps-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
-.ps-item{background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.35);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;transition:border-color .15s;}
-.ps-item.owned{border-color:#16a34a;background:rgba(0,80,40,.2);}
-.ps-ico{font-size:28px;flex-shrink:0;}
+/* ── BOUTIQUE ── */
+#boutique{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:99400;justify-content:center;align-items:flex-start;padding:16px;overflow-y:auto;}
+.bq-box{background:linear-gradient(160deg,#07000f,#120020,#07000f);border:2px solid #7c3aed;border-radius:18px;padding:22px 24px 20px;max-width:600px;width:100%;color:#fff;box-shadow:0 0 60px rgba(124,58,237,.4);margin:auto;}
+.bq-header{text-align:center;margin-bottom:14px;}
+.bq-title{font-size:22px;font-weight:900;color:#f7d060;letter-spacing:2px;margin-bottom:4px;cursor:default;}
+.bq-title .bq-secret{display:inline-block;opacity:0;font-size:14px;transition:opacity .4s;}
+.bq-title:hover .bq-secret{opacity:.3;}
+.bq-dust{font-size:13px;color:#c4b5fd;margin-bottom:12px;}
+.bq-tabs{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;}
+.bq-tab{background:rgba(124,58,237,.15);border:1px solid rgba(124,58,237,.4);border-radius:8px;padding:6px 14px;cursor:pointer;font-size:12px;font-weight:700;color:#9ca3af;transition:all .15s;}
+.bq-tab.active{background:#7c3aed;border-color:#a78bfa;color:#fff;}
+.bq-tab:hover:not(.active){background:rgba(124,58,237,.3);color:#e2e8f0;}
+#bq-content{min-height:200px;margin:14px 0;}
+.bq-close{background:#1a0a2a;color:#a78bfa;border:1px solid #7c3aed;border-radius:8px;padding:9px 0;width:100%;cursor:pointer;font-size:13px;font-weight:700;}
+.bq-close:hover{background:#2a1040;}
+/* items réutilisables */
+.ps-grid{display:flex;flex-direction:column;gap:10px;}
+.ps-item{background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.35);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;transition:border-color .15s;}
+.ps-item.owned,.ps-item.equipped{border-color:#16a34a;background:rgba(0,80,40,.2);}
+.ps-ico{font-size:26px;flex-shrink:0;}
 .ps-info{flex:1;}
-.ps-name{font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:2px;}
+.ps-name{font-size:13px;font-weight:700;color:#e2e8f0;margin-bottom:2px;}
 .ps-desc{font-size:11px;color:#9ca3af;}
-.ps-buy{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;}
+.ps-buy{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;}
 .ps-buy:hover{background:#6d28d9;}.ps-buy:disabled{background:#1f2937;color:#4b5563;cursor:not-allowed;}
 .ps-owned-badge{font-size:11px;color:#4ade80;font-weight:700;white-space:nowrap;}
+.ps-equip{background:#16a34a;color:#fff;border:none;border-radius:8px;padding:7px 14px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;}
+.ps-equip:hover{background:#15803d;}
+/* Skins grid */
+.skin-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.skin-card{border:2px solid rgba(124,58,237,.35);border-radius:12px;padding:14px 12px;cursor:pointer;text-align:center;transition:all .15s;position:relative;}
+.skin-card.active-skin{border-color:#f7d060;box-shadow:0 0 14px rgba(247,208,96,.3);}
+.skin-card:hover:not(.active-skin){border-color:#a78bfa;}
+.skin-preview{height:44px;border-radius:6px;margin-bottom:8px;background-size:16px 16px;}
+.skin-name{font-size:13px;font-weight:700;color:#e2e8f0;}
+.skin-cost{font-size:11px;color:#c4b5fd;margin-top:2px;}
+.skin-active-badge{position:absolute;top:6px;right:8px;font-size:10px;font-weight:800;color:#f7d060;}
+/* Hats grid */
+.hat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.hat-card{border:2px solid rgba(124,58,237,.35);border-radius:12px;padding:14px 10px;cursor:pointer;text-align:center;transition:all .15s;position:relative;}
+.hat-card.active-hat{border-color:#f7d060;box-shadow:0 0 14px rgba(247,208,96,.3);}
+.hat-card:hover:not(.active-hat){border-color:#a78bfa;}
+.hat-emoji{font-size:28px;margin-bottom:6px;}
+.hat-name{font-size:11px;font-weight:700;color:#e2e8f0;}
+.hat-cost{font-size:10px;color:#c4b5fd;margin-top:2px;}
+.hat-active-badge{position:absolute;top:5px;right:6px;font-size:10px;color:#f7d060;font-weight:800;}
+/* Info panel */
+.bq-info-section{background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.25);border-radius:10px;padding:12px 14px;margin-bottom:10px;}
+.bq-info-title{font-size:12px;font-weight:800;color:#c4b5fd;letter-spacing:1px;margin-bottom:8px;text-transform:uppercase;}
+.bq-info-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#e2e8f0;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.bq-info-row:last-child{border-bottom:none;}
+.bq-info-row span{color:#c4b5fd;font-weight:700;}
+/* Villager hat overlay */
+.vhat{position:absolute;top:6px;left:50%;transform:translateX(-50%);font-size:16px;pointer-events:none;z-index:6;line-height:1;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5));}
+/* Easter egg reveal */
+@keyframes eggIn{from{opacity:0;transform:translate(-50%,-50%) scale(.5) rotate(-10deg)}to{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(0)}}
+#egg-reveal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#1a0a30,#2d1060);border:2px solid #f7d060;border-radius:16px;padding:24px 32px;z-index:99999;text-align:center;color:#fff;animation:eggIn .5s cubic-bezier(.17,.67,.36,1.5) forwards;min-width:280px;}
+.egg-icon{font-size:52px;margin-bottom:8px;}
+.egg-title{font-size:18px;font-weight:900;color:#f7d060;margin-bottom:6px;}
+.egg-dust{font-size:22px;font-weight:900;color:#c4b5fd;}
+.egg-desc{font-size:12px;color:#9ca3af;margin-top:4px;}
 /* ── CONCLUSION OVERLAY ── */
 @keyframes conclIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
 #conclusion{display:none;position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:99500;justify-content:center;align-items:center;padding:20px;}
@@ -297,7 +342,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   <button id="bm-btn" onclick="showBlackMarket()" style="display:none;background:#07000f;color:#a78bfa;border:1px solid #7c3aed;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">🏴‍☠️ Marché</button>
   <button id="speed-btn" onclick="toggleSpeed()">⏩ ×1</button>
   <button id="mute-btn" onclick="toggleMute()">🔊</button>
-  <span id="hcomet" onclick="showPermaShop()" title="Poussières de Comète — cliquer pour le shop">☄️ <b id="hcomet-val">0</b></span>
+  <span id="hcomet" title="Poussières de Comète">☄️ <b id="hcomet-val">0</b></span>
   <span style="color:#666;font-size:11px;">Clic-droit=vendre | Échap=Pause</span>
 </div>
 
@@ -436,16 +481,29 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   <button class="sp-btn" onclick="closeStreakPopup()">Continuer !</button>
 </div>
 
-<!-- ── PERMA SHOP ── -->
-<div id="perma-shop">
-  <div class="ps-box">
-    <div class="ps-header">
-      <div class="ps-title">☄️ AMÉLIORATIONS PERMANENTES</div>
-      <div class="ps-dust">Solde : <b id="ps-dust-val">0</b> ☄️ Poussières de Comète</div>
+<!-- ── BOUTIQUE ── -->
+<div id="boutique">
+  <div class="bq-box">
+    <div class="bq-header">
+      <div class="bq-title" id="bq-title-el">🛍️ BOUTIQUE <span class="bq-secret" id="bq-secret-hint">☄️</span></div>
+      <div class="bq-dust">Solde : <b id="ps-dust-val">0</b> ☄️ Poussières de Comète</div>
+      <div class="bq-tabs">
+        <button class="bq-tab active" id="btab-bonuses" onclick="switchBoutTab('bonuses')">🏆 Améliorations</button>
+        <button class="bq-tab" id="btab-skins" onclick="switchBoutTab('skins')">🎨 Skins</button>
+        <button class="bq-tab" id="btab-hats" onclick="switchBoutTab('hats')">🎩 Chapeaux</button>
+        <button class="bq-tab" id="btab-info" onclick="switchBoutTab('info')">ℹ️ Gains</button>
+      </div>
     </div>
-    <div class="ps-grid" id="ps-grid"></div>
-    <button onclick="closePermaShop()" style="background:#1a0a2a;color:#a78bfa;border:1px solid #7c3aed;border-radius:8px;padding:9px 0;width:100%;cursor:pointer;font-size:13px;font-weight:700;">Fermer ✕</button>
+    <div id="bq-content"></div>
+    <button class="bq-close" onclick="closeBoutique()">Fermer ✕</button>
   </div>
+</div>
+<!-- ── EGG REVEAL ── -->
+<div id="egg-reveal">
+  <div class="egg-icon" id="egg-icon"></div>
+  <div class="egg-title" id="egg-title"></div>
+  <div class="egg-dust" id="egg-dust"></div>
+  <div class="egg-desc" id="egg-desc"></div>
 </div>
 
 <!-- ── CONCLUSION ── -->
@@ -478,10 +536,10 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 
 <!-- ── MENU PRINCIPAL ── -->
 <div id="main-menu">
-  <div class="mm-logo">🏘️</div>
+  <div class="mm-logo" id="mm-logo" onclick="eggLogoClick()" style="cursor:pointer;" title="???">🏘️</div>
   <div class="mm-title">CARDSETTLER</div>
   <div class="mm-sub">Survive 35 jours, repousse les vagues</div>
-  <div id="mm-comet" style="font-size:13px;color:#c4b5fd;background:rgba(76,29,149,.2);border:1px solid #7c3aed;border-radius:8px;padding:4px 16px;cursor:pointer;" onclick="showPermaShop()">☄️ <b id="mm-comet-val">0</b> Poussières de Comète &nbsp;|&nbsp; 🔥 Série : <b id="mm-streak-val">0</b> j.</div>
+  <div id="mm-comet" style="font-size:13px;color:#c4b5fd;background:rgba(76,29,149,.2);border:1px solid #7c3aed;border-radius:8px;padding:4px 16px;">☄️ <b id="mm-comet-val">0</b> Poussières de Comète &nbsp;|&nbsp; 🔥 Série : <b id="mm-streak-val">0</b> j.</div>
   <div id="mm-stats"></div>
   <div class="diff-selector">
     <button class="diff-btn active-normal" id="diff-normal" onclick="setDifficulty('normal')">⚔️ Normal</button>
@@ -492,7 +550,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   <button class="mbtn" onclick="startNewGame()">🆕 Nouvelle Partie</button>
   <button class="mbtn" id="btn-resume" onclick="resumeGame()" disabled>▶ Reprendre la partie</button>
   <p id="resume-info"></p>
-  <button class="mbtn" onclick="showPermaShop()" style="background:#07000f;border-color:#7c3aed;color:#c4b5fd;">☄️ Améliorations Permanentes</button>
+  <button class="mbtn" onclick="showBoutique()" style="background:#07000f;border-color:#7c3aed;color:#c4b5fd;">🛍️ Boutique</button>
   <button class="mbtn" onclick="showTutorial()" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📖 Tutoriel</button>
   <button class="mbtn" onclick="showAchOverlay()" style="background:#071e14;border-color:#1a4a2a;color:#4ade80;">🏅 Succès</button>
   <button class="mbtn disc" onclick="disconnect()">🚪 Déconnexion</button>
@@ -804,7 +862,7 @@ function loadGame(){
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
   clearLog();
   ['overlay','victory','pause','main-menu'].forEach(id=>document.getElementById(id).style.display='none');
-  buildShop();
+  buildShop();applyBoardSkin();
   // Cartes
   Object.values(data.cards).forEach(c=>{
     G.cards[c.id]={id:c.id,type:c.type,x:c.x,y:c.y,sid:null,aggro:c.aggro||0};
@@ -849,7 +907,7 @@ function initG(){
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
   clearLog();
   ['overlay','victory','pause','main-menu'].forEach(id=>document.getElementById(id).style.display='none');
-  buildShop();
+  buildShop();applyBoardSkin();
   spawn('berry_bush',70,70);spawn('tree',200,70);spawn('villager',330,70);
   if(hasPermaBonus('pop'))spawn('villager',460,70);
   spawn('berry',hasPermaBonus('pop')?590:460,70);spawn('berry',hasPermaBonus('pop')?590:460,180);spawn('flint',330,180);
@@ -871,7 +929,8 @@ function createCardDOM(id,type){
   const catCls=d.monster?'cat-monster':d.node?'cat-node':d.food?'cat-food':'cat-craft';
   el.className='card card-spawn'+(d.monster?' monster':'')+(d.boss?' boss':'');el.id='c'+id;
   el.style.cssText=`left:${G.cards[id].x}px;top:${G.cards[id].y}px;background:${d.bg};color:${d.c};z-index:10;`;
-  el.innerHTML=`<div class="stack-badge"></div><div class="card-cat ${catCls}"></div><div class="card-emoji">${d.e}</div><div class="card-name">${d.n}</div><div class="card-bar"><div class="card-bar-fill"></div></div>`;
+  const hatHtml=(type==='villager')?`<div class="vhat">${getEquippedHatEmoji()}</div>`:'';
+  el.innerHTML=`<div class="stack-badge"></div>${hatHtml}<div class="card-cat ${catCls}"></div><div class="card-emoji">${d.e}</div><div class="card-name">${d.n}</div><div class="card-bar"><div class="card-bar-fill"></div></div>`;
   setTimeout(()=>el.classList.remove('card-spawn'),420);
   el.addEventListener('mousedown',e=>{e.preventDefault();startDrag(e,id);});
   el.addEventListener('contextmenu',e=>{e.preventDefault();sellCard(id);});
@@ -898,7 +957,9 @@ function mkStack(ids){
   const sid=G.nid++;const root=G.cards[ids[0]];
   G.stacks[sid]={id:sid,ids:[...ids],rx:root.x,ry:root.y,recipe:null,prog:0};
   ids.forEach(id=>{G.cards[id].sid=sid;});
-  updateSV(sid);checkRecipe(sid);return sid;
+  updateSV(sid);checkRecipe(sid);
+  checkGoldStackEgg(ids);
+  return sid;
 }
 function dissolve(sid){
   const s=G.stacks[sid];if(!s)return;
@@ -2294,6 +2355,202 @@ function renderTuto(){
   }
 }
 
+// ── BOARD SKINS ───────────────────────────────────────────────────────────────
+const BOARD_SKINS=[
+  {id:'default',   e:'🌿', n:'Forêt Ancestrale', desc:'Le thème de départ', cost:0,
+   bg:'#1e4a1e',dot:'#265226',size:'28px 28px',hud:'#0f2310',hudb:'#2d5a2d'},
+  {id:'volcano',   e:'🌋', n:'Volcan',  desc:'Lave et cendres — pour les téméraires', cost:500,
+   bg:'#2a0800',dot:'#6b1500',size:'28px 28px',hud:'#1a0500',hudb:'#7a1500'},
+  {id:'underwater',e:'🌊', n:'Sous-Marin', desc:'Profondeurs glacées de l\'océan perdu', cost:800,
+   bg:'#001225',dot:'#003066',size:'28px 28px',hud:'#000c1a',hudb:'#004080'},
+  {id:'space',     e:'🚀', n:'Cosmique', desc:'L\'infini où naissent les comètes', cost:1200,
+   bg:'#03010a',dot:'rgba(100,60,220,.4)',size:'32px 32px',hud:'#06000f',hudb:'#4a1a8a'},
+];
+function getActiveSkin(){return localStorage.getItem('cs_board_skin')||'default';}
+function getOwnedSkins(){try{return JSON.parse(localStorage.getItem('cs_owned_skins')||'["default"]');}catch(e){return['default'];}}
+function ownsSkin(id){return getOwnedSkins().includes(id);}
+function buySkin(id){
+  const s=BOARD_SKINS.find(s=>s.id===id);if(!s||ownsSkin(id))return;
+  if(!spendCometDust(s.cost)){showDustToast('❌ Pas assez de Poussières !');return;}
+  const arr=getOwnedSkins();arr.push(id);localStorage.setItem('cs_owned_skins',JSON.stringify(arr));
+  equipSkin(id);
+}
+function equipSkin(id){
+  localStorage.setItem('cs_board_skin',id);applyBoardSkin();
+  renderBoutiqueTab('skins');updateDustUI();
+}
+function applyBoardSkin(){
+  const id=getActiveSkin();
+  const s=BOARD_SKINS.find(s=>s.id===id)||BOARD_SKINS[0];
+  const tbl=document.getElementById('table');
+  if(tbl){
+    tbl.style.background=s.bg;
+    tbl.style.backgroundImage=`radial-gradient(circle at 1px 1px,${s.dot} 1px,transparent 0)`;
+    tbl.style.backgroundSize=s.size;
+  }
+  const hud=document.getElementById('hud');
+  if(hud){hud.style.background=s.hud;hud.style.borderColor=s.hudb;}
+}
+
+// ── VILLAGER HATS ─────────────────────────────────────────────────────────────
+const HATS=[
+  {id:'none',       e:'',   n:'Sans chapeau',    desc:'Au naturel', cost:0},
+  {id:'tophat',     e:'🎩', n:'Haut-de-Forme',   desc:'Classe et élégance', cost:150},
+  {id:'straw',      e:'👒', n:'Chapeau de Paille',desc:'Pour les paysans stylés', cost:120},
+  {id:'helmet',     e:'🪖', n:'Casque Guerrier',  desc:'Protection assurée', cost:200},
+  {id:'crown',      e:'👑', n:'Couronne Royale',  desc:'Dignité maximale', cost:350},
+  {id:'graduation', e:'🎓', n:'Toque du Sage',    desc:'Connaissance infinie', cost:180},
+];
+function getEquippedHat(){return localStorage.getItem('cs_equipped_hat')||'none';}
+function getEquippedHatEmoji(){const h=HATS.find(h=>h.id===getEquippedHat());return h?h.e:'';}
+function getOwnedHats(){try{return JSON.parse(localStorage.getItem('cs_owned_hats')||'["none"]');}catch(e){return['none'];}}
+function ownsHat(id){return getOwnedHats().includes(id);}
+function buyHat(id){
+  const h=HATS.find(h=>h.id===id);if(!h||ownsHat(id))return;
+  if(!spendCometDust(h.cost)){showDustToast('❌ Pas assez de Poussières !');return;}
+  const arr=getOwnedHats();arr.push(id);localStorage.setItem('cs_owned_hats',JSON.stringify(arr));
+  equipHat(id);
+}
+function equipHat(id){
+  localStorage.setItem('cs_equipped_hat',id);
+  updateAllVillagerHats();renderBoutiqueTab('hats');updateDustUI();
+}
+function updateAllVillagerHats(){
+  const e=getEquippedHatEmoji();
+  document.querySelectorAll('.vhat').forEach(el=>el.textContent=e);
+}
+
+// ── BOUTIQUE ─────────────────────────────────────────────────────────────────
+let _boutTab='bonuses';
+let _bqSecretClicks=0;let _bqSecretTimer=null;
+
+function showBoutique(tab){
+  _boutTab=tab||'bonuses';
+  document.getElementById('boutique').style.display='flex';
+  renderBoutiqueTab(_boutTab);
+  updateDustUI();
+  // Secret egg: clicking ☄️ in title 7 times
+  const titleEl=document.getElementById('bq-title-el');
+  if(titleEl&&!titleEl._eggBound){
+    titleEl._eggBound=true;
+    titleEl.addEventListener('click',()=>{
+      _bqSecretClicks++;clearTimeout(_bqSecretTimer);
+      _bqSecretTimer=setTimeout(()=>_bqSecretClicks=0,3000);
+      if(_bqSecretClicks>=7){_bqSecretClicks=0;triggerEaster('bq_secret','☄️','Obsession Cosmique','Tu as cliqué 7 fois sur l\'emblème... et la comète t\'a répondu.',400);}
+    });
+  }
+}
+function closeBoutique(){document.getElementById('boutique').style.display='none';}
+function switchBoutTab(tab){
+  _boutTab=tab;
+  document.querySelectorAll('.bq-tab').forEach(b=>b.classList.remove('active'));
+  const el=document.getElementById('btab-'+tab);if(el)el.classList.add('active');
+  renderBoutiqueTab(tab);
+}
+function renderBoutiqueTab(tab){
+  const dust=getCometDust();
+  const el=document.getElementById('bq-content');if(!el)return;
+  if(tab==='bonuses'){
+    el.innerHTML='<div class="ps-grid">'+PERMA_BONUSES.map(b=>{
+      const owned=hasPermaBonus(b.id);
+      return `<div class="ps-item${owned?' owned':''}">
+        <div class="ps-ico">${b.e}</div>
+        <div class="ps-info"><div class="ps-name">${b.n}</div><div class="ps-desc">${b.desc}</div></div>
+        ${owned?'<div class="ps-owned-badge">✅ Actif</div>':
+          `<button class="ps-buy" onclick="buyPermaBonus('${b.id}')" ${dust<b.cost?'disabled':''}>${b.cost.toLocaleString()} ☄️</button>`}
+      </div>`;
+    }).join('')+'</div>';
+  }else if(tab==='skins'){
+    const active=getActiveSkin();
+    el.innerHTML='<div class="skin-grid">'+BOARD_SKINS.map(s=>{
+      const owned=ownsSkin(s.id);const isActive=active===s.id;
+      return `<div class="skin-card${isActive?' active-skin':''}" onclick="${owned?`equipSkin('${s.id}')`:`buySkin('${s.id}')`}">
+        ${isActive?'<div class="skin-active-badge">✓ ACTIF</div>':''}
+        <div class="skin-preview" style="background:${s.bg};background-image:radial-gradient(circle at 1px 1px,${s.dot} 1px,transparent 0);background-size:${s.size};"></div>
+        <div class="skin-name">${s.e} ${s.n}</div>
+        <div class="skin-cost">${owned?'<span style="color:#4ade80">✓ Possédé</span>':(s.cost===0?'Gratuit':`${s.cost} ☄️${dust<s.cost?' <span style="color:#ef4444">❌</span>':''}`)}</div>
+        <div class="ps-desc" style="margin-top:4px;">${s.desc}</div>
+      </div>`;
+    }).join('')+'</div>';
+  }else if(tab==='hats'){
+    const active=getEquippedHat();
+    el.innerHTML='<div style="font-size:11px;color:#9ca3af;margin-bottom:10px;text-align:center;">Le chapeau équipé apparaît sur tous tes villageois 🧑</div>'
+      +'<div class="hat-grid">'+HATS.map(h=>{
+      const owned=ownsHat(h.id);const isActive=active===h.id;
+      return `<div class="hat-card${isActive?' active-hat':''}" onclick="${owned?`equipHat('${h.id}')`:`buyHat('${h.id}')`}">
+        ${isActive?'<div class="hat-active-badge">✓</div>':''}
+        <div class="hat-emoji">${h.e||'🧑'}</div>
+        <div class="hat-name">${h.n}</div>
+        <div class="hat-cost">${owned?'<span style="color:#4ade80">✓</span>':(h.cost===0?'Gratuit':`${h.cost} ☄️`)}</div>
+      </div>`;
+    }).join('')+'</div>';
+  }else if(tab==='info'){
+    el.innerHTML=`
+      <div class="bq-info-section">
+        <div class="bq-info-title">🌅 Sources quotidiennes</div>
+        <div class="bq-info-row">Connexion du jour <span>+5 ☄️</span></div>
+        <div class="bq-info-row">Série 3 jours <span>+15 ☄️ bonus</span></div>
+        <div class="bq-info-row">Série 7 jours <span>+50 ☄️ bonus</span></div>
+        <div class="bq-info-row">Série 30 jours <span>+200 ☄️ bonus</span></div>
+        <div class="bq-info-row">Quête journalière accomplie <span>+5 ☄️</span></div>
+      </div>
+      <div class="bq-info-section">
+        <div class="bq-info-title">🏆 Victoires</div>
+        <div class="bq-info-row">Victoire en Normal <span>+30 ☄️</span></div>
+        <div class="bq-info-row">Victoire en Difficile <span>+80 ☄️</span></div>
+        <div class="bq-info-row">Tuer le Roi Gobelin 👑 <span>+10 ☄️</span></div>
+        <div class="bq-info-row">Tuer le Dragon 🐉 <span>+25 ☄️</span></div>
+      </div>
+      <div class="bq-info-section">
+        <div class="bq-info-title">🏅 Succès rares</div>
+        <div class="bq-info-row">Succès rares débloqués <span>+15 ☄️ chacun</span></div>
+      </div>
+      <div class="bq-info-section">
+        <div class="bq-info-title">🥚 Easter Eggs <span style="color:#6b7280;font-size:10px;">(trouve-les toi-même !)</span></div>
+        <div class="bq-info-row">Easter eggs cachés <span>+150 à +500 ☄️</span></div>
+        <div class="bq-info-row" style="font-style:italic;color:#6b7280;">Indice : certains secrets se cachent là où on clique le plus...</div>
+      </div>`;
+  }
+}
+
+// ── EASTER EGGS ───────────────────────────────────────────────────────────────
+function getFoundEggs(){try{return JSON.parse(localStorage.getItem('cs_eggs')||'[]');}catch(e){return[];}}
+function eggFound(id){return getFoundEggs().includes(id);}
+function markEggFound(id){const a=getFoundEggs();if(!a.includes(id)){a.push(id);localStorage.setItem('cs_eggs',JSON.stringify(a));}}
+function triggerEaster(id,icon,title,desc,amount){
+  if(eggFound(id))return;
+  markEggFound(id);
+  const earned=addCometDust(amount);
+  const el=document.getElementById('egg-reveal');
+  document.getElementById('egg-icon').textContent=icon;
+  document.getElementById('egg-title').textContent='🥚 '+title;
+  document.getElementById('egg-dust').textContent='+'+earned+' ☄️';
+  document.getElementById('egg-desc').textContent=desc;
+  el.style.display='block';
+  playSound('secret');
+  setTimeout(()=>el.style.display='none',4000);
+}
+// 1. Konami code: ↑↑↓↓←→←→
+const KONAMI=[38,38,40,40,37,39,37,39];let _konamiIdx=0;
+document.addEventListener('keydown',e=>{
+  if(e.keyCode===KONAMI[_konamiIdx])_konamiIdx++;else _konamiIdx=e.keyCode===KONAMI[0]?1:0;
+  if(_konamiIdx===KONAMI.length){_konamiIdx=0;triggerEaster('konami','🎮','Code Galactique','↑↑↓↓←→←→ — La comète t\'attendait depuis le début.',500);}
+});
+// 2. Logo ×10 clicks
+let _logoClicks=0;let _logoTimer=null;
+function eggLogoClick(){
+  _logoClicks++;clearTimeout(_logoTimer);
+  _logoTimer=setTimeout(()=>_logoClicks=0,2500);
+  if(_logoClicks>=10){_logoClicks=0;triggerEaster('logo10','🏘️','Fondateur Dévoué','10 clics sur le village... tu es vraiment attaché à lui !',300);}
+}
+// 3. Stack 3 gold — hooked in mkStack
+function checkGoldStackEgg(ids){
+  if(eggFound('gold3'))return;
+  const types=ids.map(id=>G.cards[id]?.type);
+  if(types.length>=3&&types.every(t=>t==='gold'))
+    setTimeout(()=>triggerEaster('gold3','💰','L\'Alchimiste Fou','3 pièces d\'or empilées... tu as découvert l\'alchimie cosmique !',200),400);
+}
+
 // ── REVIVE (Cristal de Survie) ───────────────────────────────────────────────
 function doRevive(reason){
   G.over=false;
@@ -2394,25 +2651,9 @@ function buyPermaBonus(id){
   showDustToast('✅ '+b.n+' débloqué !');
   playSound('achievement');
 }
-function renderPermaShop(){
-  const grid=document.getElementById('ps-grid');if(!grid)return;
-  const dust=getCometDust();
-  grid.innerHTML=PERMA_BONUSES.map(b=>{
-    const owned=hasPermaBonus(b.id);
-    return `<div class="ps-item${owned?' owned':''}">
-      <div class="ps-ico">${b.e}</div>
-      <div class="ps-info"><div class="ps-name">${b.n}</div><div class="ps-desc">${b.desc}</div></div>
-      ${owned?`<div class="ps-owned-badge">✅ Actif</div>`:
-        `<button class="ps-buy" onclick="buyPermaBonus('${b.id}')" ${dust<b.cost?'disabled':''}>${b.cost.toLocaleString()} ☄️</button>`}
-    </div>`;
-  }).join('');
-  updateDustUI();
-}
-function showPermaShop(){
-  renderPermaShop();
-  document.getElementById('perma-shop').style.display='flex';
-}
-function closePermaShop(){document.getElementById('perma-shop').style.display='none';}
+function renderPermaShop(){renderBoutiqueTab('bonuses');}
+function showPermaShop(){showBoutique('bonuses');}
+function closePermaShop(){closeBoutique();}
 
 // ── NARRATIVE ─────────────────────────────────────────────────────────────────
 const NARRATIVE_INTRO=`<em>Le Grand Gel a dévoré les pics du Nord, emportant vos ancêtres.</em>
