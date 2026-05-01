@@ -41,9 +41,24 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 .pbtn:hover{background:#a93226;}.pbtn:disabled{background:#555;cursor:not-allowed;}
 .pbtn small{display:block;font-size:10px;font-weight:400;opacity:.75;margin-top:1px;}
 /* Log */
-#log{position:absolute;bottom:12px;left:12px;z-index:100;max-width:240px;}
-.litem{background:rgba(0,0,0,.75);color:#fff;padding:4px 10px;border-radius:6px;font-size:12px;margin-bottom:4px;animation:fi .3s ease;}
-.litem.hint{background:rgba(15,30,60,.95);border:1px solid #3b82f6;color:#bfdbfe;padding:7px 12px;font-size:12px;}
+/* ── LOG SCROLLABLE ── */
+#log{position:absolute;bottom:12px;left:12px;z-index:100;width:256px;}
+#log-header{background:rgba(0,0,0,.7);color:#6b7280;font-size:10px;font-weight:700;letter-spacing:.5px;padding:4px 8px 4px 10px;border-radius:6px 6px 0 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;user-select:none;}
+#log-header:hover{background:rgba(0,0,0,.85);}
+#log-clear{background:transparent;border:none;color:#4b5563;cursor:pointer;font-size:11px;padding:0 2px;}#log-clear:hover{color:#9ca3af;}
+#log-body{max-height:172px;overflow-y:auto;display:flex;flex-direction:column;scrollbar-width:thin;scrollbar-color:#2d5a2d transparent;}
+#log-body::-webkit-scrollbar{width:3px;}
+#log-body::-webkit-scrollbar-thumb{background:#2d5a2d;border-radius:2px;}
+#log-body.collapsed{display:none;}
+.litem{background:rgba(0,0,0,.78);color:#fff;padding:4px 10px;font-size:12px;margin-bottom:2px;border-radius:0 0 0 0;animation:fi .3s ease;line-height:1.4;}
+.litem:first-child{border-radius:0;}
+.litem:last-child{border-radius:0 0 6px 6px;}
+.litem.hint{background:rgba(15,30,60,.95);border-left:2px solid #3b82f6;color:#bfdbfe;padding:6px 10px;}
+/* ── BADGE ×N ── */
+.stack-badge{position:absolute;top:4px;left:4px;background:rgba(0,0,0,.75);color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:8px;pointer-events:none;display:none;line-height:1.5;letter-spacing:.3px;border:1px solid rgba(255,255,255,.15);}
+/* ── MUTE BUTTON ── */
+#mute-btn{background:#0f1a0f;color:#86efac;border:1px solid #2d5a2d;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:14px;line-height:1;}
+#mute-btn.muted{color:#4b5563;border-color:#374151;}
 @keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 /* Overlays jeu */
 .overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9000;justify-content:center;align-items:center;flex-direction:column;color:#fff;gap:12px;text-align:center;padding:20px;}
@@ -225,6 +240,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   <button onclick="showConseilPopup()" style="background:#1a1a0a;color:#fde68a;border:1px solid #78716c;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">💡 Conseil</button>
   <button id="bm-btn" onclick="showBlackMarket()" style="display:none;background:#07000f;color:#a78bfa;border:1px solid #7c3aed;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">🏴‍☠️ Marché</button>
   <button id="speed-btn" onclick="toggleSpeed()">⏩ ×1</button>
+  <button id="mute-btn" onclick="toggleMute()">🔊</button>
   <span style="color:#666;font-size:11px;">Clic-droit=vendre | Échap=Pause</span>
 </div>
 
@@ -232,7 +248,10 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 <!-- Table de jeu -->
 <div id="table"><div id="wave-alert"></div></div>
 <div id="shop"></div>
-<div id="log"></div>
+<div id="log">
+  <div id="log-header" onclick="toggleLogCollapse()">📋 Journal<button id="log-clear" onclick="event.stopPropagation();clearLog()">×</button></div>
+  <div id="log-body"></div>
+</div>
 <div id="tooltip"><div class="tt-name"></div><div class="tt-desc"></div><div class="tt-label"></div><div class="tt-r"></div><div class="tt-sell"></div></div>
 
 <!-- Overlay Défaite / Famine -->
@@ -518,10 +537,16 @@ function setDifficulty(d){
 }
 
 // ── AUDIO ────────────────────────────────────────────────────────────────────
+let _muted=false;
+function toggleMute(){
+  _muted=!_muted;
+  const btn=document.getElementById('mute-btn');
+  if(btn){btn.textContent=_muted?'🔇':'🔊';btn.className=_muted?'muted':'';}
+}
 const AC=new(window.AudioContext||window.webkitAudioContext)();
 document.addEventListener('mousedown',()=>{if(AC.state==='suspended')AC.resume();},{passive:true});
 function playSound(type){
-  if(!AC)return;
+  if(_muted||!AC)return;
   try{
     const t=AC.currentTime;
     if(type==='craft_start'){
@@ -673,7 +698,7 @@ function loadGame(){
      packCostAdd:(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).packCostAdd,
      scoreMult:(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).scoreMult};
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
-  document.getElementById('log').innerHTML='';
+  clearLog();
   ['overlay','victory','pause','main-menu'].forEach(id=>document.getElementById(id).style.display='none');
   buildShop();
   // Cartes
@@ -717,7 +742,7 @@ function initG(){
   const sb=document.getElementById('speed-btn');if(sb){sb.textContent='⏩ ×1';sb.className='';sb.id='speed-btn';}
   const bb=document.getElementById('bm-btn');if(bb)bb.style.display='none';
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
-  document.getElementById('log').innerHTML='';
+  clearLog();
   ['overlay','victory','pause','main-menu'].forEach(id=>document.getElementById(id).style.display='none');
   buildShop();
   spawn('berry_bush',70,70);spawn('tree',200,70);spawn('villager',330,70);
@@ -735,7 +760,7 @@ function createCardDOM(id,type){
   const catCls=d.monster?'cat-monster':d.node?'cat-node':d.food?'cat-food':'cat-craft';
   el.className='card card-spawn'+(d.monster?' monster':'')+(d.boss?' boss':'');el.id='c'+id;
   el.style.cssText=`left:${G.cards[id].x}px;top:${G.cards[id].y}px;background:${d.bg};color:${d.c};z-index:10;`;
-  el.innerHTML=`<div class="card-cat ${catCls}"></div><div class="card-emoji">${d.e}</div><div class="card-name">${d.n}</div><div class="card-bar"><div class="card-bar-fill"></div></div>`;
+  el.innerHTML=`<div class="stack-badge"></div><div class="card-cat ${catCls}"></div><div class="card-emoji">${d.e}</div><div class="card-name">${d.n}</div><div class="card-bar"><div class="card-bar-fill"></div></div>`;
   setTimeout(()=>el.classList.remove('card-spawn'),420);
   el.addEventListener('mousedown',e=>{e.preventDefault();startDrag(e,id);});
   el.addEventListener('contextmenu',e=>{e.preventDefault();sellCard(id);});
@@ -785,12 +810,15 @@ function rmFromStack(cid){
 }
 function updateSV(sid){
   const s=G.stacks[sid];if(!s)return;
+  const n=s.ids.length;
   s.ids.forEach((cid,i)=>{
     const el=cel(cid);if(!el)return;
     el.style.left=s.rx+'px';el.style.top=(s.ry+i*SO)+'px';el.style.zIndex=10+i;
     G.cards[cid].x=s.rx;G.cards[cid].y=s.ry+i*SO;
     const bar=el.querySelector('.card-bar');
     if(bar)bar.style.display=(i===0&&s.recipe)?'block':'none';
+    const badge=el.querySelector('.stack-badge');
+    if(badge){badge.textContent='×'+n;badge.style.display=(i===0&&n>1)?'block':'none';}
   });
 }
 function updateCV(id){
@@ -1205,10 +1233,17 @@ function updateHUD(){
 }
 
 // ── LOG ───────────────────────────────────────────────────────────────────────
-function log(msg){
-  const d=document.getElementById('log'),el=document.createElement('div');
-  el.className='litem';el.textContent=msg;d.appendChild(el);setTimeout(()=>el.remove(),5000);
+function _logAppend(msg,cls,ttl){
+  const body=document.getElementById('log-body');if(!body)return;
+  const el=document.createElement('div');el.className=cls;el.textContent=msg;
+  body.appendChild(el);
+  const items=body.querySelectorAll('.litem');if(items.length>30)items[0].remove();
+  body.scrollTop=body.scrollHeight;
+  setTimeout(()=>{if(el.parentNode)el.remove();},ttl);
 }
+function log(msg){_logAppend(msg,'litem',6000);}
+function clearLog(){const b=document.getElementById('log-body');if(b)b.innerHTML='';}
+function toggleLogCollapse(){const b=document.getElementById('log-body');if(b)b.classList.toggle('collapsed');}
 
 // ── OVERLAYS ──────────────────────────────────────────────────────────────────
 function calcScore(){
@@ -1459,11 +1494,7 @@ function markHintSeen(id){
   try{const a=JSON.parse(localStorage.getItem('stacklands_hints')||'[]');
     if(!a.includes(id)){a.push(id);localStorage.setItem('stacklands_hints',JSON.stringify(a));}}catch(e){}
 }
-function logHint(msg){
-  const d=document.getElementById('log'),el=document.createElement('div');
-  el.className='litem hint';el.textContent=msg;d.appendChild(el);
-  setTimeout(()=>el.remove(),9000);
-}
+function logHint(msg){_logAppend(msg,'litem hint',10000);}
 
 // ── EVENT TUTORIAL IN-GAME ───────────────────────────────────────────────────
 let _evtTutQueue=[];let _evtTutBusy=false;
