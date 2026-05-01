@@ -163,6 +163,28 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 /* ── SCORE FINAL ── */
 .final-score{font-size:28px;font-weight:900;color:#f7d060;margin:6px 0;text-shadow:0 0 20px rgba(247,208,96,.5);}
 .score-breakdown{font-size:12px;color:#94a3b8;margin-top:4px;line-height:1.8;}
+/* ── QUÊTE HUD ── */
+#hquest{font-size:11px;color:#fde68a;background:rgba(100,80,0,.35);border:1px solid #854d0e;border-radius:6px;padding:2px 8px;cursor:pointer;white-space:nowrap;transition:all .2s;}
+#hquest.done{color:#4ade80;border-color:#16a34a;background:rgba(0,60,0,.4);}
+#hquest:hover{opacity:.8;}
+/* ── ÉVÉNEMENT JOURNALIER ── */
+#event-popup{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(8,16,36,.97);border:2px solid #3b82f6;border-radius:16px;padding:22px 30px 18px;max-width:370px;width:92%;color:#fff;z-index:9600;box-shadow:0 8px 40px rgba(0,0,0,.8);text-align:center;}
+@keyframes epIn{from{opacity:0;transform:translate(-50%,-48%) scale(.9)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.ep-active{animation:epIn .3s cubic-bezier(.17,.67,.36,1.1) forwards;}
+.ep-type{font-size:10px;font-weight:800;letter-spacing:2px;margin-bottom:10px;padding:3px 10px;border-radius:10px;display:inline-block;}
+.ep-type.good{color:#4ade80;background:rgba(74,222,128,.12);border:1px solid #16a34a;}
+.ep-type.bad{color:#f87171;background:rgba(248,113,113,.12);border:1px solid #dc2626;}
+.ep-type.neutral{color:#fbbf24;background:rgba(251,191,36,.12);border:1px solid #d97706;}
+.ep-emoji{font-size:52px;margin:8px 0;line-height:1;}
+.ep-title{font-size:20px;font-weight:900;color:#f7d060;margin-bottom:8px;}
+.ep-desc{font-size:13px;color:#bfdbfe;line-height:1.65;margin-bottom:4px;}
+.ep-btn{background:#1e3a8a;color:#93c5fd;border:1px solid #3b82f6;border-radius:8px;padding:9px 28px;cursor:pointer;font-size:13px;font-weight:700;margin-top:14px;width:100%;}
+.ep-btn:hover{background:#1e40af;}
+/* ── BOSS ── */
+.card.boss{border-color:rgba(251,191,36,.8)!important;}
+.card.boss:hover{box-shadow:0 0 0 3px #fbbf24,0 3px 8px rgba(0,0,0,.6)!important;}
+@keyframes boss-pulse{0%,100%{box-shadow:0 0 0 2px rgba(251,191,36,.9),0 3px 8px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 7px rgba(251,191,36,1),0 0 24px rgba(251,191,36,.7)}}
+.boss-pulse{animation:boss-pulse .6s infinite;}
 /* ── DIFFICULTÉ ── */
 .diff-selector{display:flex;gap:10px;justify-content:center;margin-bottom:2px;}
 .diff-btn{background:#0f2310;color:#6b8;border:2px solid #2d5a2d;border-radius:9px;padding:10px 28px;cursor:pointer;font-size:14px;font-weight:700;transition:all .15s;width:140px;}
@@ -195,6 +217,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   <div id="moon-wrap"><div id="moon-fill"></div></div>
   <span class="stat">🪙 <b id="hgold">5</b></span>
   <span class="stat" id="hfood-wrap">🍖 <b id="hfood">0</b>/<b id="hpop">0</b></span>
+  <span id="hquest" onclick="showQuestDetails()" style="display:none;"></span>
   <span id="obj"></span>
   <span id="save-badge">💾</span>
   <button onclick="showRB()" style="background:#1a4a1a;color:#8f8;border:1px solid #4a8a4a;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">📖 Recettes</button>
@@ -299,6 +322,15 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   </div>
 </div>
 
+<!-- ── ÉVÉNEMENT JOURNALIER ── -->
+<div id="event-popup">
+  <div class="ep-type" id="ep-type">ÉVÉNEMENT</div>
+  <div class="ep-emoji" id="ep-emoji"></div>
+  <div class="ep-title" id="ep-title"></div>
+  <div class="ep-desc" id="ep-desc"></div>
+  <button class="ep-btn" onclick="closeEventPopup()">OK !</button>
+</div>
+
 <!-- ── EVENT TUTORIAL IN-GAME ── -->
 <div id="event-tut">
   <div class="evt-tut-hd"><div class="evt-tut-emoji" id="evt-emoji"></div><div class="evt-tut-title" id="evt-title"></div></div>
@@ -379,6 +411,8 @@ const CD = {
   gem:          {n:'Gemme',          e:'🔮', bg:'#ede9fe',c:'#5b21b6', sellValue:3, desc:'Pierre précieuse. Vaut 3🪙 à la vente'},
   cave_entrance:{n:'Entrée Grotte',  e:'🕳️', bg:'#0f172a',c:'#94a3b8', node:1, desc:'Empile 1-3 🧑 + ⚔️/🗡️ → Expédition (40s). Plus d\'épées = meilleur butin !'},
   // Cartes secrètes
+  goblin_king: {n:'Roi Gobelin',  e:'👑', bg:'#3b0764',c:'#f5f3ff',monster:1,aggroMax:8, boss:true,desc:'BOSS — 2⚔️ ou 🗡️. Laisse 5🪙. Attaque en 8s'},
+  dragon:      {n:'Dragon',       e:'🐉', bg:'#450a0a', c:'#fef2f2',monster:1,aggroMax:6, boss:true,desc:'BOSS FINAL — 🗡️+⚔️ ou 3⚔️. Laisse Gemme+3🪙. Attaque en 6s'},
   elixir:       {n:'Élixir Vital',    e:'🧪', bg:'#d1fae5',c:'#065f46', food:10, secret:1, desc:'Nourriture : +10', sdesc:'Un élixir magique qui nourrit instantanément tout ton village.', skeep:'Garde-le pour une urgence de famine, ou utilise-le quand tu as beaucoup de villageois.', sbonus:'Nourrit 10 villageois en une seule fois !'},
   golden_bar:   {n:'Lingot d\'Or',    e:'💛', bg:'#fef9c3',c:'#a16207', sellValue:8, secret:1, desc:'Vaut 8 pièces à la vente', sdesc:'Un lingot d\'or pur forgé par alchimie.', skeep:'Revends-le immédiatement (clic droit) pour 8 pièces d\'or !', sbonus:'8× la valeur d\'une carte normale (1 pièce)'},
   war_potion:   {n:'Potion de Guerre',e:'⚡', bg:'#fce7f3',c:'#9d174d', secret:1, desc:'Accélère le combat ×10 (empile sur épée+monstre)', sdesc:'Une potion alchimique qui décuple la vitesse au combat.', skeep:'Empile-la avec ton épée et un monstre pour un combat ultra-rapide !', sbonus:'Combat 10× plus vite — parfait contre les Trolls !'},
@@ -430,6 +464,17 @@ const RECIPES = [
   {i:['war_potion','iron_sword','troll'],  o:['gold','gold'],keep:['iron_sword'],t:.3, rep:0, d:'⚡ Potion+Épée Fer+Troll → 2 Or'},
   // Phil stone production
   {i:['phil_stone','villager'],        o:['gold'],        keep:['phil_stone','villager'], t:5, rep:1, d:'💎 Pierre Philo + Villageois → Or (boucle)'},
+  // ── Boss : Roi Gobelin (Jour 20) ──
+  {i:['sword','sword','goblin_king'],       o:['gold','gold','gold','gold','gold'],keep:['sword','sword'],    t:12,rep:0,d:'👑 2⚔️ + Roi Gobelin → 5 Or'},
+  {i:['iron_sword','goblin_king'],          o:['gold','gold','gold','gold','gold'],keep:['iron_sword'],       t:7, rep:0,d:'👑 🗡️ + Roi Gobelin → 5 Or'},
+  {i:['iron_sword','sword','goblin_king'],  o:['gold','gold','gold','gold','gold'],keep:['iron_sword','sword'],t:8,rep:0,d:'👑 🗡️+⚔️ + Roi Gobelin → 5 Or'},
+  // ── Boss : Dragon (Jour 30) ── Normal : 🗡️+⚔️  |  Difficile : 🗡️+⚔️+⚔️
+  {i:['iron_sword','sword','dragon'],           o:['gold','gold','gold','gem'],          keep:['iron_sword','sword'],       t:16,rep:0,normalOnly:true, d:'🐉 🗡️+⚔️ + Dragon → 3 Or + Gemme'},
+  {i:['iron_sword','sword','sword','dragon'],   o:['gold','gold','gold','gold','gem'],   keep:['iron_sword','sword','sword'],t:13,rep:0,hardOnly:true,  d:'💀🐉 🗡️+2⚔️ + Dragon → 4 Or + Gemme'},
+  {i:['sword','sword','sword','dragon'],        o:['gold','gold','gem'],                 keep:['sword','sword','sword'],    t:20,rep:0,normalOnly:true, d:'🐉 3⚔️ + Dragon → 2 Or + Gemme'},
+  // War potion bosses
+  {i:['war_potion','sword','sword','goblin_king'],o:['gold','gold','gold','gold','gold'],keep:['sword','sword'],t:.8,rep:0,d:'⚡ Potion+2⚔️+Roi Gobelin → 5 Or'},
+  {i:['war_potion','iron_sword','goblin_king'],   o:['gold','gold','gold','gold','gold'],keep:['iron_sword'], t:.5,rep:0,d:'⚡ Potion+🗡️+Roi Gobelin → 5 Or'},
 ];
 
 const PACKS = {
@@ -456,7 +501,7 @@ const PACKS = {
   ]},
 };
 
-const WIN_DAY=25, CW=82, CH=104, SO=24;
+const WIN_DAY=35, CW=82, CH=104, SO=24;
 let G={};
 let selectedDifficulty=localStorage.getItem('cs_difficulty')||'normal';
 const DIFF_PARAMS={
@@ -537,6 +582,18 @@ function playSound(type){
         o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.11);
         g.gain.setValueAtTime(.18,t+i*.11);g.gain.exponentialRampToValueAtTime(.001,t+i*.11+.42);
         o.start(t+i*.11);o.stop(t+i*.11+.48);});
+    }else if(type==='goblin_king_appear'){
+      [200,260,180,300].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';
+        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.1);
+        g.gain.setValueAtTime(.3,t+i*.1);g.gain.exponentialRampToValueAtTime(.001,t+i*.1+.25);
+        o.start(t+i*.1);o.stop(t+i*.1+.28);});
+    }else if(type==='dragon_appear'){
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.connect(g);g.connect(AC.destination);
+      o.frequency.setValueAtTime(40,t);o.frequency.exponentialRampToValueAtTime(20,t+1.2);
+      g.gain.setValueAtTime(.7,t);g.gain.exponentialRampToValueAtTime(.001,t+1.3);o.start(t);o.stop(t+1.4);
+      const o2=AC.createOscillator(),g2=AC.createGain();o2.type='square';o2.connect(g2);g2.connect(AC.destination);
+      o2.frequency.setValueAtTime(80,t+.3);o2.frequency.exponentialRampToValueAtTime(40,t+1.0);
+      g2.gain.setValueAtTime(.3,t+.3);g2.gain.exponentialRampToValueAtTime(.001,t+1.1);o2.start(t+.3);o2.stop(t+1.1);
     }else if(type==='wolf_appear'){
       const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.connect(g);g.connect(AC.destination);
       o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(60,t+.5);
@@ -589,6 +646,7 @@ function saveGame(){
   const data={
     gold:G.gold, moon:G.moon, moonProg:G.moonProg, moonDur:G.moonDur, nid:G.nid,
     _babiesGrown:G._babiesGrown||0,
+    _lastEvent:G._lastEvent||null,
     difficulty:G.difficulty||'normal',
     _stats:G._stats||{},
     cards:Object.fromEntries(Object.entries(G.cards).map(([id,c])=>[id,{id:c.id,type:c.type,x:c.x,y:c.y,sid:c.sid,aggro:c.aggro||0}])),
@@ -608,6 +666,7 @@ function loadGame(){
      _stats:data._stats||{crafts:0,kills:0,sells:0,blocks:0,babies:0},
      _faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,
      _babiesGrown:data._babiesGrown||0,
+     _quest:data._quest||null,_lastEvent:data._lastEvent||null,
      difficulty:data.difficulty||'normal',
      aggroMult:(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).aggroMult,
      foodPerPop:(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).foodPerPop,
@@ -654,7 +713,7 @@ function buildShop(){
 // ── STATE ────────────────────────────────────────────────────────────────────
 function initG(){
   const dp=DIFF_PARAMS[selectedDifficulty]||DIFF_PARAMS.normal;
-  G={gold:5,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,difficulty:selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult};
+  G={gold:5,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,_quest:null,_lastEvent:null,difficulty:selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult};
   const sb=document.getElementById('speed-btn');if(sb){sb.textContent='⏩ ×1';sb.className='';sb.id='speed-btn';}
   const bb=document.getElementById('bm-btn');if(bb)bb.style.display='none';
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
@@ -674,7 +733,7 @@ function createCardDOM(id,type){
   const d=CD[type];
   const el=document.createElement('div');
   const catCls=d.monster?'cat-monster':d.node?'cat-node':d.food?'cat-food':'cat-craft';
-  el.className='card card-spawn'+(d.monster?' monster':'');el.id='c'+id;
+  el.className='card card-spawn'+(d.monster?' monster':'')+(d.boss?' boss':'');el.id='c'+id;
   el.style.cssText=`left:${G.cards[id].x}px;top:${G.cards[id].y}px;background:${d.bg};color:${d.c};z-index:10;`;
   el.innerHTML=`<div class="card-cat ${catCls}"></div><div class="card-emoji">${d.e}</div><div class="card-name">${d.n}</div><div class="card-bar"><div class="card-bar-fill"></div></div>`;
   setTimeout(()=>el.classList.remove('card-spawn'),420);
@@ -689,7 +748,7 @@ function spawn(type,x,y){
   G.cards[id]={id,type,x,y,sid:null,aggro:0};
   createCardDOM(id,type);
   if(CD[type]?.monster){
-    const snd={wolf:'wolf_appear',goblin:'goblin_appear',troll:'troll_appear'}[type];
+    const snd={wolf:'wolf_appear',goblin:'goblin_appear',troll:'troll_appear',goblin_king:'goblin_king_appear',dragon:'dragon_appear'}[type];
     if(snd)setTimeout(()=>playSound(snd),80);
   }
   checkFirstEncounter(type);
@@ -966,19 +1025,48 @@ function monsterAttack(mid){
 function spawnWave(){
   const waveNum=Math.floor(G.moon/5);
   let monsters;
+  const isBossWave20=G.moon===20,isBossWave30=G.moon===30;
   if(waveNum===1)monsters=['wolf'];
   else if(waveNum===2)monsters=['wolf','wolf'];
   else if(waveNum===3)monsters=['wolf','goblin'];
   else if(waveNum===4)monsters=['goblin','goblin'];
   else if(waveNum===5)monsters=['goblin','goblin','troll'];
-  else monsters=['troll',...Array(Math.min(waveNum-3,4)).fill('goblin')];
+  else if(waveNum===6)monsters=['troll','goblin','goblin'];
+  else if(waveNum===7)monsters=['troll','troll','goblin'];
+  else monsters=['troll','troll',...Array(Math.min(waveNum-6,3)).fill('goblin')];
   const tbl=document.getElementById('table').getBoundingClientRect();
   monsters.forEach(type=>{spawn(type,40+Math.random()*(tbl.width-180),40+Math.random()*(tbl.height-180));});
+  // Boss spéciaux
+  if(isBossWave20){
+    setTimeout(()=>{
+      spawn('goblin_king',tbl.width/2+(Math.random()-.5)*140,tbl.height/2+(Math.random()-.5)*100);
+      const wa=document.getElementById('wave-alert');
+      wa.innerHTML='👑 BOSS : ROI GOBELIN ! 2⚔️ ou 🗡️ pour le battre ! Laisse 5🪙 !';
+      wa.style.background='rgba(100,0,140,.93)';wa.style.display='block';
+      setTimeout(()=>{wa.style.display='none';wa.style.background='';},5000);
+      log('👑 Le Roi Gobelin est arrivé ! Il faut 2 épées ou une épée de fer !');
+      playSound('troll_appear');
+    },1200);
+  }
+  if(isBossWave30){
+    setTimeout(()=>{
+      spawn('dragon',tbl.width/2+(Math.random()-.5)*100,tbl.height/2+(Math.random()-.5)*80);
+      const wa=document.getElementById('wave-alert');
+      wa.innerHTML='🐉 BOSS FINAL : LE DRAGON ! 🗡️+⚔️ pour le vaincre !';
+      wa.style.background='rgba(140,0,0,.95)';wa.style.display='block';
+      setTimeout(()=>{wa.style.display='none';wa.style.background='';},6000);
+      log('🐉 LE DRAGON EST LÀ ! Prépare épée de fer + épée (Normal) ou 🗡️+2⚔️ (Difficile) !');
+      playSound('troll_appear');setTimeout(()=>playSound('troll_appear'),600);
+    },1800);
+  }
   playSound('wave_start');
   const el=document.getElementById('wave-alert');
-  el.textContent='⚔️ Vague '+waveNum+' ! '+monsters.map(t=>CD[t].e+' '+CD[t].n).join(', ')+' !';
-  el.style.display='block';setTimeout(()=>el.style.display='none',3500);
-  log('⚔️ Vague '+waveNum+' ! Empile une Épée sur les monstres !');
+  if(!isBossWave20&&!isBossWave30){
+    el.textContent='⚔️ Vague '+waveNum+' ! '+monsters.map(t=>CD[t].e+' '+CD[t].n).join(', ')+' !';
+    el.style.display='block';setTimeout(()=>el.style.display='none',3500);
+  }
+  const diff=G.difficulty==='hard'?' (Difficile !)':'';
+  log('⚔️ Vague '+waveNum+diff+' ! Empile des épées sur les monstres !');
 }
 
 // ── GAME LOOP ────────────────────────────────────────────────────────────────
@@ -1019,7 +1107,7 @@ function loop(ts){
         const bar=el.querySelector('.card-bar'),fill=el.querySelector('.card-bar-fill');
         if(bar)bar.style.display='block';
         if(fill){fill.style.background='#ef4444';fill.style.width=Math.min(pct*100,100)+'%';}
-        if(pct>=.7)el.classList.add('danger-pulse');else el.classList.remove('danger-pulse');
+        if(pct>=.7){el.classList.add('danger-pulse');if(d.boss)el.classList.add('boss-pulse');}else{el.classList.remove('danger-pulse');el.classList.remove('boss-pulse');}
       }
       if(c.aggro>=effMax)toAttack.push(id);
     }else{if(el)el.classList.remove('danger-pulse');}
@@ -1045,6 +1133,11 @@ function endMoon(){
     log('🌙 Jour '+G.moon+' — '+pop+' villageois nourris'+(G.foodPerPop>1?' (×'+G.foodPerPop+' en difficile)':'')+'!');
   }else{log('🌙 Jour '+G.moon);}
   if(G.moon%5===0)spawnWave();
+  // Quête : vérifier complétion + nouvelle quête
+  checkDailyQuest();
+  newDailyQuest();
+  // Événement aléatoire (pas les jours de vague pour éviter le chaos)
+  if(G.moon%5!==0&&G.moon>2)maybeFireEvent();
   Object.entries(PACKS).forEach(([k,p])=>{
     if(p.unlock>0&&G.moon>=p.unlock){
       const b=document.getElementById('b-'+k);if(b)b.style.display='block';
@@ -1102,10 +1195,13 @@ function updateHUD(){
   foodWrap.style.color=food>=pop?'#86efac':'#fca5a5';
   if(food<pop&&pop>0)foodWrap.classList.add('famine-warn');else foodWrap.classList.remove('famine-warn');
   const nextWave=G.moon%5===0?G.moon+5:Math.ceil(G.moon/5)*5;
-  document.getElementById('obj').textContent='⚔️ Vague J'+Math.min(nextWave,WIN_DAY)+' | 🎯 Objectif : J'+WIN_DAY;
+  const isBossNext=nextWave===20||nextWave===30;
+  const bossLabel=nextWave===20?' 👑BOSS':nextWave===30?' 🐉BOSS':'';
+  document.getElementById('obj').textContent='⚔️ Vague J'+Math.min(nextWave,WIN_DAY)+bossLabel+' | 🎯 Objectif : J'+WIN_DAY;
   const hdiff=document.getElementById('hdiff');
   if(hdiff)hdiff.style.display=G.difficulty==='hard'?'inline':'none';
   Object.keys(PACKS).forEach(k=>{const b=document.getElementById('b-'+k);if(b)b.disabled=G.gold<(PACKS[k].cost+(G.packCostAdd||0));});
+  updateQuestHUD();
 }
 
 // ── LOG ───────────────────────────────────────────────────────────────────────
@@ -1433,6 +1529,19 @@ function checkFirstEncounter(type){
     const msg=G.difficulty==='hard'?'👹 Troll ! En mode difficile : 3 ⚔️ ou 🗡️+⚔️ !':'👹 Troll ! Empile 2 ⚔️ ou 1 🗡️ Épée de Fer pour le battre !';
     showEventTut('troll',EVT_TUTS.troll.emoji,EVT_TUTS.troll.title,EVT_TUTS.troll.text);
     logHint(msg);
+  }else if(type==='goblin_king'&&!hasSeenHint('goblin_king')){
+    markHintSeen('goblin_king');
+    logHint('👑 ROI GOBELIN ! BOSS — Il lui faut 2⚔️ ou 1🗡️ Épée de Fer. Il laisse 5🪙 !!');
+    showEventTut('goblin_king','👑','BOSS : Roi Gobelin !',
+      'Le Roi Gobelin est bien plus puissant qu\'un gobelin ordinaire !\n\nPour le vaincre :\n⚔️⚔️ 2 Épées (13s de combat)\n🗡️ Épée de Fer seule (7s)\n🗡️+⚔️ Les deux (8s)\n\n💰 Il laisse 5🪙 en mourant — ta plus grosse récompense !\n\n💡 Prépare tes armes AVANT qu\'il attaque !\n⏱️ Il frappe en 8 secondes !');
+  }else if(type==='dragon'&&!hasSeenHint('dragon')){
+    markHintSeen('dragon');
+    const dmsg=G.difficulty==='hard'?'🐉 DRAGON ! BOSS FINAL — 🗡️+2⚔️ en mode difficile ! Il laisse Gemme+4🪙 !':'🐉 DRAGON ! BOSS FINAL — 🗡️+⚔️ ou 3⚔️. Il laisse Gemme+3🪙 !';
+    logHint(dmsg);
+    const dtext=G.difficulty==='hard'
+      ?'Le Dragon est le monstre ultime du jeu !\n\nMode Difficile :\n🗡️+⚔️+⚔️ Épée de Fer + 2 Épées\n\nIl laisse 4🪙 + 1💎 Gemme !\n\n💡 Prépare-toi bien avant le Jour 30 !\n⏱️ Il frappe en 6 secondes — très rapide !'
+      :'Le Dragon est le monstre ultime du jeu !\n\nMode Normal :\n🗡️+⚔️ Épée de Fer + Épée (16s)\n⚔️×3 3 Épées (20s — lent !)\n\nIl laisse 3🪙 + 1💎 Gemme !\n\n💡 Forge l\'épée de fer avant le Jour 30 !\n⏱️ Il frappe en 6 secondes — très rapide !';
+    showEventTut('dragon','🐉','BOSS FINAL : Le Dragon !',dtext);
   }
 }
 
@@ -1585,6 +1694,147 @@ function spawnConfetti(){
     ],{duration:dur,delay,easing:'ease-in',fill:'forwards'});
     setTimeout(()=>c.remove(),dur+delay+200);
   }
+}
+
+// ── ÉVÉNEMENTS JOURNALIERS ───────────────────────────────────────────────────
+const EVENTS_LIST=[
+  {id:'migration', type:'good', emoji:'👨‍👩‍👧', title:'Migration !',
+   desc:'Une famille arrive attirée par ta prospérité. +1 Villageois !',
+   effect(){const tbl=document.getElementById('table').getBoundingClientRect();
+     spawn('villager',tbl.width/2+(Math.random()-.5)*200,tbl.height/2+(Math.random()-.5)*120);
+     log('👪 +1 Villageois (migration) !');playSound('buy_pack');}},
+  {id:'harvest', type:'good', emoji:'🌾', title:'Récolte Abondante !',
+   desc:'Les champs ont été généreux cette saison. +3 Pommes gratuites !',
+   effect(){const tbl=document.getElementById('table').getBoundingClientRect();
+     for(let i=0;i<3;i++)spawn('apple',60+i*(CW+12),tbl.height/2);
+     log('🌾 +3 Pommes gratuites !');}},
+  {id:'merchant', type:'good', emoji:'🛒', title:'Marchand de Passage !',
+   desc:'Un marchand itinérant offre de l\'or en échange d\'un toit pour la nuit. +5🪙 !',
+   effect(){G.gold+=5;log('💰 Marchand de passage → +5🪙 !');updateHUD();}},
+  {id:'windfall', type:'good', emoji:'💎', title:'Trouvaille !',
+   desc:'Tes villageois ont trouvé une gemme cachée dans les rochers.',
+   effect(){const tbl=document.getElementById('table').getBoundingClientRect();
+     spawn('gem',tbl.width/2+(Math.random()-.5)*160,tbl.height/2+(Math.random()-.5)*100);
+     log('💎 Gemme trouvée dans les rochers !');}},
+  {id:'inspiration', type:'good', emoji:'💡', title:'Découverte Artisanale !',
+   desc:'Tes artisans ont fait une découverte inattendue. +2 Planches !',
+   effect(){const tbl=document.getElementById('table').getBoundingClientRect();
+     spawn('plank',tbl.width/2-50,tbl.height/2);spawn('plank',tbl.width/2+50,tbl.height/2);
+     log('💡 +2 Planches découvertes !');}},
+  {id:'drought', type:'bad', emoji:'☀️', title:'Sécheresse !',
+   desc:'La chaleur a desséché tes réserves. -2 nourriture.',
+   effect(){let rm=0;
+     const fcs=Object.values(G.cards).filter(c=>CD[c.type]?.food).sort((a,b)=>(CD[a.type].food||0)-(CD[b.type].food||0));
+     for(const fc of fcs){if(rm>=2)break;if(fc.sid)rmFromStack(fc.id);delCard(fc.id);rm++;}
+     log('☀️ Sécheresse : -2 nourriture !');}},
+  {id:'plague', type:'bad', emoji:'🤒', title:'Épidémie !',
+   desc:'Un villageois est tombé malade et a quitté le village.',
+   effect(){const vils=Object.values(G.cards).filter(c=>c.type==='villager'&&(!c.sid||!G.stacks[c.sid]?.recipe));
+     if(vils.length>2){const v=vils[0];if(v.sid)rmFromStack(v.id);delCard(v.id);
+       log('🤒 Épidémie : 1 villageois perdu !');updateHUD();}
+     else log('🤒 Épidémie contenue — village trop petit.');}},
+  {id:'bandit', type:'bad', emoji:'🦹', title:'Brigand !',
+   desc:'Un brigand a dérobé des pièces d\'or pendant la nuit.',
+   effect(){const stolen=Math.min(4,G.gold);G.gold-=stolen;
+     log('🦹 Brigand ! -'+stolen+'🪙 volés.');playSound('monster_attack');updateHUD();}},
+  {id:'storm', type:'bad', emoji:'⛈️', title:'Tempête !',
+   desc:'La tempête a renversé des ressources. -3🪙 et perte d\'une ressource.',
+   effect(){G.gold=Math.max(0,G.gold-2);
+     const res=Object.values(G.cards).filter(c=>!CD[c.type]?.node&&!CD[c.type]?.monster&&!CD[c.type]?.food&&!c.sid&&c.type!=='villager'&&c.type!=='baby');
+     if(res.length>0){const r=res[Math.floor(Math.random()*res.length)];delCard(r.id);}
+     log('⛈️ Tempête : -2🪙 et 1 ressource perdue !');updateHUD();}},
+];
+let _evtOpen=false;
+function maybeFireEvent(){
+  if(_evtOpen)return;
+  if(Math.random()>0.40)return; // 40% de chance par jour éligible
+  let pool=EVENTS_LIST;
+  if(G._lastEvent)pool=pool.filter(e=>e.id!==G._lastEvent);
+  const ev=pool[Math.floor(Math.random()*pool.length)];
+  G._lastEvent=ev.id;
+  setTimeout(()=>showEventPopup(ev),600);
+}
+function showEventPopup(ev){
+  _evtOpen=true;
+  const po=document.getElementById('event-popup');
+  document.getElementById('ep-type').textContent=ev.type==='good'?'✨ BONNE NOUVELLE':ev.type==='bad'?'⚠️ ÉVÉNEMENT':'📢 ÉVÉNEMENT';
+  document.getElementById('ep-type').className='ep-type '+ev.type;
+  document.getElementById('ep-emoji').textContent=ev.emoji;
+  document.getElementById('ep-title').textContent=ev.title;
+  document.getElementById('ep-desc').textContent=ev.desc;
+  po.style.display='block';po.classList.remove('ep-active');void po.offsetWidth;po.classList.add('ep-active');
+  setTimeout(()=>ev.effect(),400);
+  if(ev.type==='bad')playSound('error');else playSound('buy_pack');
+}
+function closeEventPopup(){
+  document.getElementById('event-popup').style.display='none';
+  _evtOpen=false;
+}
+
+// ── QUÊTES JOURNALIÈRES ───────────────────────────────────────────────────────
+const QUESTS_DEF=[
+  {id:'q_wood',  e:'🪵', desc:'Stocke 5 Bois',         reward:3, check:()=>countT('wood')>=5},
+  {id:'q_stone', e:'🪨', desc:'Stocke 4 Pierres',       reward:2, check:()=>countT('stone')>=4},
+  {id:'q_food',  e:'🍖', desc:'10 repas en réserve',    reward:3, check:()=>Object.values(G.cards).filter(c=>CD[c.type]?.food).reduce((s,c)=>s+(CD[c.type].food||0),0)>=10},
+  {id:'q_kill',  e:'⚔️', desc:'Tue 1 monstre',          reward:5, check:()=>(G._stats.kills||0)-(G._quest?.sk||0)>=1},
+  {id:'q_craft', e:'⚒️', desc:'Crafte 4 objets',        reward:3, check:()=>(G._stats.crafts||0)-(G._quest?.sc||0)>=4},
+  {id:'q_pop',   e:'👥', desc:'3 villageois vivants',   reward:3, check:()=>countT('villager')>=3},
+  {id:'q_gold',  e:'🪙', desc:'Accumule 8 Or',           reward:2, check:()=>G.gold>=8},
+  {id:'q_plank', e:'🟫', desc:'Stocke 2 Planches',      reward:2, check:()=>countT('plank')>=2},
+  {id:'q_baby',  e:'👶', desc:'Obtiens un Bébé',         reward:5, check:()=>countT('baby')>=1},
+  {id:'q_exp',   e:'⛏️', desc:'Lance une Expédition',   reward:7, check:()=>(G._stats.expeditions||0)-(G._quest?.se||0)>=1},
+  {id:'q_iron',  e:'🗡️', desc:'Forge une Épée de Fer',  reward:6, check:()=>(G._stats.madeIronSword||countT('iron_sword')>0)},
+  {id:'q_gem',   e:'🔮', desc:'Ramasse 1 Gemme',         reward:4, check:()=>countT('gem')>=1},
+];
+function newDailyQuest(){
+  const diff=G.difficulty||'normal';
+  const available=QUESTS_DEF.filter(q=>{
+    if(q.id==='q_baby'&&G.moon<6)return false;
+    if(q.id==='q_exp'&&G.moon<9)return false;
+    if(q.id==='q_iron'&&G.moon<8)return false;
+    if(q.id==='q_gem'&&G.moon<8)return false;
+    return true;
+  });
+  const def=available[Math.floor(Math.random()*available.length)];
+  G._quest={def,done:false,sk:G._stats.kills||0,sc:G._stats.crafts||0,se:G._stats.expeditions||0};
+  updateQuestHUD();
+  log('📋 Quête : '+def.e+' '+def.desc+' → +'+def.reward+'🪙');
+}
+function checkDailyQuest(){
+  if(!G._quest||G._quest.done)return;
+  if(G._quest.def.check()){
+    G._quest.done=true;
+    G.gold+=G._quest.def.reward;
+    playSound('achievement');
+    updateQuestHUD();
+    showAchievementToast({e:G._quest.def.e,n:'Quête accomplie !',d:G._quest.def.desc+' (+'+G._quest.def.reward+'🪙)'});
+    log('✅ Quête accomplie ! +'+G._quest.def.reward+'🪙');
+    updateHUD();
+  }
+}
+function updateQuestHUD(){
+  const el=document.getElementById('hquest');if(!el)return;
+  if(!G._quest){el.style.display='none';return;}
+  el.style.display='inline';
+  if(G._quest.done){
+    el.textContent='✅ Quête accomplie !';
+    el.className='done';el.id='hquest';
+  }else{
+    el.textContent='📋 '+G._quest.def.e+' '+G._quest.def.desc;
+    el.className='';el.id='hquest';
+  }
+}
+function showQuestDetails(){
+  if(!G._quest)return;
+  const q=G._quest;
+  const msg=q.done?'✅ Quête accomplie — +'+q.def.reward+'🪙 reçus !'
+    :'📋 '+q.def.e+' '+q.def.desc+' → récompense : +'+q.def.reward+'🪙';
+  const old=document.getElementById('conseil-popup');if(old)old.remove();
+  const el=document.createElement('div');el.id='conseil-popup';
+  el.style.cssText='position:fixed;top:58px;left:50%;transform:translateX(-50%);background:rgba(40,20,0,.97);color:#fde68a;padding:12px 20px;border-radius:12px;font-size:13px;z-index:99990;max-width:360px;text-align:center;border:1px solid #854d0e;box-shadow:0 4px 20px rgba(0,0,0,.6);cursor:pointer;';
+  el.innerHTML='<div style="font-size:10px;color:#a16207;letter-spacing:1px;margin-bottom:4px;">QUÊTE DU JOUR</div>'+msg+'<div style="font-size:10px;color:#4b5563;margin-top:6px;">Cliquer pour fermer</div>';
+  el.onclick=()=>el.remove();document.body.appendChild(el);
+  setTimeout(()=>{if(el.parentNode)el.remove();},6000);
 }
 
 // ── TIDY TABLE (par catégorie) ────────────────────────────────────────────────
