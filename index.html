@@ -197,6 +197,62 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 .ep-btn:hover{background:#1e40af;}
 /* ── BOSS ── */
 .card.boss{border-color:rgba(251,191,36,.8)!important;}
+/* ── POUSSIÈRES DE COMÈTE ── */
+#hcomet{background:rgba(139,92,246,.18);border:1px solid #7c3aed;border-radius:6px;padding:2px 8px;font-size:12px;color:#c4b5fd;white-space:nowrap;cursor:pointer;}
+#hcomet b{color:#e9d5ff;}
+/* ── NARRATIVE INTRO ── */
+@keyframes narIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+#narrative-intro{display:none;position:fixed;inset:0;background:linear-gradient(160deg,#020408 0%,#050d1a 50%,#030810 100%);z-index:99700;justify-content:center;align-items:center;flex-direction:column;padding:32px 20px;}
+.nar-box{max-width:560px;width:100%;text-align:center;animation:narIn .7s ease forwards;}
+.nar-comet{font-size:80px;margin-bottom:16px;filter:drop-shadow(0 0 30px rgba(139,92,246,.6));}
+.nar-lore{font-size:15px;line-height:2;color:#c4b5fd;white-space:pre-line;margin-bottom:28px;text-shadow:0 0 20px rgba(139,92,246,.3);}
+.nar-lore em{color:#f7d060;font-style:normal;font-weight:700;}
+.nar-btn{background:linear-gradient(135deg,#4c1d95,#7c3aed);color:#fff;border:none;border-radius:10px;padding:14px 40px;cursor:pointer;font-size:15px;font-weight:700;box-shadow:0 0 30px rgba(124,58,237,.5);letter-spacing:.5px;}
+.nar-btn:hover{background:linear-gradient(135deg,#5b21b6,#8b5cf6);}
+.nar-skip{background:transparent;border:none;color:#4b5563;font-size:11px;cursor:pointer;margin-top:12px;text-decoration:underline;}
+.nar-skip:hover{color:#6b7280;}
+/* ── STREAK POPUP ── */
+@keyframes streakIn{from{opacity:0;transform:translate(-50%,-44%) scale(.85)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+#streak-popup{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(160deg,#0a0a1a,#1a0a2e);border:2px solid #7c3aed;border-radius:16px;padding:28px 36px 22px;max-width:360px;width:92%;color:#fff;z-index:99600;box-shadow:0 0 50px rgba(124,58,237,.5);text-align:center;animation:streakIn .4s cubic-bezier(.17,.67,.36,1.3) forwards;}
+.streak-fire{font-size:56px;margin-bottom:6px;}
+.streak-count{font-size:42px;font-weight:900;color:#f7d060;text-shadow:0 0 20px rgba(247,208,96,.5);}
+.streak-label{font-size:13px;color:#c4b5fd;margin-bottom:12px;}
+.streak-reward{font-size:14px;color:#86efac;font-weight:700;margin-bottom:16px;background:rgba(0,100,50,.2);border:1px solid #16a34a;border-radius:8px;padding:8px 16px;}
+#streak-popup .sp-btn{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:10px 28px;cursor:pointer;font-size:13px;font-weight:700;}
+#streak-popup .sp-btn:hover{background:#6d28d9;}
+/* ── PERMA SHOP ── */
+#perma-shop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:99400;justify-content:center;align-items:center;padding:20px;}
+.ps-box{background:linear-gradient(160deg,#07000f,#120020,#07000f);border:2px solid #7c3aed;border-radius:18px;padding:26px 28px 22px;max-width:580px;width:100%;color:#fff;box-shadow:0 0 60px rgba(124,58,237,.4);max-height:90vh;overflow-y:auto;}
+.ps-header{text-align:center;margin-bottom:6px;}
+.ps-title{font-size:22px;font-weight:900;color:#f7d060;letter-spacing:2px;}
+.ps-dust{font-size:14px;color:#c4b5fd;margin:4px 0 16px;}
+.ps-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+.ps-item{background:rgba(124,58,237,.1);border:1px solid rgba(124,58,237,.35);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:14px;transition:border-color .15s;}
+.ps-item.owned{border-color:#16a34a;background:rgba(0,80,40,.2);}
+.ps-ico{font-size:28px;flex-shrink:0;}
+.ps-info{flex:1;}
+.ps-name{font-size:14px;font-weight:700;color:#e2e8f0;margin-bottom:2px;}
+.ps-desc{font-size:11px;color:#9ca3af;}
+.ps-buy{background:#7c3aed;color:#fff;border:none;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;}
+.ps-buy:hover{background:#6d28d9;}.ps-buy:disabled{background:#1f2937;color:#4b5563;cursor:not-allowed;}
+.ps-owned-badge{font-size:11px;color:#4ade80;font-weight:700;white-space:nowrap;}
+/* ── CONCLUSION OVERLAY ── */
+@keyframes conclIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
+#conclusion{display:none;position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:99500;justify-content:center;align-items:center;padding:20px;}
+.concl-box{max-width:560px;width:100%;text-align:center;animation:conclIn .6s cubic-bezier(.17,.67,.36,1.1) forwards;}
+.concl-type{font-size:10px;font-weight:800;letter-spacing:3px;padding:4px 14px;border-radius:12px;display:inline-block;margin-bottom:16px;}
+.concl-type.a{background:rgba(247,208,96,.15);color:#f7d060;border:1px solid #d97706;}
+.concl-type.b{background:rgba(239,68,68,.1);color:#f87171;border:1px solid #dc2626;}
+.concl-type.c{background:rgba(124,58,237,.2);color:#c4b5fd;border:1px solid #7c3aed;}
+.concl-emoji{font-size:72px;margin:8px 0 16px;line-height:1;}
+.concl-title{font-size:26px;font-weight:900;color:#f7d060;margin-bottom:16px;text-shadow:0 0 20px rgba(247,208,96,.4);}
+.concl-text{font-size:14px;line-height:1.9;color:#ddd5fe;margin-bottom:20px;max-width:480px;margin-left:auto;margin-right:auto;}
+.concl-reward{font-size:13px;color:#86efac;background:rgba(0,80,40,.25);border:1px solid #16a34a;border-radius:8px;padding:8px 16px;display:inline-block;margin-bottom:20px;}
+.concl-btn{background:#7c3aed;color:#fff;border:none;border-radius:10px;padding:12px 32px;cursor:pointer;font-size:14px;font-weight:700;box-shadow:0 0 20px rgba(124,58,237,.4);}
+.concl-btn:hover{background:#6d28d9;}
+/* ── DUST TOAST ── */
+@keyframes dustToastIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+.dust-toast{position:fixed;top:56px;right:16px;background:rgba(76,29,149,.9);border:1px solid #7c3aed;color:#e9d5ff;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:700;z-index:99999;animation:dustToastIn .3s ease forwards;pointer-events:none;}
 .card.boss:hover{box-shadow:0 0 0 3px #fbbf24,0 3px 8px rgba(0,0,0,.6)!important;}
 @keyframes boss-pulse{0%,100%{box-shadow:0 0 0 2px rgba(251,191,36,.9),0 3px 8px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 7px rgba(251,191,36,1),0 0 24px rgba(251,191,36,.7)}}
 .boss-pulse{animation:boss-pulse .6s infinite;}
@@ -241,6 +297,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   <button id="bm-btn" onclick="showBlackMarket()" style="display:none;background:#07000f;color:#a78bfa;border:1px solid #7c3aed;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">🏴‍☠️ Marché</button>
   <button id="speed-btn" onclick="toggleSpeed()">⏩ ×1</button>
   <button id="mute-btn" onclick="toggleMute()">🔊</button>
+  <span id="hcomet" onclick="showPermaShop()" title="Poussières de Comète — cliquer pour le shop">☄️ <b id="hcomet-val">0</b></span>
   <span style="color:#666;font-size:11px;">Clic-droit=vendre | Échap=Pause</span>
 </div>
 
@@ -360,6 +417,50 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   </div>
 </div>
 
+<!-- ── NARRATIVE INTRO ── -->
+<div id="narrative-intro">
+  <div class="nar-box">
+    <div class="nar-comet">☄️</div>
+    <div class="nar-lore" id="nar-lore"></div>
+    <button class="nar-btn" onclick="closeNarrative()">⚔️ Partir à l'aventure</button><br>
+    <button class="nar-skip" onclick="closeNarrative()">Passer</button>
+  </div>
+</div>
+
+<!-- ── STREAK POPUP ── -->
+<div id="streak-popup">
+  <div class="streak-fire" id="streak-fire">🔥</div>
+  <div class="streak-count" id="streak-count">1</div>
+  <div class="streak-label" id="streak-label">jour de suite !</div>
+  <div class="streak-reward" id="streak-reward">+5 ☄️ Poussières de Comète</div>
+  <button class="sp-btn" onclick="closeStreakPopup()">Continuer !</button>
+</div>
+
+<!-- ── PERMA SHOP ── -->
+<div id="perma-shop">
+  <div class="ps-box">
+    <div class="ps-header">
+      <div class="ps-title">☄️ AMÉLIORATIONS PERMANENTES</div>
+      <div class="ps-dust">Solde : <b id="ps-dust-val">0</b> ☄️ Poussières de Comète</div>
+    </div>
+    <div class="ps-grid" id="ps-grid"></div>
+    <button onclick="closePermaShop()" style="background:#1a0a2a;color:#a78bfa;border:1px solid #7c3aed;border-radius:8px;padding:9px 0;width:100%;cursor:pointer;font-size:13px;font-weight:700;">Fermer ✕</button>
+  </div>
+</div>
+
+<!-- ── CONCLUSION ── -->
+<div id="conclusion">
+  <div class="concl-box">
+    <div class="concl-type" id="concl-type"></div>
+    <div class="concl-emoji" id="concl-emoji"></div>
+    <div class="concl-title" id="concl-title"></div>
+    <div class="concl-text" id="concl-text"></div>
+    <div class="concl-reward" id="concl-reward"></div>
+    <br>
+    <button class="concl-btn" onclick="closeConclusion()">Continuer →</button>
+  </div>
+</div>
+
 <!-- ── TUTORIEL ── -->
 <div id="tutorial">
   <div class="tut-box">
@@ -379,16 +480,19 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 <div id="main-menu">
   <div class="mm-logo">🏘️</div>
   <div class="mm-title">CARDSETTLER</div>
-  <div class="mm-sub">Survive 25 jours, repousse les vagues</div>
+  <div class="mm-sub">Survive 35 jours, repousse les vagues</div>
+  <div id="mm-comet" style="font-size:13px;color:#c4b5fd;background:rgba(76,29,149,.2);border:1px solid #7c3aed;border-radius:8px;padding:4px 16px;cursor:pointer;" onclick="showPermaShop()">☄️ <b id="mm-comet-val">0</b> Poussières de Comète &nbsp;|&nbsp; 🔥 Série : <b id="mm-streak-val">0</b> j.</div>
   <div id="mm-stats"></div>
   <div class="diff-selector">
     <button class="diff-btn active-normal" id="diff-normal" onclick="setDifficulty('normal')">⚔️ Normal</button>
     <button class="diff-btn" id="diff-hard" onclick="setDifficulty('hard')">💀 Difficile</button>
   </div>
   <div class="mm-diff-note" id="mm-diff-note">Mode Normal</div>
+  <button class="mbtn" onclick="showNarrative()">🌌 L'Histoire</button>
   <button class="mbtn" onclick="startNewGame()">🆕 Nouvelle Partie</button>
   <button class="mbtn" id="btn-resume" onclick="resumeGame()" disabled>▶ Reprendre la partie</button>
   <p id="resume-info"></p>
+  <button class="mbtn" onclick="showPermaShop()" style="background:#07000f;border-color:#7c3aed;color:#c4b5fd;">☄️ Améliorations Permanentes</button>
   <button class="mbtn" onclick="showTutorial()" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📖 Tutoriel</button>
   <button class="mbtn" onclick="showAchOverlay()" style="background:#071e14;border-color:#1a4a2a;color:#4ade80;">🏅 Succès</button>
   <button class="mbtn disc" onclick="disconnect()">🚪 Déconnexion</button>
@@ -738,7 +842,8 @@ function buildShop(){
 // ── STATE ────────────────────────────────────────────────────────────────────
 function initG(){
   const dp=DIFF_PARAMS[selectedDifficulty]||DIFF_PARAMS.normal;
-  G={gold:5,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,_quest:null,_lastEvent:null,difficulty:selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult};
+  const startGold=5+(hasPermaBonus('gold')?15:0);
+  G={gold:startGold,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,_quest:null,_lastEvent:null,difficulty:selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult,_reviveAvail:hasPermaBonus('revive')};
   const sb=document.getElementById('speed-btn');if(sb){sb.textContent='⏩ ×1';sb.className='';sb.id='speed-btn';}
   const bb=document.getElementById('bm-btn');if(bb)bb.style.display='none';
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
@@ -746,8 +851,14 @@ function initG(){
   ['overlay','victory','pause','main-menu'].forEach(id=>document.getElementById(id).style.display='none');
   buildShop();
   spawn('berry_bush',70,70);spawn('tree',200,70);spawn('villager',330,70);
-  spawn('berry',460,70);spawn('berry',460,180);spawn('flint',330,180);
+  if(hasPermaBonus('pop'))spawn('villager',460,70);
+  spawn('berry',hasPermaBonus('pop')?590:460,70);spawn('berry',hasPermaBonus('pop')?590:460,180);spawn('flint',330,180);
+  if(hasPermaBonus('iron'))spawn('iron_ore',590,180);
   updateHUD();
+  updateDustUI();
+  if(hasPermaBonus('gold'))log('✨ Éclat Stellaire : +15🪙 en bonus de départ !');
+  if(hasPermaBonus('pop'))log('👥 Mémoire des Ancêtres : villageois supplémentaire !');
+  if(hasPermaBonus('iron'))log('⚒️ Forge des Étoiles : minerai de fer en bonus !');
   log('🌅 Empile les cartes pour crafter !');
   log('⚔️ Première vague de monstres au Jour 5 !');
   requestAnimationFrame(loop);
@@ -871,7 +982,13 @@ function execRecipe(sid){
   // Stats tracking
   G._stats.crafts=(G._stats.crafts||0)+1;
   const killCount=goneTypes.filter(t=>CD[t]?.monster).length;
-  if(killCount>0)G._stats.kills=(G._stats.kills||0)+killCount;
+  if(killCount>0){
+    G._stats.kills=(G._stats.kills||0)+killCount;
+    goneTypes.forEach(t=>{
+      if(t==='goblin_king')addCometDust(10);
+      else if(t==='dragon')addCometDust(25);
+    });
+  }
   if(r.o.includes('baby'))G._stats.babies=(G._stats.babies||0)+1;
   // Bébé → villageois : villageois devient plus rare dans les paquets
   if(r.o.includes('villager')&&r.i.includes('baby'))G._babiesGrown=(G._babiesGrown||0)+1;
@@ -1045,8 +1162,13 @@ function monsterAttack(mid){
   if(villagers.length>0){
     const v=villagers[0];if(v.sid)rmFromStack(v.id);delCard(v.id);
     log('💀 Le '+mName+' a tué un villageois !');
-    if(countT('villager')+countT('baby')===0){G.over=true;showOverMonster();return;}
-  }else{log('💀 Le '+mName+' ravage le village !');G.over=true;showOverMonster();return;}
+    if(countT('villager')+countT('baby')===0){
+      if(G._reviveAvail){G._reviveAvail=false;doRevive('combat');}
+      else{G.over=true;showOverMonster();}return;}
+  }else{
+    if(G._reviveAvail){G._reviveAvail=false;doRevive('combat');}
+    else{log('💀 Le '+mName+' ravage le village !');G.over=true;showOverMonster();}return;
+  }
   updateHUD();
 }
 
@@ -1155,7 +1277,10 @@ function endMoon(){
     const fCards=Object.values(G.cards).filter(c=>CD[c.type]?.food).sort((a,b)=>(CD[b.type].food||0)-(CD[a.type].food||0));
     const total=fCards.reduce((s,c)=>s+(CD[c.type].food||0),0);
     const needed=pop*(G.foodPerPop||1);
-    if(total<needed){G.over=true;showOverFamine();return;}
+    if(total<needed){
+      if(G._reviveAvail){G._reviveAvail=false;doRevive('famine');}
+      else{G.over=true;showOverFamine();}return;
+    }
     let need=needed;
     for(const fc of fCards){if(need<=0)break;if(fc.sid)rmFromStack(fc.id);delCard(fc.id);need-=CD[fc.type].food;}
     log('🌙 Jour '+G.moon+' — '+pop+' villageois nourris'+(G.foodPerPop>1?' (×'+G.foodPerPop+' en difficile)':'')+'!');
@@ -1259,26 +1384,18 @@ function scoreBreakdown(){
   const mult=G.scoreMult||1;
   return `📅 ${G.moon} jours ×100  |  ⚒️ ${s.crafts||0} crafts ×15  |  💀 ${s.kills||0} kills ×20  |  ⛏️ ${s.expeditions||0} expéditions ×30  |  👥 ${pop} survivants ×50${mult>1?' | 💀 ×'+mult+' (Difficile)':''}`;
 }
-function showOverFamine(){
+function _showDefeatScreen(title,msg){
   updateGlobalStats(false);
-  document.getElementById('over-title').textContent='☠️ Famine !';
-  document.getElementById('over-msg').textContent='Tes villageois sont morts de faim.';
+  document.getElementById('over-title').textContent=title;
+  document.getElementById('over-msg').textContent=msg;
   document.getElementById('fscore').textContent='Tu as survécu '+G.moon+' jours.';
   const sc=calcScore();
   document.getElementById('over-score').textContent='Score : '+sc.toLocaleString();
   document.getElementById('over-breakdown').textContent=scoreBreakdown();
-  document.getElementById('overlay').style.display='flex';
+  showConclusion('b',()=>{document.getElementById('overlay').style.display='flex';});
 }
-function showOverMonster(){
-  updateGlobalStats(false);
-  document.getElementById('over-title').textContent='💀 Défaite !';
-  document.getElementById('over-msg').textContent='Tous tes villageois ont été tués par des monstres.';
-  document.getElementById('fscore').textContent='Tu as survécu '+G.moon+' jours.';
-  const sc=calcScore();
-  document.getElementById('over-score').textContent='Score : '+sc.toLocaleString();
-  document.getElementById('over-breakdown').textContent=scoreBreakdown();
-  document.getElementById('overlay').style.display='flex';
-}
+function showOverFamine(){_showDefeatScreen('☠️ Famine !','Tes villageois sont morts de faim.');}
+function showOverMonster(){_showDefeatScreen('💀 Défaite !','Tous tes villageois ont été tués par des monstres.');}
 function showVictory(){
   updateGlobalStats(true);
   if(!hasAchievement('victory_u')&&unlockAchievement('victory_u')){
@@ -1290,8 +1407,13 @@ function showVictory(){
   document.getElementById('vic-score').textContent='Score : '+sc.toLocaleString();
   document.getElementById('vic-breakdown').textContent=scoreBreakdown();
   document.getElementById('victory-stats').textContent='⚒️ '+(G._stats?.crafts||0)+' crafts  |  💀 '+(G._stats?.kills||0)+' monstres  |  🏅 '+getAchievements().length+'/'+ACHIEVEMENTS.length+' succès';
-  document.getElementById('victory').style.display='flex';
-  spawnConfetti();
+  const conclusionType=getTotalDust()>=3000?'c':'a';
+  const bonusDust=G.difficulty==='hard'?80:30;
+  addCometDust(bonusDust,true);
+  showConclusion(conclusionType,()=>{
+    document.getElementById('victory').style.display='flex';
+    spawnConfetti();
+  });
 }
 
 // ── MENU PRINCIPAL ────────────────────────────────────────────────────────────
@@ -1319,6 +1441,8 @@ function showMainMenu(){
     statsEl.textContent=parts.join(' | ');
   }
   document.getElementById('main-menu').style.display='flex';
+  updateDustUI();
+  checkAndUpdateStreak();
 }
 function startNewGame(){
   playSound('menu_click');
@@ -1656,7 +1780,9 @@ function execExpedition(sid){
   if(deadId){
     log('⛏️ Expédition : un villageois n\'est pas revenu... Butin : '+loot.map(t=>CD[t].e).join(' '));
     playSound('monster_attack');
-    if(countT('villager')+countT('baby')===0){G.over=true;showOverMonster();return;}
+    if(countT('villager')+countT('baby')===0){
+      if(G._reviveAvail){G._reviveAvail=false;doRevive('combat');}
+      else{G.over=true;showOverMonster();}return;}
   }else{
     log('⛏️ Expédition terminée ! Butin : '+loot.map(t=>CD[t].e+' '+CD[t].n).join(', '));
     playSound('craft_done');
@@ -1840,6 +1966,7 @@ function checkDailyQuest(){
     updateQuestHUD();
     showAchievementToast({e:G._quest.def.e,n:'Quête accomplie !',d:G._quest.def.desc+' (+'+G._quest.def.reward+'🪙)'});
     log('✅ Quête accomplie ! +'+G._quest.def.reward+'🪙');
+    addCometDust(5);
     updateHUD();
   }
 }
@@ -1994,7 +2121,11 @@ function getAchievements(){try{return JSON.parse(localStorage.getItem('stackland
 function hasAchievement(id){return getAchievements().includes(id);}
 function unlockAchievement(id){
   const arr=getAchievements();if(arr.includes(id))return false;
-  arr.push(id);localStorage.setItem('stacklands_achievements',JSON.stringify(arr));return true;
+  arr.push(id);localStorage.setItem('stacklands_achievements',JSON.stringify(arr));
+  // Rare achievements award Comet Dust
+  const rareIds=['victory_u','max_pop','full_craft','expedition_master','dragon_slayer','phil_master'];
+  if(rareIds.includes(id))setTimeout(()=>addCometDust(15),600);
+  return true;
 }
 let _toastQ=[],_toastBusy=false;
 function showAchievementToast(ach){_toastQ.push(ach);if(!_toastBusy)_nextToast();}
@@ -2161,6 +2292,186 @@ function renderTuto(){
     next.textContent='Suivant →';
     next.onclick=nextTutoStep;
   }
+}
+
+// ── REVIVE (Cristal de Survie) ───────────────────────────────────────────────
+function doRevive(reason){
+  G.over=false;
+  const tbl=document.getElementById('table');
+  const cx=tbl?tbl.offsetWidth/2:300, cy=tbl?tbl.offsetHeight/2:200;
+  const count=Math.max(2,Math.ceil((countT('villager')+countT('baby'))/2));
+  for(let i=0;i<count;i++)spawn('villager',cx+(i%3-1)*(CW+10),cy);
+  updateHUD();
+  playSound('achievement');
+  log('💙 Cristal de Survie ! '+count+' villageois ressuscités !');
+  showDustToast('💙 Résurrection !');
+}
+
+// ── COMET DUST ───────────────────────────────────────────────────────────────
+function getCometDust(){return parseInt(localStorage.getItem('cs_comet_dust')||'0');}
+function getTotalDust(){return parseInt(localStorage.getItem('cs_total_dust')||'0');}
+function addCometDust(amount,silent){
+  const multi=hasPermaBonus('soul')?2:1;
+  const earned=amount*multi;
+  localStorage.setItem('cs_comet_dust',getCometDust()+earned);
+  localStorage.setItem('cs_total_dust',getTotalDust()+earned);
+  updateDustUI();
+  if(!silent)showDustToast('+'+earned+' ☄️');
+  return earned;
+}
+function spendCometDust(amount){
+  if(getCometDust()<amount)return false;
+  localStorage.setItem('cs_comet_dust',getCometDust()-amount);
+  updateDustUI();return true;
+}
+function updateDustUI(){
+  const v=getCometDust();
+  const el=document.getElementById('hcomet-val');if(el)el.textContent=v.toLocaleString();
+  const mel=document.getElementById('mm-comet-val');if(mel)mel.textContent=v.toLocaleString();
+  const sel=document.getElementById('mm-streak-val');if(sel)sel.textContent=getStreak();
+  const psel=document.getElementById('ps-dust-val');if(psel)psel.textContent=v.toLocaleString();
+}
+function showDustToast(msg){
+  const t=document.createElement('div');t.className='dust-toast';t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),2800);
+}
+
+// ── STREAK ────────────────────────────────────────────────────────────────────
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function getStreak(){return parseInt(localStorage.getItem('cs_streak')||'0');}
+function checkAndUpdateStreak(){
+  const today=todayStr();
+  const last=localStorage.getItem('cs_last_play_date');
+  if(last===today)return; // déjà joué aujourd'hui
+  let streak=getStreak();
+  if(last){
+    const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+    streak=last===yesterday?streak+1:1;
+  }else{streak=1;}
+  localStorage.setItem('cs_streak',streak);
+  localStorage.setItem('cs_last_play_date',today);
+  // Gains de poussières
+  let earned=5;
+  if(streak===3)earned+=15;
+  else if(streak===7)earned+=50;
+  else if(streak===30)earned+=200;
+  addCometDust(earned,true);
+  showStreakPopup(streak,earned);
+}
+function showStreakPopup(streak,earned){
+  document.getElementById('streak-count').textContent=streak;
+  document.getElementById('streak-fire').textContent=streak>=7?'🌟':streak>=3?'🔥':'⭐';
+  document.getElementById('streak-label').textContent=streak===1?'premier jour !':streak+' jours de suite !';
+  let rewardTxt='+'+earned+' ☄️ Poussières de Comète';
+  if(streak===3)rewardTxt+=' (Bonus ×3 !)';
+  if(streak===7)rewardTxt+=' (Bonus ×7 !)';
+  if(streak===30)rewardTxt+=' (Bonus ×30 !)';
+  document.getElementById('streak-reward').textContent=rewardTxt;
+  document.getElementById('streak-popup').style.display='block';
+}
+function closeStreakPopup(){document.getElementById('streak-popup').style.display='none';}
+
+// ── PERMANENT BONUSES ────────────────────────────────────────────────────────
+const PERMA_BONUSES=[
+  {id:'gold',   e:'✨', n:'Éclat Stellaire',       cost:1000, desc:'Commence chaque partie avec +15 pièces d\'or'},
+  {id:'pop',    e:'👥', n:'Mémoire des Ancêtres',   cost:1500, desc:'Commence chaque partie avec 1 villageois supplémentaire'},
+  {id:'iron',   e:'⚒️', n:'Forge des Étoiles',      cost:2000, desc:'Commence avec 1 minerai de fer en bonus'},
+  {id:'revive', e:'💙', n:'Cristal de Survie',      cost:3000, desc:'Une résurrection gratuite par partie (50% des villageois)'},
+  {id:'soul',   e:'🌟', n:'Âme de la Comète',       cost:5000, desc:'Toutes les Poussières gagnées sont doublées (×2)'},
+];
+function getOwnedBonuses(){try{return JSON.parse(localStorage.getItem('cs_perma_bonuses')||'[]');}catch(e){return[];}}
+function hasPermaBonus(id){return getOwnedBonuses().includes(id);}
+function unlockPermaBonus(id){
+  const arr=getOwnedBonuses();
+  if(!arr.includes(id)){arr.push(id);localStorage.setItem('cs_perma_bonuses',JSON.stringify(arr));}
+}
+function buyPermaBonus(id){
+  if(hasPermaBonus(id))return;
+  const b=PERMA_BONUSES.find(b=>b.id===id);if(!b)return;
+  if(!spendCometDust(b.cost)){showDustToast('❌ Pas assez de Poussières !');return;}
+  unlockPermaBonus(id);
+  renderPermaShop();
+  showDustToast('✅ '+b.n+' débloqué !');
+  playSound('achievement');
+}
+function renderPermaShop(){
+  const grid=document.getElementById('ps-grid');if(!grid)return;
+  const dust=getCometDust();
+  grid.innerHTML=PERMA_BONUSES.map(b=>{
+    const owned=hasPermaBonus(b.id);
+    return `<div class="ps-item${owned?' owned':''}">
+      <div class="ps-ico">${b.e}</div>
+      <div class="ps-info"><div class="ps-name">${b.n}</div><div class="ps-desc">${b.desc}</div></div>
+      ${owned?`<div class="ps-owned-badge">✅ Actif</div>`:
+        `<button class="ps-buy" onclick="buyPermaBonus('${b.id}')" ${dust<b.cost?'disabled':''}>${b.cost.toLocaleString()} ☄️</button>`}
+    </div>`;
+  }).join('');
+  updateDustUI();
+}
+function showPermaShop(){
+  renderPermaShop();
+  document.getElementById('perma-shop').style.display='flex';
+}
+function closePermaShop(){document.getElementById('perma-shop').style.display='none';}
+
+// ── NARRATIVE ─────────────────────────────────────────────────────────────────
+const NARRATIVE_INTRO=`<em>Le Grand Gel a dévoré les pics du Nord, emportant vos ancêtres.</em>
+Vous n'avez qu'un vieux sac de vivres et le souvenir d'une prophétie :
+
+<em>"Là où la poussière de comète touche le sol,\nla vie ne s'éteindra jamais."</em>
+
+Empilez, survivez, et levez les yeux vers le ciel.`;
+
+function showNarrative(){
+  const lore=document.getElementById('nar-lore');
+  if(lore)lore.innerHTML=NARRATIVE_INTRO.replace(/<em>(.*?)<\/em>/g,'<em>$1</em>');
+  document.getElementById('narrative-intro').style.display='flex';
+  playSound('secret');
+}
+function closeNarrative(){
+  document.getElementById('narrative-intro').style.display='none';
+}
+
+// ── CONCLUSION (A / B / C) ───────────────────────────────────────────────────
+const CONCLUSIONS={
+  a:{
+    type:'a', label:'🏆 VICTOIRE',
+    emoji:'☄️',
+    title:'La Prophétie Accomplie',
+    text:'La comète s\'illumine sous vos tirs et se fragmente en une pluie d\'orichalque.\nLa chaleur revient enfin sur ces terres.\n\nGrâce aux Poussières de Comète, votre clan n\'est plus une bande de réfugiés, mais les fondateurs d\'une nouvelle civilisation stellaire.',
+    dust:50,
+  },
+  b:{
+    type:'b', label:'☠️ DÉFAITE',
+    emoji:'❄️',
+    title:'Le Froid vous a Rattrapés',
+    text:'Le feu du ciel s\'est éteint, et le froid de la montagne vous a rattrapés.\nVos cartes s\'éparpillent dans le vent, ne laissant que du bois mort et des pierres froides.\n\nLa prophétie attendra de meilleures mains.',
+    dust:10,
+  },
+  c:{
+    type:'c', label:'💰 VOIE MARCHANDE',
+    emoji:'🏴‍☠️',
+    title:'Le Maître du Marché Mystique',
+    text:'Vous n\'avez pas détruit la comète, vous l\'avez achetée.\nEn accumulant chaque éclat tombé, vous êtes devenu le maître du Marché Mystique.\n\nLe monde est peut-être gelé, mais votre village est l\'endroit le plus riche de l\'univers connu.',
+    dust:120,
+  },
+};
+let _pendingConclusion=null;
+function showConclusion(type, onClose){
+  const c=CONCLUSIONS[type];if(!c)return;
+  _pendingConclusion=onClose||null;
+  document.getElementById('concl-type').textContent=c.label;
+  document.getElementById('concl-type').className='concl-type '+c.type;
+  document.getElementById('concl-emoji').textContent=c.emoji;
+  document.getElementById('concl-title').textContent=c.title;
+  document.getElementById('concl-text').textContent=c.text;
+  const earned=addCometDust(c.dust,true);
+  document.getElementById('concl-reward').textContent='+'+earned+' ☄️ Poussières de Comète gagnées !';
+  document.getElementById('conclusion').style.display='flex';
+}
+function closeConclusion(){
+  document.getElementById('conclusion').style.display='none';
+  if(_pendingConclusion){_pendingConclusion();_pendingConclusion=null;}
 }
 
 // ── START ─────────────────────────────────────────────────────────────────────
