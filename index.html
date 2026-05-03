@@ -183,6 +183,15 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 .tbtn.next:hover{background:#15803d;}
 .tbtn.close-tut{position:absolute;top:12px;right:12px;background:rgba(120,0,0,.6);border-color:rgba(200,0,0,.5);color:#fca5a5;font-size:12px;padding:5px 12px;}
 .tbtn.close-tut:hover{background:rgba(180,0,0,.8);}
+.tut-question{font-size:15px;font-weight:700;color:#f7d060;margin-bottom:16px;line-height:1.6;text-align:left;}
+.tut-choices{display:flex;flex-direction:column;gap:8px;margin-bottom:12px;}
+.tut-choice{border:2px solid #2d5a2d;border-radius:10px;padding:11px 16px;cursor:pointer;font-size:13px;text-align:left;background:#0a1a0a;color:#d1fae5;transition:all .15s;width:100%;}
+.tut-choice:hover:not(:disabled){background:#1a3a1a;border-color:#4ade80;}
+.tut-choice.correct{background:#064e3b!important;border-color:#10b981!important;color:#6ee7b7!important;cursor:default;}
+.tut-choice.wrong{background:#450a0a!important;border-color:#ef4444!important;color:#fca5a5!important;opacity:.65;cursor:default;}
+.tut-feedback{font-size:13px;min-height:38px;line-height:1.6;border-radius:8px;padding:0 4px;}
+.tbtn:disabled{opacity:.4;cursor:not-allowed;}
+.tut-dot.quiz{background:#c084fc;width:10px;height:10px;}
 /* ── SECRET REVEAL ─────────────────────────────────────────────── */
 @keyframes srIn{from{opacity:0;transform:scale(.7) rotate(-3deg)}to{opacity:1;transform:scale(1) rotate(0)}}
 #secret-reveal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:99800;justify-content:center;align-items:center;}
@@ -741,7 +750,12 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
     <button class="tbtn close-tut" onclick="closeTutorial()">✕ Quitter le tuto</button>
     <div class="tut-emoji" id="tut-emoji"></div>
     <div class="tut-title" id="tut-title"></div>
-    <div class="tut-text" id="tut-text"></div>
+    <div class="tut-text" id="tut-text" style="display:none;"></div>
+    <div id="tut-quiz" style="display:none;">
+      <div class="tut-question" id="tut-question"></div>
+      <div class="tut-choices" id="tut-choices"></div>
+      <div class="tut-feedback" id="tut-feedback"></div>
+    </div>
     <div class="tut-dots" id="tut-dots"></div>
     <div class="tut-nav">
       <button class="tbtn" id="tut-prev" onclick="prevTutoStep()">← Précédent</button>
@@ -3034,6 +3048,16 @@ const TUTO = [
     text:'👆 GLISSE une carte sur une autre pour les empiler.\n\n✅ Barre VERTE qui apparaît = recette trouvée, craft automatique en cours !\n\n❌ Cartes qui TREMBLENT = mauvaise combinaison.\n\n💡 ASTUCE : Survole une carte pour voir ses recettes en temps réel dans le coin.\n\n📱 Sur mobile : glisse directement avec ton doigt !'
   },
   {
+    quiz:true,
+    emoji:'🤔',
+    title:'Quiz — Teste tes connaissances !',
+    question:'Tu veux récolter du Bois en boucle sans interruption. Que fais-tu ?',
+    choices:['🧑 Empile un Villageois sur l\'Arbre 🌳','🌳 Empile l\'Arbre sur une Pierre 🪨','🌳 Empile deux Arbres ensemble'],
+    correct:0,
+    ok:'Exact ! Le Villageois reste sur l\'arbre et produit du bois indéfiniment. C\'est la base de toute économie !',
+    wrong:['Non — Arbre + Pierre n\'a aucune recette, les cartes trembleront.','Non — deux arbres ne produisent rien. Il faut un Villageois pour travailler !']
+  },
+  {
     emoji:'🧑',
     title:'Les Villageois — Ta main-d\'œuvre',
     text:'Le Villageois 🧑 est ta carte la plus précieuse.\n\nEmpile-le sur une ressource pour produire EN BOUCLE :\n\n🌳 + 🧑 → Bois ♻️\n🪨 + 🧑 → Pierre ♻️\n🫐 + 🧑 → Baie ♻️\n🌾 + 🧑 → Pomme ♻️\n\nLe villageois RESTE sur la ressource et produit indéfiniment !\n\n✨ Double-clique sur un villageois pour lui donner un prénom !'
@@ -3044,14 +3068,44 @@ const TUTO = [
     text:'Combine plusieurs cartes pour fabriquer des objets :\n\n🔷 Silex + 🪵 Bois → 🔥 Feu de camp\n🪵×3 + 🧑 → 🟫 Planche\n🪨×3 + 🧑 → 🧱 Brique\n🔷 + 🟫 + 🧑 → ⚔️ Épée  ← PRIORITÉ !\n🟫×2 + 🧑 → 🛡️ Bouclier\n🧱×2 + 🟫×2 + 🧑 → 🏠 Maison\n🧱 + 🟫×2 + 🧑 → 🌾 Ferme\n\n📖 Clique "Recettes" en haut pour voir toutes les combinaisons !'
   },
   {
+    quiz:true,
+    emoji:'🤔',
+    title:'Quiz — Teste tes connaissances !',
+    question:'C\'est le Jour 4, un monstre approche. Tu as du Silex 🔷 et du Bois 🪵. Que fabriques-tu EN PRIORITÉ ?',
+    choices:['🛡️ Bouclier — pour bloquer les attaques','⚔️ Épée — pour tuer le monstre','🏠 Maison — pour avoir plus de villageois'],
+    correct:1,
+    ok:'Bonne décision ! L\'épée est indispensable pour éliminer les monstres. Sans épée, tu es sans défense !',
+    wrong:['Le bouclier bloque une attaque mais ne tue pas le monstre. L\'épée est prioritaire !','La maison est utile à long terme, mais les monstres arrivent maintenant. Fais l\'épée d\'abord !']
+  },
+  {
     emoji:'🍖',
     title:'Nourriture & Jours — Ne laisse pas mourir de faim !',
     text:'La barre jaune en haut = temps avant la fin du jour.\n\n⚠️ À chaque fin de jour : tes villageois mangent !\n(1 repas par villageois)\n\nSi tu n\'as pas assez de nourriture → ☠️ FAMINE = partie perdue !\n\n💡 Cuisine pour multiplier l\'effet :\n🫐 Baie brute = 1 repas\n🫐 + 🔥 → 🍇 Baie cuite = 3 repas\n🍎 + 🔥 → 🍲 Ragoût = 5 repas\n\n🌾 Une Ferme + Villageois produit des Pommes en boucle !'
   },
   {
+    quiz:true,
+    emoji:'🤔',
+    title:'Quiz — Teste tes connaissances !',
+    question:'Tu as 3 villageois affamés, une Pomme 🍎 et un Feu de camp 🔥. Que fais-tu ?',
+    choices:['Mange la Pomme telle quelle → 1 seul repas','Empile Pomme + Feu → Ragoût 🍲 → 5 repas','Garde tout pour plus tard, ce n\'est pas urgent'],
+    correct:1,
+    ok:'Parfait ! Cuisiner multiplie la valeur nutritive. 1 Pomme → 5 repas au lieu d\'1. Toujours cuisiner !',
+    wrong:['La pomme crue ne donne qu\'1 repas sur 3 villageois affamés — ce n\'est pas suffisant !','Attendre avec des villageois affamés = FAMINE à la fin du jour. Agis maintenant !']
+  },
+  {
     emoji:'⚔️',
     title:'Les Monstres — Survie en combat !',
     text:'Tous les 5 jours, une vague de monstres arrive !\n\n🐺 Loup = 1⚔️ en 15s   |   👺 Gobelin = 1⚔️ en 12s\n👹 Troll = 2⚔️ en 10s (ou 🗡️ seule !)\n\nPour combattre : EMPILE ⚔️ Épée sur le monstre.\n\n🔴 Barre rouge sur le monstre = temps avant attaque !\nPulse rouge = URGENT → agis tout de suite !\n\n✅ L\'épée SURVIT après le combat.\n🛡️ Bouclier : empile sur un monstre qui attaque pour bloquer !'
+  },
+  {
+    quiz:true,
+    emoji:'🤔',
+    title:'Quiz — Teste tes connaissances !',
+    question:'Un 👹 Troll surgit ! Quelle est la bonne façon de l\'éliminer ?',
+    choices:['Empile 1 ⚔️ Épée sur le Troll','Empile 2 ⚔️ Épées (ou 1 🗡️ Épée de Fer) sur le Troll','Empile 1 🛡️ Bouclier sur le Troll'],
+    correct:1,
+    ok:'Exact ! Le Troll est résistant : 1 épée normale ne suffit pas. Il faut 2 épées ou 1 épée de fer.',
+    wrong:['1 épée suffit pour les Loups et Gobelins, mais le Troll est plus coriace. Il en faut 2 !','Le bouclier bloque une attaque mais ne tue pas — le Troll reviendra attaquer. Il faut des épées !']
   },
   {
     emoji:'🏆',
@@ -3064,7 +3118,7 @@ const TUTO = [
     text:'✅ Résumé :\n\n1️⃣ Empile 🧑 sur ressources → production en boucle\n2️⃣ Nourris tes villageois chaque jour\n3️⃣ Fabrique ⚔️ Épée avant Jour 5 !\n4️⃣ Cuisine tes aliments sur 🔥\n5️⃣ Empile épée sur monstre pour combattre\n\n💡 Conseils :\n• Clique-droit sur une carte = vendre\n• Appuie sur Échap = Pause\n• Clique 💡 Conseil pour des astuces en cours de partie\n• Tapis = tu peux acheter des Paquets 📦 en haut à droite\n\n🍀 Bonne chance, Chef de Village !'
   },
 ];
-let tutoStep=0;
+let tutoStep=0,tutoAnswered=false;
 
 function showTutorial(){
   playSound('menu_click');
@@ -3075,7 +3129,6 @@ function closeTutorial(){
   playSound('menu_click');
   localStorage.setItem('cs_tuto_seen','1');
   document.getElementById('tutorial').style.display='none';
-  // Si le jeu n'est pas encore démarré (premier tutoriel auto), démarrer
   if(!G||!G.cards||Object.keys(G.cards).length===0){
     document.getElementById('main-menu').style.display='none';
     initG();
@@ -3089,24 +3142,56 @@ function prevTutoStep(){
   playSound('craft_start');
   if(tutoStep>0){tutoStep--;renderTuto();}
 }
+function selectAnswer(idx){
+  const s=TUTO[tutoStep];
+  if(!s.quiz||tutoAnswered)return;
+  const choices=document.querySelectorAll('.tut-choice');
+  const feedback=document.getElementById('tut-feedback');
+  if(idx===s.correct){
+    tutoAnswered=true;
+    choices[idx].classList.add('correct');
+    feedback.innerHTML='<span style="color:#6ee7b7">✅ '+s.ok+'</span>';
+    document.getElementById('tut-next').disabled=false;
+    playSound('craft_start');
+  }else{
+    choices[idx].classList.add('wrong');
+    choices[idx].disabled=true;
+    const wrongIdx=idx<s.correct?idx:idx-1;
+    feedback.innerHTML='<span style="color:#fca5a5">❌ '+(s.wrong[wrongIdx]||'Ce n\'est pas la bonne réponse, essaie encore !')+'</span>';
+    playSound('error');
+  }
+}
 function renderTuto(){
   const s=TUTO[tutoStep];
   document.getElementById('tut-emoji').textContent=s.emoji;
   document.getElementById('tut-title').textContent=s.title;
-  document.getElementById('tut-text').textContent=s.text;
-  // Points de progression
-  const dots=document.getElementById('tut-dots');
-  dots.innerHTML=TUTO.map((_,i)=>`<div class="tut-dot${i===tutoStep?' active':''}"></div>`).join('');
-  // Bouton précédent
-  document.getElementById('tut-prev').style.visibility=tutoStep>0?'visible':'hidden';
-  // Bouton suivant / commencer
-  const next=document.getElementById('tut-next');
-  if(tutoStep===TUTO.length-1){
-    next.textContent='🎮 Commencer !';
-    next.onclick=()=>{localStorage.setItem('cs_tuto_seen','1');closeTutorial();if(!G||!G.cards||Object.keys(G.cards).length===0)initG();};
+  const textEl=document.getElementById('tut-text');
+  const quizEl=document.getElementById('tut-quiz');
+  const nextBtn=document.getElementById('tut-next');
+  if(s.quiz){
+    textEl.style.display='none';
+    quizEl.style.display='block';
+    tutoAnswered=false;
+    nextBtn.disabled=true;
+    document.getElementById('tut-question').textContent=s.question;
+    document.getElementById('tut-choices').innerHTML=s.choices.map((c,i)=>
+      `<button class="tut-choice" onclick="selectAnswer(${i})">${c}</button>`).join('');
+    document.getElementById('tut-feedback').innerHTML='';
   }else{
-    next.textContent='Suivant →';
-    next.onclick=nextTutoStep;
+    textEl.style.display='block';
+    quizEl.style.display='none';
+    nextBtn.disabled=false;
+    textEl.textContent=s.text;
+  }
+  const dots=document.getElementById('tut-dots');
+  dots.innerHTML=TUTO.map((t,i)=>`<div class="tut-dot${i===tutoStep?' active':''}${t.quiz?' quiz':''}"></div>`).join('');
+  document.getElementById('tut-prev').style.visibility=tutoStep>0?'visible':'hidden';
+  if(tutoStep===TUTO.length-1){
+    nextBtn.textContent='🎮 Commencer !';
+    nextBtn.onclick=()=>{localStorage.setItem('cs_tuto_seen','1');closeTutorial();if(!G||!G.cards||Object.keys(G.cards).length===0)initG();};
+  }else{
+    nextBtn.textContent='Suivant →';
+    nextBtn.onclick=nextTutoStep;
   }
 }
 
