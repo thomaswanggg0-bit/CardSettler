@@ -1009,6 +1009,12 @@ const RECIPES = [
   // War potion bosses
   {i:['war_potion','sword','sword','goblin_king'],o:['gold','gold','gold','gold','gold'],keep:['sword','sword'],t:.8,rep:0,d:'⚡ Potion+2⚔️+Roi Gobelin → 5 Or'},
   {i:['war_potion','iron_sword','goblin_king'],   o:['gold','gold','gold','gold','gold'],keep:['iron_sword'], t:.5,rep:0,d:'⚡ Potion+🗡️+Roi Gobelin → 5 Or'},
+  // ── Recettes intermédiaires (chemins alternatifs) ──
+  {i:['apple','apple','campfire'],                    o:['stew'],         keep:['campfire'],  t:3,  rep:0, d:'2 Pommes + Feu → Ragoût'},
+  {i:['berry','berry','berry','berry','campfire'],     o:['stew','stew'],  keep:['campfire'],  t:5,  rep:0, d:'4 Baies + Feu → 2 Ragoûts'},
+  {i:['bone','bone','flint','villager'],               o:['sword'],        keep:['villager'],  t:8,  rep:0, d:'2 Os + Silex + Villageois → Épée'},
+  {i:['shield','iron_ore','villager'],                 o:['iron_sword'],   keep:['villager'],  t:9,  rep:0, d:'Bouclier + Minerai + Villageois → Épée de Fer'},
+  {i:['gold','gold','gold','forge'],                   o:['gem'],          keep:['forge'],     t:6,  rep:0, d:'3 Or + Forge → Gemme'},
   // ── Combats Mode Infini ────────────────────────────────────────────────────
   {i:['sword','skeleton'],          o:['bone'],              keep:['sword'],                       t:3,  rep:0, infinite:1, d:'💀 ⚔️+Squelette → Os'},
   {i:['iron_sword','skeleton'],     o:['bone','bone'],       keep:['iron_sword'],                  t:2,  rep:0, infinite:1, d:'💀 🗡️+Squelette → 2 Os'},
@@ -1538,7 +1544,12 @@ document.addEventListener('mouseup',()=>{
       if(tgt){
         const dragTypes=s.ids.map(cid=>G.cards[cid].type);
         const existT=tgt.sid?G.stacks[tgt.sid].ids.map(cid=>G.cards[cid].type):[G.cards[tgt.id].type];
-        if(!canPotentiallyRecipe([...dragTypes,...existT])){updateSV(dragSid);updateHUD();return;}
+        if(!canPotentiallyRecipe([...dragTypes,...existT])){
+          playSound('error');
+          const errEl=cel(tgt.sid?G.stacks[tgt.sid].ids[0]:tgt.id);
+          if(errEl){errEl.classList.remove('shake');void errEl.offsetWidth;errEl.classList.add('shake');setTimeout(()=>errEl.classList.remove('shake'),400);}
+          updateSV(dragSid);updateHUD();return;
+        }
         const allIds=[...s.ids];
         dissolve(dragSid);
         let tSid=tgt.sid;
@@ -1565,7 +1576,12 @@ document.addEventListener('mouseup',()=>{
   const tgt=findTarget(id);
   if(tgt){
     const existT=tgt.sid?G.stacks[tgt.sid].ids.map(cid=>G.cards[cid].type):[G.cards[tgt.id].type];
-    if(!canPotentiallyRecipe([...existT,G.cards[id].type])){updateHUD();return;}
+    if(!canPotentiallyRecipe([...existT,G.cards[id].type])){
+      playSound('error');
+      const errEl=cel(tgt.sid?G.stacks[tgt.sid].ids[0]:tgt.id);
+      if(errEl){errEl.classList.remove('shake');void errEl.offsetWidth;errEl.classList.add('shake');setTimeout(()=>errEl.classList.remove('shake'),400);}
+      updateHUD();return;
+    }
     if(tgt.sid)addToStack(tgt.sid,id);else mkStack([tgt.id,id]);
     const sid=G.cards[id]?.sid;
     if(sid&&!G.stacks[sid]?.recipe){
@@ -2027,7 +2043,8 @@ function updateHUD(){
   } else {
     const nextWave=G.moon%5===0?G.moon+5:Math.ceil(G.moon/5)*5;
     const bossLabel=nextWave===20?' 👑BOSS':nextWave===30?' 🐉BOSS':'';
-    objText='⚔️ Vague J'+Math.min(nextWave,WIN_DAY)+bossLabel+' | 🎯 Objectif : J'+WIN_DAY;
+    const modeIcon=G.difficulty==='easy'?'🌱':'⚔️';
+    objText=modeIcon+' Vague J'+Math.min(nextWave,WIN_DAY)+bossLabel+' | 🎯 Objectif : J'+WIN_DAY;
   }
   document.getElementById('obj').textContent=objText;
   const hdiff=document.getElementById('hdiff');
@@ -3935,7 +3952,9 @@ function getDailyChallengeKey(){
 }
 function getDailyConstraints(){
   const rng=seededRNG(parseInt(getDailyChallengeKey()));
-  return [...DAILY_CONSTRAINTS].sort(()=>rng()-.5).slice(0,2);
+  const arr=[...DAILY_CONSTRAINTS];
+  for(let i=arr.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}
+  return arr.slice(0,2);
 }
 function showDailyChallenge(){
   const cs=getDailyConstraints();
