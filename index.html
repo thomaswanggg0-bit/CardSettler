@@ -1878,6 +1878,7 @@ function loop(ts){
 // ── MOON / FOOD ───────────────────────────────────────────────────────────────
 function getWinDay(){return G._coopMode?50:G._infiniteMode?99999:WIN_DAY;}
 function endMoon(){
+  if(G._tutorialMode){G.moon++;updateHUD();return;}
   if(!G._infiniteMode&&G.moon>getWinDay()){G.over=true;showVictory();return;}
   // Résolution pillard (avant la nourriture)
   if(G._raider){
