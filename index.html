@@ -1496,6 +1496,9 @@ document.addEventListener('mouseup',()=>{
       s.ids.forEach((cid,i)=>{const el=cel(cid);if(el){el.classList.remove('dragging');el.style.zIndex=10+i;}});
       const tgt=findTargetForStack(dragSid);
       if(tgt){
+        const dragTypes=s.ids.map(cid=>G.cards[cid].type);
+        const existT=tgt.sid?G.stacks[tgt.sid].ids.map(cid=>G.cards[cid].type):[G.cards[tgt.id].type];
+        if(!canPotentiallyRecipe([...dragTypes,...existT])){updateSV(dragSid);updateHUD();return;}
         const allIds=[...s.ids];
         dissolve(dragSid);
         let tSid=tgt.sid;
@@ -1521,6 +1524,8 @@ document.addEventListener('mouseup',()=>{
   const el=cel(id);if(el){el.classList.remove('dragging');el.style.zIndex=10;}
   const tgt=findTarget(id);
   if(tgt){
+    const existT=tgt.sid?G.stacks[tgt.sid].ids.map(cid=>G.cards[cid].type):[G.cards[tgt.id].type];
+    if(!canPotentiallyRecipe([...existT,G.cards[id].type])){updateHUD();return;}
     if(tgt.sid)addToStack(tgt.sid,id);else mkStack([tgt.id,id]);
     const sid=G.cards[id]?.sid;
     if(sid&&!G.stacks[sid]?.recipe){
@@ -1532,6 +1537,21 @@ document.addEventListener('mouseup',()=>{
   updateHUD();
 });
 document.addEventListener('touchend',()=>{if(G.drag){const fakeUp=new Event('mouseup');document.dispatchEvent(fakeUp);}},{passive:true});
+function canPotentiallyRecipe(types){
+  const sorted=[...types].sort();
+  for(const r of RECIPES){
+    const ri=[...r.i];let ok=true;
+    for(const t of sorted){const idx=ri.indexOf(t);if(idx===-1){ok=false;break;}ri.splice(idx,1);}
+    if(ok)return true;
+  }
+  if(types.includes('cave_entrance')){
+    const vC=types.filter(t=>t==='villager').length;
+    const sC=types.filter(t=>t==='sword'||t==='iron_sword').length;
+    const oth=types.filter(t=>t!=='cave_entrance'&&t!=='villager'&&t!=='sword'&&t!=='iron_sword');
+    if(vC>=1&&vC<=3&&sC<=2&&oth.length===0)return true;
+  }
+  return false;
+}
 function findTarget(dragId){
   const dc=G.cards[dragId];
   for(const [idStr,c] of Object.entries(G.cards)){
