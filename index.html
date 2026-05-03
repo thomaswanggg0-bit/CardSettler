@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>CardSettler</title>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;user-select:none;}
 body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column;}
@@ -72,17 +73,75 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 #wave-alert{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(160,0,0,0.93);color:#fff;font-size:20px;font-weight:700;padding:14px 30px;border-radius:12px;z-index:500;pointer-events:none;text-align:center;border:2px solid #ef4444;}
 #obj{font-size:11px;color:#f7d060;white-space:nowrap;}
 /* ── MENU PRINCIPAL ─────────────────────────────────────────── */
-#main-menu{display:flex;position:fixed;inset:0;background:linear-gradient(160deg,#071407 0%,#0f2a0f 40%,#0a1e0a 100%);z-index:99000;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
-.mm-logo{font-size:72px;margin-bottom:4px;filter:drop-shadow(0 0 20px rgba(100,200,80,.4));}
-.mm-title{font-size:52px;font-weight:900;color:#f7d060;letter-spacing:4px;text-shadow:0 0 30px rgba(247,208,96,.4);}
-.mm-sub{color:#6b8;font-size:14px;margin-bottom:20px;}
-.mbtn{background:#0f2310;color:#d1fae5;border:2px solid #2d5a2d;border-radius:10px;padding:14px 0;cursor:pointer;font-size:16px;font-weight:700;width:260px;transition:background .15s,border-color .15s,transform .1s;text-align:center;}
+#main-menu{display:grid;grid-template-columns:1fr 300px;position:fixed;inset:0;background:linear-gradient(160deg,#071407 0%,#0f2a0f 40%,#0a1e0a 100%);z-index:99000;padding:40px 6%;gap:32px;align-items:start;overflow-y:auto;}
+.mm-left{display:flex;flex-direction:column;gap:10px;}
+.mm-right{display:flex;flex-direction:column;gap:14px;position:sticky;top:40px;}
+.mm-logo{font-size:64px;line-height:1;filter:drop-shadow(0 0 20px rgba(100,200,80,.4));}
+.mm-title{font-size:48px;font-weight:900;color:#f7d060;letter-spacing:4px;text-shadow:0 0 30px rgba(247,208,96,.4);line-height:1.1;}
+.mm-sub{color:#6b8;font-size:13px;margin-bottom:6px;}
+.mm-nav{display:flex;flex-direction:column;gap:8px;max-width:420px;}
+.mbtn{background:#0f2310;color:#d1fae5;border:2px solid #2d5a2d;border-radius:10px;padding:13px 20px;cursor:pointer;font-size:15px;font-weight:700;width:100%;transition:background .15s,border-color .15s,transform .1s;text-align:center;}
 .mbtn:hover{background:#1a3a1a;border-color:#4a8a4a;transform:translateY(-2px);}
 .mbtn:disabled{background:#111;border-color:#333;color:#555;cursor:not-allowed;transform:none;}
 .mbtn.disc{background:#1a0a0a;border-color:#4a1a1a;color:#fca5a5;}
 .mbtn.disc:hover{background:#2a1010;border-color:#8a2d2d;}
-#resume-info{color:#6b8;font-size:12px;margin-top:-8px;height:16px;}
-.mm-version{position:absolute;bottom:16px;color:#2d5a2d;font-size:11px;}
+.mbtn.mbtn-lg{font-size:19px;padding:17px 20px;border-color:#4a8a4a;background:#0e2510;}
+.mbtn.mbtn-sm{font-size:13px;padding:10px 20px;border-color:#1e3a1e;color:#86efac;}
+.mm-boutique-btn{background:linear-gradient(160deg,#120030,#2a0858,#120030);border:2px solid #7c3aed;border-radius:16px;color:#c4b5fd;font-size:20px;font-weight:900;padding:0;cursor:pointer;transition:all .2s;text-align:center;min-height:170px;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;box-shadow:0 0 30px rgba(124,58,237,.2);}
+.mm-boutique-btn:hover{border-color:#a78bfa;transform:translateY(-2px);box-shadow:0 0 50px rgba(124,58,237,.5);}
+.mm-boutique-ico{font-size:44px;line-height:1;}
+.mm-boutique-sub{font-size:11px;color:#9ca3af;}
+.mm-dust-panel{background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:14px 16px;}
+.mm-dust-row{font-size:13px;color:#c4b5fd;margin:4px 0;}
+.mm-dust-row b{color:#f7d060;}
+#resume-info{color:#6b8;font-size:12px;margin-top:-4px;min-height:16px;}
+.mm-version{color:#2d5a2d;font-size:11px;text-align:center;}
+.mm-panel{background:rgba(0,0,0,.25);border:1px solid rgba(74,138,74,.25);border-radius:12px;padding:14px 16px;}
+.mm-panel-title{font-size:11px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
+.mm-rec-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#86efac;padding:3px 0;border-bottom:1px solid rgba(74,138,74,.1);}
+.mm-rec-row:last-child{border-bottom:none;}
+.mm-rec-val{color:#f7d060;font-weight:700;}
+.mm-ach-bar-wrap{background:rgba(0,0,0,.3);border-radius:20px;height:7px;margin:6px 0 10px;overflow:hidden;}
+.mm-ach-bar{height:100%;background:linear-gradient(90deg,#4ade80,#f7d060);border-radius:20px;transition:width .5s ease;}
+.mm-ach-count{color:#f7d060;font-weight:700;float:right;}
+.mm-ach-recent{display:flex;flex-direction:column;gap:5px;margin-top:4px;}
+.mm-ach-item{display:flex;align-items:center;gap:7px;font-size:11px;color:#d1fae5;background:rgba(74,138,74,.08);border-radius:7px;padding:5px 8px;}
+.mm-ach-item-ico{font-size:16px;line-height:1;}
+.mm-ach-item-name{color:#86efac;font-weight:600;}
+.mm-ach-empty{font-size:11px;color:#4b5563;font-style:italic;text-align:center;padding:6px 0;}
+.mm-boutique-badge{background:#f7d060;color:#1a0050;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.5px;}
+/* ── LEADERBOARD ──────────────────────────────────────────── */
+#leaderboard{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99500;justify-content:center;align-items:center;}
+.lb-box{background:linear-gradient(160deg,#071407,#0f2a0f);border:2px solid #2d5a2d;border-radius:16px;padding:28px 32px;max-width:600px;width:94%;max-height:88vh;overflow-y:auto;color:#fff;}
+.lb-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.lb-title{font-size:20px;font-weight:900;color:#f7d060;}
+.lb-close{background:none;border:none;color:#6b7280;font-size:22px;cursor:pointer;line-height:1;}
+.lb-tabs{display:flex;gap:7px;margin-bottom:14px;flex-wrap:wrap;}
+.lb-tab{background:#0f2310;border:1px solid #2d5a2d;border-radius:8px;padding:6px 13px;cursor:pointer;font-size:12px;color:#86efac;transition:all .15s;}
+.lb-tab.active{background:#1a4a1a;border-color:#4ade80;color:#f7d060;font-weight:700;}
+.lb-table{width:100%;border-collapse:collapse;font-size:13px;}
+.lb-table th{color:#6b7280;font-weight:600;padding:6px 8px;border-bottom:1px solid #1a3a1a;text-align:left;}
+.lb-table td{padding:7px 8px;border-bottom:1px solid rgba(45,90,45,.25);}
+.lb-rank{color:#f7d060;font-weight:700;}
+.lb-you{background:rgba(74,222,128,.07);}
+.lb-msg{color:#6b7280;text-align:center;padding:28px 0;font-size:13px;}
+/* ── DÉFI QUOTIDIEN ───────────────────────────────────────── */
+#daily-challenge{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99500;justify-content:center;align-items:center;}
+.dc-box{background:linear-gradient(160deg,#07101f,#0f1e30);border:2px solid #3b82f6;border-radius:16px;padding:28px 32px;max-width:460px;width:94%;color:#fff;text-align:center;}
+.dc-title{font-size:22px;font-weight:900;color:#60a5fa;margin-bottom:3px;}
+.dc-date{font-size:12px;color:#6b7280;margin-bottom:18px;}
+.dc-constraints{display:flex;flex-direction:column;gap:10px;margin:0 0 16px;}
+.dc-constraint{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:10px;padding:11px 15px;text-align:left;}
+.dc-c-label{font-weight:700;color:#93c5fd;font-size:13px;}
+.dc-c-desc{font-size:11px;color:#9ca3af;margin-top:2px;}
+.dc-best{font-size:12px;color:#4ade80;margin-bottom:18px;min-height:16px;}
+/* ── SCORE SUBMIT ─────────────────────────────────────────── */
+.score-submit{margin-top:14px;padding:12px 16px;background:rgba(247,208,96,.06);border:1px solid rgba(247,208,96,.2);border-radius:10px;}
+.score-submit-title{font-size:11px;color:#f7d060;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px;}
+.score-submit-row{display:flex;gap:8px;}
+.score-submit-input{background:#0a1e0a;border:1px solid #2d5a2d;border-radius:7px;padding:7px 11px;color:#fff;font-size:13px;flex:1;outline:none;}
+.score-submit-btn{background:#1a4a1a;border:1px solid #4ade80;border-radius:7px;padding:7px 13px;color:#4ade80;cursor:pointer;font-size:12px;font-weight:700;white-space:nowrap;}
+.score-submit-done{font-size:12px;color:#4ade80;text-align:center;padding:6px 0;}
 /* ── TUTORIEL ─────────────────────────────────────────────── */
 #tutorial{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:99500;justify-content:center;align-items:center;}
 .tut-box{background:linear-gradient(160deg,#0a1e0a,#142814);border:2px solid #2d5a2d;border-radius:16px;padding:36px 38px 28px;max-width:500px;width:92%;color:#fff;text-align:center;position:relative;box-shadow:0 8px 32px rgba(0,0,0,.6);}
@@ -130,7 +189,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 .ach-toast{position:fixed;right:16px;top:72px;background:linear-gradient(135deg,#14532d,#16a34a);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;z-index:99900;box-shadow:0 4px 16px rgba(0,0,0,.5);border:1px solid #22c55e;max-width:260px;animation:toastIn .4s ease forwards;}
 .ach-toast.out{animation:toastOut .4s ease forwards;}
 .ach-toast small{display:block;font-size:11px;font-weight:400;opacity:.8;margin-top:2px;}
-#mm-stats{color:#4ade80;font-size:12px;text-align:center;max-width:340px;line-height:1.7;min-height:18px;}
+#mm-stats{color:#4ade80;font-size:12px;max-width:420px;line-height:1.7;min-height:18px;}
 @keyframes expedition-pulse{0%,100%{box-shadow:0 0 0 2px rgba(139,92,246,.8),0 3px 8px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 6px rgba(139,92,246,1),0 0 22px rgba(139,92,246,.6)}}
 .expedition-active{animation:expedition-pulse .9s infinite;border-color:rgba(139,92,246,.8)!important;}
 /* ── MARCHÉ NOIR ─────────────────────────────────────────────────── */
@@ -233,6 +292,20 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 .bq-tab.active{background:#7c3aed;border-color:#a78bfa;color:#fff;}
 .bq-tab:hover:not(.active){background:rgba(124,58,237,.3);color:#e2e8f0;}
 #bq-content{min-height:200px;margin:14px 0;}
+/* Daily dust calendar */
+.dust-calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:10px 0;}
+.dust-day{background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);border-radius:10px;padding:8px 4px;text-align:center;cursor:default;}
+.dust-day.today{border-color:#f7d060;background:rgba(247,208,96,.12);}
+.dust-day.claimed{border-color:#16a34a;background:rgba(0,80,40,.2);opacity:.7;}
+.dust-day.today.claimable{cursor:pointer;animation:dustPulse 1.4s ease-in-out infinite;}
+@keyframes dustPulse{0%,100%{box-shadow:0 0 0 0 rgba(247,208,96,.4);}50%{box-shadow:0 0 0 6px rgba(247,208,96,0);}}
+.dust-day-name{font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.dust-day-amt{font-size:13px;font-weight:700;color:#c4b5fd;}
+.dust-day.today .dust-day-amt{color:#f7d060;}
+.dust-day.claimed .dust-day-amt{color:#4ade80;}
+.dust-day-icon{font-size:14px;margin-bottom:2px;}
+.dust-week-bonus{background:rgba(247,208,96,.08);border:1px dashed rgba(247,208,96,.35);border-radius:10px;padding:10px 14px;margin-top:10px;text-align:center;font-size:12px;color:#c4b5fd;}
+.dust-week-bonus b{color:#f7d060;}
 .bq-close{background:#1a0a2a;color:#a78bfa;border:1px solid #7c3aed;border-radius:8px;padding:9px 0;width:100%;cursor:pointer;font-size:13px;font-weight:700;}
 .bq-close:hover{background:#2a1040;}
 /* items réutilisables */
@@ -302,11 +375,16 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 @keyframes boss-pulse{0%,100%{box-shadow:0 0 0 2px rgba(251,191,36,.9),0 3px 8px rgba(0,0,0,.4)}50%{box-shadow:0 0 0 7px rgba(251,191,36,1),0 0 24px rgba(251,191,36,.7)}}
 .boss-pulse{animation:boss-pulse .6s infinite;}
 /* ── DIFFICULTÉ ── */
-.diff-selector{display:flex;gap:10px;justify-content:center;margin-bottom:2px;}
+.diff-selector{display:flex;gap:10px;justify-content:flex-start;margin-bottom:2px;}
 .diff-btn{background:#0f2310;color:#6b8;border:2px solid #2d5a2d;border-radius:9px;padding:10px 28px;cursor:pointer;font-size:14px;font-weight:700;transition:all .15s;width:140px;}
 .diff-btn.active-normal{border-color:#16a34a;color:#4ade80;background:#0d2a1a;}
 .diff-btn.active-hard{border-color:#ef4444;color:#fca5a5;background:#2a0a0a;box-shadow:0 0 12px rgba(239,68,68,.3);}
 .diff-btn:hover{opacity:.8;}
+#coop-banner{display:none;position:fixed;top:52px;right:16px;border-radius:20px;padding:5px 14px;font-size:13px;font-weight:700;z-index:600;pointer-events:none;transition:all .3s;}
+#coop-banner.p1{background:linear-gradient(135deg,#0c1a3a,#1e3a6e);border:1.5px solid #60a5fa;color:#93c5fd;}
+#coop-banner.p2{background:linear-gradient(135deg,#3a0c2a,#6e1e4a);border:1.5px solid #f472b6;color:#f9a8d4;}
+.mbtn.mbtn-coop{font-size:16px;padding:14px 20px;border-color:#6d28d9;background:linear-gradient(135deg,#0f0a2a,#1e1254);color:#a5b4fc;}
+.mbtn.mbtn-coop:hover{border-color:#a78bfa;box-shadow:0 0 20px rgba(109,40,217,.4);}
 #hdiff{font-size:11px;font-weight:800;color:#ef4444;letter-spacing:1px;margin-left:4px;vertical-align:middle;display:none;}
 .mm-diff-note{font-size:11px;color:#6b7280;text-align:center;min-height:16px;}
 /* ── EVENT TUTORIAL IN-GAME ── */
@@ -329,12 +407,79 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 #rename-input{background:#0a1a0a;color:#f7d060;border:2px solid #f7d060;border-radius:6px;padding:4px 8px;font-size:12px;font-weight:700;text-align:center;width:82px;outline:none;box-shadow:0 0 12px rgba(247,208,96,.4);}
 .rename-hint{font-size:9px;color:#6b7280;background:rgba(0,0,0,.8);padding:2px 6px;border-radius:4px;}
 .card-edit-dot{position:absolute;bottom:10px;right:5px;font-size:8px;color:rgba(255,255,255,.35);pointer-events:none;line-height:1;}
+/* ── VOLUME CONTROLS ── */
+.vol-section{margin:8px 0 2px;}
+.vol-row{display:flex;align-items:center;gap:8px;margin:5px 0;}
+.vol-row label{font-size:11px;color:#86efac;min-width:64px;}
+.vol-slider{flex:1;-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:#1e3a1e;outline:none;cursor:pointer;}
+.vol-slider::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:#4ade80;cursor:pointer;}
+/* ── CONFIRMATION MODAL ── */
+#confirm-modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99500;justify-content:center;align-items:center;}
+.confirm-box{background:#0f2310;border:2px solid #4a8a4a;border-radius:14px;padding:28px 32px;max-width:340px;width:90%;text-align:center;color:#fff;}
+.confirm-box h3{font-size:18px;margin-bottom:10px;}
+.confirm-box p{font-size:13px;color:#9ca3af;margin-bottom:20px;}
+.confirm-btns{display:flex;gap:12px;justify-content:center;}
+/* ── CO-OP LOBBY ── */
+#coop-lobby{display:none;position:fixed;inset:0;background:linear-gradient(160deg,#030818 0%,#0a1254 50%,#030818 100%);z-index:99100;justify-content:center;align-items:center;}
+.coop-lobby-box{background:rgba(10,18,70,.95);border:2px solid #4f46e5;border-radius:20px;padding:36px 40px;max-width:480px;width:92%;color:#fff;text-align:center;}
+.coop-lobby-title{font-size:30px;font-weight:900;color:#a5b4fc;letter-spacing:2px;margin-bottom:6px;}
+.coop-lobby-sub{font-size:12px;color:#6b7280;margin-bottom:20px;}
+.coop-tabs{display:flex;gap:0;border-radius:10px;overflow:hidden;margin-bottom:22px;border:1px solid #4f46e5;}
+.coop-tab{flex:1;padding:10px;background:#0a1254;color:#818cf8;border:none;cursor:pointer;font-size:14px;font-weight:600;transition:background .15s;}
+.coop-tab.active{background:#4f46e5;color:#fff;}
+.coop-input{width:100%;background:#060e36;border:1.5px solid #4f46e5;border-radius:9px;padding:11px 15px;color:#fff;font-size:18px;text-align:center;letter-spacing:6px;text-transform:uppercase;outline:none;margin-bottom:14px;font-weight:700;}
+.coop-input::placeholder{letter-spacing:normal;font-size:14px;color:#4b5563;}
+.coop-room-code{font-size:46px;font-weight:900;letter-spacing:10px;color:#f7d060;margin:14px 0;text-shadow:0 0 20px rgba(247,208,96,.4);}
+.coop-btn{background:#4f46e5;color:#fff;border:none;border-radius:10px;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;margin:4px;transition:background .15s;display:inline-block;}
+.coop-btn:hover{background:#6366f1;}.coop-btn.sec{background:#1e1b4b;border:1.5px solid #4f46e5;color:#a5b4fc;}
+.coop-btn:disabled{background:#312e81;color:#6b7280;cursor:not-allowed;}
+.coop-status{font-size:13px;margin-top:12px;min-height:18px;}
+.coop-ok{color:#4ade80;}.coop-wait{color:#fbbf24;animation:blink 1.2s infinite;}
+.coop-err{color:#f87171;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+.coop-sep{color:#4b5563;font-size:12px;margin:12px 0;}
+/* ── ROLE SELECTION ── */
+#role-select{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99200;justify-content:center;align-items:center;}
+.role-box{background:#0a1254;border:2px solid #4f46e5;border-radius:20px;padding:32px 36px;max-width:540px;width:92%;color:#fff;text-align:center;}
+.role-title{font-size:22px;font-weight:900;color:#a5b4fc;margin-bottom:6px;}
+.role-sub{font-size:12px;color:#6b7280;margin-bottom:22px;}
+.role-cards{display:flex;gap:14px;margin:0 auto 22px;justify-content:center;}
+.role-card{flex:1;max-width:210px;background:#060d36;border:2px solid #312e81;border-radius:14px;padding:20px;cursor:pointer;transition:all .2s;}
+.role-card:hover,.role-card.selected{border-color:#6366f1;background:#1e1b4b;transform:translateY(-4px);}
+.role-card.selected{border-color:#a5b4fc;box-shadow:0 0 20px rgba(165,180,252,.3);}
+.role-emoji{font-size:42px;margin-bottom:8px;}
+.role-name{font-size:17px;font-weight:800;color:#c7d2fe;margin-bottom:7px;}
+.role-perks{font-size:11px;color:#4ade80;line-height:1.6;}
+.role-desc{font-size:11px;color:#6b7280;margin-top:5px;}
+/* ── CO-OP HUD BAR ── */
+#coop-hud{display:none;position:fixed;bottom:14px;left:50%;transform:translateX(-50%);background:rgba(5,10,40,.93);border:1.5px solid #4f46e5;border-radius:30px;padding:7px 18px;z-index:600;align-items:center;gap:10px;white-space:nowrap;}
+.coop-hud-btn{background:none;border:1px solid #312e81;border-radius:50%;width:32px;height:32px;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;color:#fff;}
+.coop-hud-btn:hover{background:#1e1b4b;border-color:#6366f1;}
+.coop-hud-btn.mic-on{background:rgba(34,197,94,.2);border-color:#22c55e;}
+.coop-hud-btn.mic-off{background:rgba(239,68,68,.2);border-color:#ef4444;}
+.coop-partner-name{font-size:12px;color:#a5b4fc;font-weight:700;}
+#voice-indicator{display:none;position:fixed;top:58px;right:16px;background:rgba(34,197,94,.12);border:1px solid #22c55e;border-radius:16px;padding:4px 10px;font-size:11px;color:#4ade80;z-index:600;pointer-events:none;}
+/* ── PARTENAIRE CURSEUR ── */
+#partner-cursor{position:absolute;pointer-events:none;z-index:9990;display:none;transition:left .08s,top .08s;}
+.partner-cursor-dot{width:16px;height:16px;border-radius:50%;background:#f472b6;border:2px solid #fff;box-shadow:0 0 8px rgba(244,114,182,.8);}
+.partner-cursor-label{font-size:10px;color:#f9a8d4;font-weight:700;background:rgba(10,5,30,.8);padding:1px 5px;border-radius:4px;margin-top:2px;white-space:nowrap;}
+/* ── PING ── */
+@keyframes ping-out{0%{transform:translate(-50%,-50%) scale(.2);opacity:1}100%{transform:translate(-50%,-50%) scale(2.5);opacity:0}}
+.ping-ring{position:absolute;width:36px;height:36px;border-radius:50%;border:3px solid;pointer-events:none;z-index:9985;animation:ping-out .9s ease-out forwards;}
+/* ── EMOTE POPUP ── */
+@keyframes emote-rise{0%{opacity:1;transform:translateY(0) scale(1)}100%{opacity:0;transform:translateY(-60px) scale(.8)}}
+.emote-pop{position:absolute;pointer-events:none;z-index:9995;font-size:14px;font-weight:800;background:rgba(5,10,40,.9);border:1px solid #4f46e5;border-radius:10px;padding:5px 12px;color:#c7d2fe;animation:emote-rise .7s ease forwards;white-space:nowrap;}
+/* ── SPECTATEUR ── */
+#spectator-banner{display:none;position:fixed;top:0;left:0;right:0;background:rgba(124,58,237,.15);border-bottom:1px solid #7c3aed;padding:5px;text-align:center;font-size:11px;color:#a78bfa;z-index:800;pointer-events:none;}
+/* ── RECETTES CO-OP (brillance) ── */
+.coop-recipe-glow{animation:coop-glow .8s infinite alternate;}
+@keyframes coop-glow{from{box-shadow:0 0 6px rgba(165,180,252,.5)}to{box-shadow:0 0 18px rgba(99,102,241,.9),0 0 36px rgba(99,102,241,.3)}}
 </style>
 </head>
 <body>
 <!-- HUD -->
 <div id="hud">
-  <span class="stat">📅 Jour <b id="hday">1</b>/25<span id="hdiff">💀 HARD</span></span>
+  <span class="stat">📅 Jour <b id="hday">1</b><span id="hwinday">/35</span><span id="hdiff">💀 HARD</span></span>
   <div id="moon-wrap"><div id="moon-fill"></div></div>
   <span class="stat">🪙 <b id="hgold">5</b></span>
   <span class="stat" id="hfood-wrap">🍖 <b id="hfood">0</b>/<b id="hpop">0</b></span>
@@ -352,6 +497,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 </div>
 
 <div id="day-flash"></div>
+<div id="coop-banner" class="p1">👤 Tour du Joueur 1</div>
 <!-- Table de jeu -->
 <div id="table"><div id="wave-alert"></div></div>
 <div id="shop"></div>
@@ -369,6 +515,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   <p id="fscore"></p>
   <div class="final-score" id="over-score"></div>
   <div class="score-breakdown" id="over-breakdown"></div>
+  <div id="over-submit"></div>
   <div class="btn-row">
     <button class="obtn green" onclick="startNewGame()">🔄 Recommencer</button>
     <button class="obtn" onclick="showMainMenu()">🏠 Menu Principal</button>
@@ -383,9 +530,45 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   <div class="final-score" id="vic-score"></div>
   <div class="score-breakdown" id="vic-breakdown"></div>
   <p id="victory-stats"></p>
+  <div id="vic-submit"></div>
   <div class="btn-row">
     <button class="obtn green" onclick="startNewGame()">🔄 Rejouer</button>
     <button class="obtn" onclick="showMainMenu()">🏠 Menu Principal</button>
+  </div>
+</div>
+
+<!-- Classement Mondial -->
+<div id="leaderboard" onclick="closeLeaderboard()">
+  <div class="lb-box" onclick="event.stopPropagation()">
+    <div class="lb-header">
+      <div class="lb-title">🏆 Classement Mondial</div>
+      <button class="lb-close" onclick="closeLeaderboard()">✕</button>
+    </div>
+    <div class="lb-tabs">
+      <button class="lb-tab active" data-filter="all"    onclick="showLeaderboard('all')">🌍 Tous</button>
+      <button class="lb-tab"        data-filter="normal" onclick="showLeaderboard('normal')">⚔️ Normal</button>
+      <button class="lb-tab"        data-filter="hard"   onclick="showLeaderboard('hard')">💀 Difficile</button>
+      <button class="lb-tab"        data-filter="daily"  onclick="showLeaderboard('daily')">📅 Défi du Jour</button>
+    </div>
+    <table class="lb-table">
+      <thead><tr><th>#</th><th>Joueur</th><th>Score</th><th>Mode</th><th>Date</th></tr></thead>
+      <tbody id="lb-body"><tr><td colspan="5" class="lb-msg">⏳ Chargement...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Défi Quotidien -->
+<div id="daily-challenge" onclick="closeDailyChallenge()">
+  <div class="dc-box" onclick="event.stopPropagation()">
+    <div class="dc-title">📅 Défi du Jour</div>
+    <div class="dc-date" id="dc-date"></div>
+    <p style="font-size:12px;color:#9ca3af;margin:0 0 12px">Contraintes imposées aujourd'hui :</p>
+    <div class="dc-constraints" id="dc-constraints"></div>
+    <div class="dc-best" id="dc-best"></div>
+    <div style="display:flex;gap:10px;justify-content:center">
+      <button class="obtn green" style="font-size:14px" onclick="startDailyChallenge()">🎯 Jouer le Défi</button>
+      <button class="obtn" onclick="closeDailyChallenge()">Annuler</button>
+    </div>
   </div>
 </div>
 
@@ -399,8 +582,8 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
     <button class="obtn" onclick="showConseilPopup()" style="background:#1a1a0a;border-color:#78716c;color:#fde68a;">💡 Conseil</button>
   </div>
   <div class="btn-row">
-    <button class="obtn red" onclick="startNewGame()">🔄 Recommencer</button>
-    <button class="obtn" onclick="goMainMenu()">🏠 Menu Principal</button>
+    <button class="obtn red" onclick="confirmRestart()">🔄 Recommencer</button>
+    <button class="obtn" onclick="confirmMenu()">🏠 Menu Principal</button>
   </div>
 </div>
 
@@ -498,6 +681,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
         <button class="bq-tab" id="btab-skins" onclick="switchBoutTab('skins')">🎨 Skins</button>
         <button class="bq-tab" id="btab-hats" onclick="switchBoutTab('hats')">🎩 Chapeaux</button>
         <button class="bq-tab" id="btab-info" onclick="switchBoutTab('info')">ℹ️ Gains</button>
+        <button class="bq-tab" id="btab-dust" onclick="switchBoutTab('dust')">☄️ Poussières</button>
       </div>
     </div>
     <div id="bq-content"></div>
@@ -542,25 +726,58 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 
 <!-- ── MENU PRINCIPAL ── -->
 <div id="main-menu">
-  <div class="mm-logo" id="mm-logo" onclick="eggLogoClick()" style="cursor:pointer;" title="???">🏘️</div>
-  <div class="mm-title">CARDSETTLER</div>
-  <div class="mm-sub">Survive 35 jours, repousse les vagues</div>
-  <div id="mm-comet" style="font-size:13px;color:#c4b5fd;background:rgba(76,29,149,.2);border:1px solid #7c3aed;border-radius:8px;padding:4px 16px;">☄️ <b id="mm-comet-val">0</b> Poussières de Comète &nbsp;|&nbsp; 🔥 Série : <b id="mm-streak-val">0</b> j.</div>
-  <div id="mm-stats"></div>
-  <div class="diff-selector">
-    <button class="diff-btn active-normal" id="diff-normal" onclick="setDifficulty('normal')">⚔️ Normal</button>
-    <button class="diff-btn" id="diff-hard" onclick="setDifficulty('hard')">💀 Difficile</button>
+  <div class="mm-left">
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="mm-logo" id="mm-logo" onclick="eggLogoClick()" style="cursor:pointer;" title="???">🏘️</div>
+      <div>
+        <div class="mm-title">CARDSETTLER</div>
+        <div class="mm-sub">Survive 35 jours, repousse les vagues de monstres</div>
+      </div>
+    </div>
+    <div class="diff-selector" style="margin:6px 0 2px;">
+      <button class="diff-btn active-normal" id="diff-normal" onclick="setDifficulty('normal')">⚔️ Normal</button>
+      <button class="diff-btn" id="diff-hard" onclick="setDifficulty('hard')">💀 Difficile</button>
+    </div>
+    <div class="mm-diff-note" id="mm-diff-note">Mode Normal</div>
+    <div id="mm-stats"></div>
+    <div class="mm-nav">
+      <button class="mbtn mbtn-lg" onclick="startNewGame()">🆕 Nouvelle Partie</button>
+      <button class="mbtn mbtn-coop" onclick="startCoopGame()">👥 Mode Co-op — Jour 50</button>
+      <button class="mbtn" id="btn-resume" onclick="resumeGame()" disabled>▶ Reprendre la partie</button>
+      <p id="resume-info"></p>
+      <button class="mbtn mbtn-sm" onclick="showNarrative()">🌌 L'Histoire</button>
+      <button class="mbtn mbtn-sm" onclick="showTutorial()" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📖 Tutoriel</button>
+      <button class="mbtn mbtn-sm" onclick="showAchOverlay()" style="background:#071e14;border-color:#1a4a2a;color:#4ade80;">🏅 Succès</button>
+      <button class="mbtn mbtn-sm" onclick="showLeaderboard()" style="border-color:#78350f;background:#1a0a00;color:#fbbf24;">🏆 Classement Mondial</button>
+      <button class="mbtn mbtn-sm" id="btn-daily" onclick="showDailyChallenge()" style="border-color:#1e3a8a;background:#030d1a;color:#93c5fd;">📅 Défi du Jour</button>
+      <button class="mbtn mbtn-sm disc" onclick="disconnect()">🚪 Déconnexion</button>
+    </div>
   </div>
-  <div class="mm-diff-note" id="mm-diff-note">Mode Normal</div>
-  <button class="mbtn" onclick="showNarrative()">🌌 L'Histoire</button>
-  <button class="mbtn" onclick="startNewGame()">🆕 Nouvelle Partie</button>
-  <button class="mbtn" id="btn-resume" onclick="resumeGame()" disabled>▶ Reprendre la partie</button>
-  <p id="resume-info"></p>
-  <button class="mbtn" id="btn-boutique" onclick="showBoutique()" style="background:#07000f;border-color:#7c3aed;color:#c4b5fd;">🛍️ Boutique</button>
-  <button class="mbtn" onclick="showTutorial()" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📖 Tutoriel</button>
-  <button class="mbtn" onclick="showAchOverlay()" style="background:#071e14;border-color:#1a4a2a;color:#4ade80;">🏅 Succès</button>
-  <button class="mbtn disc" onclick="disconnect()">🚪 Déconnexion</button>
-  <div class="mm-version">CardSettler v1.0</div>
+  <div class="mm-right">
+    <button class="mm-boutique-btn" id="btn-boutique" onclick="showBoutique()">
+      <div class="mm-boutique-ico">🛍️</div>
+      <div>BOUTIQUE</div>
+      <div class="mm-boutique-sub">Skins · Chapeaux · Bonus permanents</div>
+    </button>
+    <div class="mm-dust-panel">
+      <div class="mm-dust-row">☄️ <b id="mm-comet-val">0</b> Poussières de Comète</div>
+      <div class="mm-dust-row">🔥 Série : <b id="mm-streak-val">0</b> j. consécutifs</div>
+      <div class="vol-section">
+        <div class="vol-row"><label>🔊 Effets</label><input type="range" class="vol-slider" id="sfx-vol" min="0" max="1" step="0.05" value="0.8" oninput="setSfxVol(this.value)"></div>
+        <div class="vol-row"><label>🎵 Musique</label><input type="range" class="vol-slider" id="music-vol" min="0" max="1" step="0.05" value="0.5" oninput="setMusicVol(this.value)"></div>
+      </div>
+    </div>
+    <div class="mm-panel" id="mm-records-panel">
+      <div class="mm-panel-title">📊 Mes Records</div>
+      <div id="mm-records-body"></div>
+    </div>
+    <div class="mm-panel">
+      <div class="mm-panel-title">🏅 Succès <span class="mm-ach-count" id="mm-ach-count">0/0</span></div>
+      <div class="mm-ach-bar-wrap"><div class="mm-ach-bar" id="mm-ach-bar" style="width:0%"></div></div>
+      <div class="mm-ach-recent" id="mm-ach-recent"></div>
+    </div>
+    <div class="mm-version">CardSettler v1.0</div>
+  </div>
 </div>
 
 <script>
@@ -706,98 +923,104 @@ function setDifficulty(d){
 
 // ── AUDIO ────────────────────────────────────────────────────────────────────
 let _muted=false;
+let _sfxVol=parseFloat(localStorage.getItem('cs_sfx_vol')??'0.8');
+let _musicVol=parseFloat(localStorage.getItem('cs_music_vol')??'0.5');
+function setSfxVol(v){_sfxVol=parseFloat(v);localStorage.setItem('cs_sfx_vol',v);_masterSfxGain.gain.value=_sfxVol;const e=document.getElementById('sfx-vol');if(e)e.value=v;}
+function setMusicVol(v){_musicVol=parseFloat(v);localStorage.setItem('cs_music_vol',v);}
 function toggleMute(){
   _muted=!_muted;
+  _masterSfxGain.gain.value=_muted?0:_sfxVol;
   const btn=document.getElementById('mute-btn');
   if(btn){btn.textContent=_muted?'🔇':'🔊';btn.className=_muted?'muted':'';}
 }
 const AC=new(window.AudioContext||window.webkitAudioContext)();
+const _masterSfxGain=AC.createGain();_masterSfxGain.gain.value=_sfxVol;_masterSfxGain.connect(AC.destination);
 document.addEventListener('mousedown',()=>{if(AC.state==='suspended')AC.resume();},{passive:true});
 function playSound(type){
   if(_muted||!AC)return;
   try{
     const t=AC.currentTime;
     if(type==='craft_start'){
-      const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(AC.destination);
+      const o=AC.createOscillator(),g=AC.createGain();o.connect(g);g.connect(_masterSfxGain);
       o.frequency.setValueAtTime(300,t);o.frequency.exponentialRampToValueAtTime(520,t+.12);
       g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);o.start(t);o.stop(t+.15);
     }else if(type==='craft_done'){
       [523,659,784].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sine';
-        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.09);
+        o.connect(g);g.connect(_masterSfxGain);o.frequency.setValueAtTime(f,t+i*.09);
         g.gain.setValueAtTime(.22,t+i*.09);g.gain.exponentialRampToValueAtTime(.001,t+i*.09+.28);
         o.start(t+i*.09);o.stop(t+i*.09+.3);});
     }else if(type==='monster_attack'){
-      const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.connect(g);g.connect(AC.destination);
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.connect(g);g.connect(_masterSfxGain);
       o.frequency.setValueAtTime(160,t);o.frequency.exponentialRampToValueAtTime(40,t+.35);
       g.gain.setValueAtTime(.5,t);g.gain.exponentialRampToValueAtTime(.001,t+.35);o.start(t);o.stop(t+.35);
     }else if(type==='shield_block'){
       [900,1400,700].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='square';
-        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.025);
+        o.connect(g);g.connect(_masterSfxGain);o.frequency.setValueAtTime(f,t+i*.025);
         g.gain.setValueAtTime(.12,t+i*.025);g.gain.exponentialRampToValueAtTime(.001,t+i*.025+.22);
         o.start(t+i*.025);o.stop(t+i*.025+.25);});
     }else if(type==='buy_pack'){
-      const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.connect(g);g.connect(AC.destination);
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.connect(g);g.connect(_masterSfxGain);
       o.frequency.setValueAtTime(880,t);o.frequency.setValueAtTime(1100,t+.07);
       g.gain.setValueAtTime(.28,t);g.gain.exponentialRampToValueAtTime(.001,t+.28);o.start(t);o.stop(t+.3);
     }else if(type==='wave_start'){
       for(let i=0;i<3;i++){const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';
-        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(i%2===0?240:190,t+i*.22);
+        o.connect(g);g.connect(_masterSfxGain);o.frequency.setValueAtTime(i%2===0?240:190,t+i*.22);
         g.gain.setValueAtTime(.32,t+i*.22);g.gain.exponentialRampToValueAtTime(.001,t+i*.22+.2);
         o.start(t+i*.22);o.stop(t+i*.22+.22);}
     }else if(type==='error'){
-      const o=AC.createOscillator(),g=AC.createGain();o.type='square';o.connect(g);g.connect(AC.destination);
+      const o=AC.createOscillator(),g=AC.createGain();o.type='square';o.connect(g);g.connect(_masterSfxGain);
       o.frequency.setValueAtTime(110,t);g.gain.setValueAtTime(.13,t);g.gain.exponentialRampToValueAtTime(.001,t+.13);
       o.start(t);o.stop(t+.14);
     }else if(type==='sell'){
-      const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.connect(g);g.connect(AC.destination);
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.connect(g);g.connect(_masterSfxGain);
       o.frequency.setValueAtTime(440,t);o.frequency.exponentialRampToValueAtTime(330,t+.12);
       g.gain.setValueAtTime(.18,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);o.start(t);o.stop(t+.15);
     }else if(type==='save'){
-      const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.connect(g);g.connect(AC.destination);
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.connect(g);g.connect(_masterSfxGain);
       o.frequency.setValueAtTime(440,t);o.frequency.setValueAtTime(554,t+.06);o.frequency.setValueAtTime(660,t+.12);
       g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.001,t+.25);o.start(t);o.stop(t+.25);
     }else if(type==='victory'){
       [523,659,784,1047].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();
-        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.1);
+        o.connect(g);g.connect(_masterSfxGain);o.frequency.setValueAtTime(f,t+i*.1);
         g.gain.setValueAtTime(.28,t+i*.1);g.gain.exponentialRampToValueAtTime(.001,t+i*.1+.4);
         o.start(t+i*.1);o.stop(t+i*.1+.45);});
     }else if(type==='menu_click'){
-      const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.connect(g);g.connect(AC.destination);
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.connect(g);g.connect(_masterSfxGain);
       o.frequency.setValueAtTime(660,t);g.gain.setValueAtTime(.12,t);g.gain.exponentialRampToValueAtTime(.001,t+.1);
       o.start(t);o.stop(t+.1);
     }else if(type==='achievement'){
       [784,880,1047].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sine';
-        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.08);
+        o.connect(g);g.connect(_masterSfxGain);o.frequency.setValueAtTime(f,t+i*.08);
         g.gain.setValueAtTime(.2,t+i*.08);g.gain.exponentialRampToValueAtTime(.001,t+i*.08+.3);
         o.start(t+i*.08);o.stop(t+i*.08+.35);});
     }else if(type==='secret'){
       [392,494,587,740,880].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sine';
-        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.11);
+        o.connect(g);g.connect(_masterSfxGain);o.frequency.setValueAtTime(f,t+i*.11);
         g.gain.setValueAtTime(.18,t+i*.11);g.gain.exponentialRampToValueAtTime(.001,t+i*.11+.42);
         o.start(t+i*.11);o.stop(t+i*.11+.48);});
     }else if(type==='goblin_king_appear'){
       [200,260,180,300].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';
-        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.1);
+        o.connect(g);g.connect(_masterSfxGain);o.frequency.setValueAtTime(f,t+i*.1);
         g.gain.setValueAtTime(.3,t+i*.1);g.gain.exponentialRampToValueAtTime(.001,t+i*.1+.25);
         o.start(t+i*.1);o.stop(t+i*.1+.28);});
     }else if(type==='dragon_appear'){
-      const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.connect(g);g.connect(AC.destination);
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.connect(g);g.connect(_masterSfxGain);
       o.frequency.setValueAtTime(40,t);o.frequency.exponentialRampToValueAtTime(20,t+1.2);
       g.gain.setValueAtTime(.7,t);g.gain.exponentialRampToValueAtTime(.001,t+1.3);o.start(t);o.stop(t+1.4);
-      const o2=AC.createOscillator(),g2=AC.createGain();o2.type='square';o2.connect(g2);g2.connect(AC.destination);
+      const o2=AC.createOscillator(),g2=AC.createGain();o2.type='square';o2.connect(g2);g2.connect(_masterSfxGain);
       o2.frequency.setValueAtTime(80,t+.3);o2.frequency.exponentialRampToValueAtTime(40,t+1.0);
       g2.gain.setValueAtTime(.3,t+.3);g2.gain.exponentialRampToValueAtTime(.001,t+1.1);o2.start(t+.3);o2.stop(t+1.1);
     }else if(type==='wolf_appear'){
-      const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.connect(g);g.connect(AC.destination);
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.connect(g);g.connect(_masterSfxGain);
       o.frequency.setValueAtTime(120,t);o.frequency.exponentialRampToValueAtTime(60,t+.5);
       g.gain.setValueAtTime(.35,t);g.gain.exponentialRampToValueAtTime(.001,t+.55);o.start(t);o.stop(t+.55);
     }else if(type==='goblin_appear'){
       [350,420,280,380].forEach((f,i)=>{const o=AC.createOscillator(),g=AC.createGain();o.type='square';
-        o.connect(g);g.connect(AC.destination);o.frequency.setValueAtTime(f,t+i*.07);
+        o.connect(g);g.connect(_masterSfxGain);o.frequency.setValueAtTime(f,t+i*.07);
         g.gain.setValueAtTime(.14,t+i*.07);g.gain.exponentialRampToValueAtTime(.001,t+i*.07+.18);
         o.start(t+i*.07);o.stop(t+i*.07+.2);});
     }else if(type==='troll_appear'){
-      const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.connect(g);g.connect(AC.destination);
+      const o=AC.createOscillator(),g=AC.createGain();o.type='sawtooth';o.connect(g);g.connect(_masterSfxGain);
       o.frequency.setValueAtTime(55,t);o.frequency.exponentialRampToValueAtTime(30,t+.8);
       g.gain.setValueAtTime(.55,t);g.gain.exponentialRampToValueAtTime(.001,t+.85);o.start(t);o.stop(t+.85);
     }
@@ -841,6 +1064,9 @@ function saveGame(){
     _babiesGrown:G._babiesGrown||0,
     _lastEvent:G._lastEvent||null,
     difficulty:G.difficulty||'normal',
+    foodPerPop:G.foodPerPop||1,
+    _raider:G._raider||null,_raiderGold:G._raiderGold||0,
+    _dailyChallengeKey:G._dailyChallengeKey||null,
     _stats:G._stats||{},
     cards:Object.fromEntries(Object.entries(G.cards).map(([id,c])=>[id,{id:c.id,type:c.type,x:c.x,y:c.y,sid:c.sid,aggro:c.aggro||0,name:c.name||null}])),
     stacks:Object.fromEntries(Object.entries(G.stacks).map(([sid,s])=>[sid,{id:s.id,ids:[...s.ids],rx:s.rx,ry:s.ry}]))
@@ -861,8 +1087,10 @@ function loadGame(){
      _babiesGrown:data._babiesGrown||0,
      _quest:data._quest||null,_lastEvent:data._lastEvent||null,
      difficulty:data.difficulty||'normal',
+     _raider:data._raider||null,_raiderGold:data._raiderGold||0,
+     _dailyChallengeKey:data._dailyChallengeKey||null,
      aggroMult:(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).aggroMult,
-     foodPerPop:(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).foodPerPop,
+     foodPerPop:data.foodPerPop||(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).foodPerPop,
      packCostAdd:(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).packCostAdd,
      scoreMult:(DIFF_PARAMS[data.difficulty||'normal']||DIFF_PARAMS.normal).scoreMult};
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
@@ -906,7 +1134,7 @@ function buildShop(){
 // ── STATE ────────────────────────────────────────────────────────────────────
 function initG(){
   const dp=DIFF_PARAMS[selectedDifficulty]||DIFF_PARAMS.normal;
-  const startGold=5+(hasPermaBonus('gold')?15:0);
+  const startGold=(selectedDifficulty==='hard'?3:5)+(hasPermaBonus('gold')?15:0);
   G={gold:startGold,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,_quest:null,_lastEvent:null,difficulty:selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult,_reviveAvail:hasPermaBonus('revive')};
   const sb=document.getElementById('speed-btn');if(sb){sb.textContent='⏩ ×1';sb.className='';sb.id='speed-btn';}
   const bb=document.getElementById('bm-btn');if(bb)bb.style.display='none';
@@ -916,7 +1144,9 @@ function initG(){
   buildShop();applyBoardSkin();
   spawn('berry_bush',70,70);spawn('tree',200,70);spawn('villager',330,70);
   if(hasPermaBonus('pop'))spawn('villager',460,70);
-  spawn('berry',hasPermaBonus('pop')?590:460,70);spawn('berry',hasPermaBonus('pop')?590:460,180);spawn('flint',330,180);
+  spawn('berry',hasPermaBonus('pop')?590:460,70);
+  if(selectedDifficulty!=='hard')spawn('berry',hasPermaBonus('pop')?590:460,180);
+  spawn('flint',330,180);
   if(hasPermaBonus('iron'))spawn('iron_ore',590,180);
   updateHUD();
   updateDustUI();
@@ -924,7 +1154,17 @@ function initG(){
   if(hasPermaBonus('pop'))log('👥 Mémoire des Ancêtres : villageois supplémentaire !');
   if(hasPermaBonus('iron'))log('⚒️ Forge des Étoiles : minerai de fer en bonus !');
   log('🌅 Empile les cartes pour crafter !');
-  log('⚔️ Première vague de monstres au Jour 5 !');
+  if(selectedDifficulty==='hard')log('💀 Mode Difficile : -2🪙 de départ, 1 baie en moins, repas ×2, jours plus courts. Bonne chance !');
+  else log('⚔️ Première vague de monstres au Jour 5 !');
+  // Appliquer les contraintes du défi quotidien si actives
+  if(_pendingChallengeConstraints){
+    G._dailyChallengeKey=getDailyChallengeKey();
+    G._dailyConstraints=_pendingChallengeConstraints;
+    _pendingChallengeConstraints=null;
+    G._dailyConstraints.forEach(c=>{try{c.apply();}catch(e){}});
+    updateHUD();
+    log('📅 DÉFI DU JOUR ! '+G._dailyConstraints.map(c=>c.label).join(' + '));
+  }
   requestAnimationFrame(loop);
 }
 
@@ -1055,8 +1295,8 @@ function execRecipe(sid){
   if(killCount>0){
     G._stats.kills=(G._stats.kills||0)+killCount;
     goneTypes.forEach(t=>{
-      if(t==='goblin_king')addCometDust(10);
-      else if(t==='dragon')addCometDust(25);
+      if(t==='goblin_king'){addCometDust(10);G._stats.killedGoblinKing=true;}
+      else if(t==='dragon'){addCometDust(25);G._stats.killedDragon=true;}
     });
   }
   if(r.o.includes('baby'))G._stats.babies=(G._stats.babies||0)+1;
@@ -1071,6 +1311,8 @@ function execRecipe(sid){
   if(r.o.includes('shield'))G._stats.madeShield=true;
   if(r.o.includes('campfire'))G._stats.madeCampfire=true;
   if(r.o.includes('house'))G._stats.madeHouse=true;
+  if(r.o.includes('farm'))G._stats.madeFarm=true;
+  if(r.o.includes('forge'))G._stats.madeForge=true;
   spawnParticles(rx,ry);
   // Secret card reveal
   r.o.forEach(type=>{
@@ -1211,6 +1453,7 @@ function sellCard(id){
   const val=CD[t].sellValue||1;
   delCard(id);G.gold+=val;playSound('sell');log('💰 +'+val+'🪙 (vente)');
   G._stats.sells=(G._stats.sells||0)+1;
+  if(t==='sword'||t==='iron_sword')G._stats.soldWeapon=true;
   checkAchievements();
   updateHUD();
 }
@@ -1243,6 +1486,8 @@ function monsterAttack(mid){
 }
 
 function spawnWave(){
+  // Hard mode jour 35 : assaut final dévastateur
+  if(G.difficulty==='hard' && G.moon===35){spawnHardFinalAssault();return;}
   const waveNum=Math.floor(G.moon/5);
   let monsters;
   const isBossWave20=G.moon===20,isBossWave30=G.moon===30;
@@ -1254,6 +1499,10 @@ function spawnWave(){
   else if(waveNum===6)monsters=['troll','goblin','goblin'];
   else if(waveNum===7)monsters=['troll','troll','goblin'];
   else monsters=['troll','troll',...Array(Math.min(waveNum-6,3)).fill('goblin')];
+  // Hard mode: +1 monstre bonus sur chaque vague normale
+  if(G.difficulty==='hard'&&!isBossWave20&&!isBossWave30){
+    monsters.push(waveNum<=3?'wolf':waveNum<=5?'goblin':'troll');
+  }
   const tbl=document.getElementById('table').getBoundingClientRect();
   monsters.forEach(type=>{spawn(type,40+Math.random()*(tbl.width-180),40+Math.random()*(tbl.height-180));});
   // Boss spéciaux
@@ -1272,7 +1521,7 @@ function spawnWave(){
     setTimeout(()=>{
       spawn('dragon',tbl.width/2+(Math.random()-.5)*100,tbl.height/2+(Math.random()-.5)*80);
       const wa=document.getElementById('wave-alert');
-      wa.innerHTML='🐉 BOSS FINAL : LE DRAGON ! 🗡️+⚔️ pour le vaincre !';
+      wa.innerHTML='🐉 BOSS : LE DRAGON ! 🗡️+⚔️ pour le vaincre !';
       wa.style.background='rgba(140,0,0,.95)';wa.style.display='block';
       setTimeout(()=>{wa.style.display='none';wa.style.background='';},6000);
       log('🐉 LE DRAGON EST LÀ ! Prépare épée de fer + épée (Normal) ou 🗡️+2⚔️ (Difficile) !');
@@ -1287,6 +1536,54 @@ function spawnWave(){
   }
   const diff=G.difficulty==='hard'?' (Difficile !)':'';
   log('⚔️ Vague '+waveNum+diff+' ! Empile des épées sur les monstres !');
+}
+
+function maybeSpawnRaider(){
+  if(G._raider||G.moon%5===0||G.moon>=31)return;
+  if(Math.random()>0.35)return;
+  const tbl=document.getElementById('table').getBoundingClientRect();
+  const rid=spawn('goblin',tbl.width-120,20+Math.random()*(tbl.height-80));
+  const stolen=3+Math.floor(Math.random()*4);
+  G._raider=rid;G._raiderGold=stolen;
+  log('🦹 Un gobelin pillard rôde ! Tue-le avant la fin du jour ou perd '+stolen+'🪙 !');
+}
+
+function spawnHardDailyWave(day){
+  const configs={
+    31:['goblin','goblin','wolf'],
+    32:['troll','goblin','goblin'],
+    33:['troll','troll','goblin'],
+    34:['troll','troll','goblin','goblin']
+  };
+  const monsters=configs[day]||['troll','goblin'];
+  const tbl=document.getElementById('table').getBoundingClientRect();
+  monsters.forEach(type=>spawn(type,40+Math.random()*(tbl.width-180),40+Math.random()*(tbl.height-180)));
+  playSound('wave_start');
+  const wa=document.getElementById('wave-alert');
+  wa.style.background='rgba(120,30,0,.95)';
+  wa.innerHTML='⚠️ Assaut Nocturne J'+day+' ! '+monsters.map(t=>CD[t].e+' '+CD[t].n).join(', ')+' !';
+  wa.style.display='block';
+  setTimeout(()=>{wa.style.display='none';wa.style.background='';},3500);
+  log('⚠️ [DIFFICILE] Assaut nocturne J'+day+' ! '+monsters.map(t=>CD[t].n).join(', ')+' !');
+}
+
+function spawnHardFinalAssault(){
+  const tbl=document.getElementById('table').getBoundingClientRect();
+  const horde=['troll','troll','troll','goblin','goblin','goblin'];
+  horde.forEach(type=>spawn(type,40+Math.random()*(tbl.width-180),40+Math.random()*(tbl.height-180)));
+  playSound('wave_start');
+  setTimeout(()=>playSound('troll_appear'),400);
+  setTimeout(()=>{
+    spawn('dragon',tbl.width*0.35+(Math.random()-.5)*80,tbl.height/2+(Math.random()-.5)*80);
+    spawn('goblin_king',tbl.width*0.65+(Math.random()-.5)*80,tbl.height/2+(Math.random()-.5)*80);
+    playSound('troll_appear');setTimeout(()=>playSound('troll_appear'),500);
+    const wa=document.getElementById('wave-alert');
+    wa.style.background='rgba(60,0,0,.98)';
+    wa.innerHTML='💀 ASSAUT FINAL ! 🐉 Dragon + 👑 Roi Gobelin + Horde ! Tout ou rien !';
+    wa.style.display='block';
+    setTimeout(()=>{wa.style.display='none';wa.style.background='';},8000);
+    log('💀 ASSAUT FINAL DIFFICILE ! Dragon + Roi Gobelin + 3 trolls + 3 gobelins ! Bonne chance !');
+  },1400);
 }
 
 // ── GAME LOOP ────────────────────────────────────────────────────────────────
@@ -1338,8 +1635,26 @@ function loop(ts){
 }
 
 // ── MOON / FOOD ───────────────────────────────────────────────────────────────
+function getWinDay(){return G._coopMode?50:WIN_DAY;}
 function endMoon(){
-  if(G.moon>WIN_DAY){G.over=true;showVictory();return;}
+  if(G.moon>getWinDay()){G.over=true;showVictory();return;}
+  // Résolution pillard (avant la nourriture)
+  if(G._raider){
+    if(G.cards[G._raider]){
+      const stolen=Math.min(G._raiderGold||3,G.gold);
+      G.gold-=stolen;
+      if(G.cards[G._raider].sid)rmFromStack(G._raider);
+      delCard(G._raider);
+      log('🦹 Le pillard a fui avec '+stolen+'🪙 volés !');
+      playSound('monster_attack');updateHUD();
+    }
+    G._raider=null;G._raiderGold=0;
+  }
+  // Malnutrition progressive en difficile (jour 15 : foodPerPop passe à 3)
+  if(G.difficulty==='hard'&&G.moon===15&&G.foodPerPop<3){
+    G.foodPerPop=3;
+    log('🫁 Malnutrition ! La population s\'affaiblit. Consommation : 3 nourriture/villageois dès maintenant !');
+  }
   const fl=document.getElementById('day-flash');
   if(fl){fl.style.opacity=G.moon%5===0?'.7':'.35';setTimeout(()=>fl.style.opacity='0',G.moon%5===0?500:220);}
   const pop=countT('villager')+countT('baby');
@@ -1355,7 +1670,18 @@ function endMoon(){
     for(const fc of fCards){if(need<=0)break;if(fc.sid)rmFromStack(fc.id);delCard(fc.id);need-=CD[fc.type].food;}
     log('🌙 Jour '+G.moon+' — '+pop+' villageois nourris'+(G.foodPerPop>1?' (×'+G.foodPerPop+' en difficile)':'')+'!');
   }else{log('🌙 Jour '+G.moon);}
-  if(G.moon%5===0)spawnWave();
+  if(G._coopMode){
+    // Co-op: boss aux jours 40, 45, 50
+    if(G.moon===40||G.moon===45||G.moon===50){spawnCoopBoss(G.moon);}
+    // Co-op: monstres chaque jour dès le jour 6 (hors boss)
+    else if(G.moon>=6){spawnCoopDailyMonsters(G.moon);}
+  }else{
+    if(G.moon%5===0)spawnWave();
+    // Hard mode : assauts nocturnes quotidiens jours 31–34
+    if(G.difficulty==='hard'&&G.moon>=31&&G.moon<=34)spawnHardDailyWave(G.moon);
+    // Hard mode : gobelin pillard (jours 5–30, hors vague, 35% de chance)
+    if(G.difficulty==='hard'&&G.moon>4&&G.moon<31&&G.moon%5!==0)maybeSpawnRaider();
+  }
   // Quête : vérifier complétion + nouvelle quête
   checkDailyQuest();
   newDailyQuest();
@@ -1424,10 +1750,23 @@ function updateHUD(){
   const foodWrap=document.getElementById('hfood-wrap');
   foodWrap.style.color=food>=pop?'#86efac':'#fca5a5';
   if(food<pop&&pop>0)foodWrap.classList.add('famine-warn');else foodWrap.classList.remove('famine-warn');
-  const nextWave=G.moon%5===0?G.moon+5:Math.ceil(G.moon/5)*5;
-  const isBossNext=nextWave===20||nextWave===30;
-  const bossLabel=nextWave===20?' 👑BOSS':nextWave===30?' 🐉BOSS':'';
-  document.getElementById('obj').textContent='⚔️ Vague J'+Math.min(nextWave,WIN_DAY)+bossLabel+' | 🎯 Objectif : J'+WIN_DAY;
+  const winDay=getWinDay();
+  const hwinday=document.getElementById('hwinday');if(hwinday)hwinday.textContent='/'+winDay;
+  let objText;
+  if(G._coopMode){
+    const nextBoss=G.moon<40?40:G.moon<45?45:G.moon<50?50:50;
+    const coopBossLabel={40:'👑 BOSS J40',45:'🐉👑 BOSS J45',50:'💀 BOSS FINAL J50'}[nextBoss]||'';
+    objText='👥 '+(G.moon>=40?coopBossLabel:'⚔️ Monstres quotidiens')+' | 🎯 Objectif : J50';
+  } else if(G.difficulty==='hard'&&G.moon>=30&&G.moon<35){
+    objText='⚠️ Assaut J'+(G.moon+1)+' | '+(G.moon===34?'💀 ASSAUT FINAL J35':'⚔️ Encore '+(35-G.moon)+' jours');
+  } else if(G.difficulty==='hard'&&G.moon===35){
+    objText='💀 ASSAUT FINAL EN COURS ! Tiens bon !';
+  } else {
+    const nextWave=G.moon%5===0?G.moon+5:Math.ceil(G.moon/5)*5;
+    const bossLabel=nextWave===20?' 👑BOSS':nextWave===30?' 🐉BOSS':'';
+    objText='⚔️ Vague J'+Math.min(nextWave,WIN_DAY)+bossLabel+' | 🎯 Objectif : J'+WIN_DAY;
+  }
+  document.getElementById('obj').textContent=objText;
   const hdiff=document.getElementById('hdiff');
   if(hdiff)hdiff.style.display=G.difficulty==='hard'?'inline':'none';
   Object.keys(PACKS).forEach(k=>{const b=document.getElementById('b-'+k);if(b)b.disabled=G.gold<(PACKS[k].cost+(G.packCostAdd||0));});
@@ -1469,7 +1808,11 @@ function _showDefeatScreen(title,msg){
   const sc=calcScore();
   document.getElementById('over-score').textContent='Score : '+sc.toLocaleString();
   document.getElementById('over-breakdown').textContent=scoreBreakdown();
-  showConclusion('b',()=>{document.getElementById('overlay').style.display='flex';});
+  if(G._dailyChallengeKey){const k='cs_daily_best_'+G._dailyChallengeKey;if(sc>parseInt(localStorage.getItem(k)||'0'))localStorage.setItem(k,sc);}
+  showConclusion('b',()=>{
+    document.getElementById('overlay').style.display='flex';
+    showScoreSubmit('over-submit',sc,G.difficulty,G.moon,G._dailyChallengeKey||null);
+  });
 }
 function showOverFamine(){_showDefeatScreen('☠️ Famine !','Tes villageois sont morts de faim.');}
 function showOverMonster(){_showDefeatScreen('💀 Défaite !','Tous tes villageois ont été tués par des monstres.');}
@@ -1478,18 +1821,28 @@ function showVictory(){
   if(!hasAchievement('victory_u')&&unlockAchievement('victory_u')){
     const a=ACHIEVEMENTS.find(a=>a.id==='victory_u');if(a)setTimeout(()=>showAchievementToast(a),800);
   }
+  if(G.difficulty==='hard'){
+    if(!hasAchievement('hard_victory')&&unlockAchievement('hard_victory')){
+      const a=ACHIEVEMENTS.find(a=>a.id==='hard_victory');if(a)setTimeout(()=>showAchievementToast(a),1400);
+    }
+    if(!G._stats.madeShield&&!hasAchievement('hard_no_shield')&&unlockAchievement('hard_no_shield')){
+      const a=ACHIEVEMENTS.find(a=>a.id==='hard_no_shield');if(a)setTimeout(()=>showAchievementToast(a),2200);
+    }
+  }
   playSound('victory');
   const sc=calcScore();
   document.getElementById('vscore').textContent='Tu as repoussé toutes les vagues et survécu '+WIN_DAY+' jours !';
   document.getElementById('vic-score').textContent='Score : '+sc.toLocaleString();
   document.getElementById('vic-breakdown').textContent=scoreBreakdown();
   document.getElementById('victory-stats').textContent='⚒️ '+(G._stats?.crafts||0)+' crafts  |  💀 '+(G._stats?.kills||0)+' monstres  |  🏅 '+getAchievements().length+'/'+ACHIEVEMENTS.length+' succès';
+  if(G._dailyChallengeKey){const k='cs_daily_best_'+G._dailyChallengeKey;if(sc>parseInt(localStorage.getItem(k)||'0'))localStorage.setItem(k,sc);}
   const conclusionType=getTotalDust()>=3000?'c':'a';
   const bonusDust=G.difficulty==='hard'?80:30;
   addCometDust(bonusDust,true);
   showConclusion(conclusionType,()=>{
     document.getElementById('victory').style.display='flex';
     spawnConfetti();
+    showScoreSubmit('vic-submit',sc,G.difficulty,G.moon,G._dailyChallengeKey||null);
   });
 }
 
@@ -1521,21 +1874,60 @@ function showMainMenu(){
   updateDustUI();
   // Badge chapeau gratuit si non réclamé
   const btnB=document.getElementById('btn-boutique');
-  if(btnB){const weekly=getCurrentWeekHat();const free=!hasClaimedThisWeek()&&!ownsHat(weekly.id);btnB.textContent=free?'🛍️ Boutique  🎁':'🛍️ Boutique';}
+  if(btnB){
+    const free=!hasClaimedThisWeek()&&!ownsHat(getCurrentWeekHat().id);
+    const badge=btnB.querySelector('.mm-boutique-badge');
+    if(free&&!badge){const b=document.createElement('div');b.className='mm-boutique-badge';b.textContent='🎁 CADEAU DISPO';btnB.appendChild(b);}
+    else if(!free&&badge)badge.remove();
+  }
+  // Panel Records
+  const recBody=document.getElementById('mm-records-body');
+  if(recBody){
+    const rows=[];
+    if(gs.totalGames)rows.push(['🎮 Parties jouées',gs.totalGames]);
+    if(gs.wins)rows.push(['🏆 Victoires',gs.wins+(gs.totalGames?' ('+Math.round(gs.wins/gs.totalGames*100)+'%)':'')]);
+    if(gs.bestDays)rows.push(['📅 Meilleure partie',gs.bestDays+' jours']);
+    if(gs.totalKills)rows.push(['💀 Monstres tués',gs.totalKills.toLocaleString()]);
+    if(gs.totalCrafts)rows.push(['⚒️ Objets craftés',gs.totalCrafts.toLocaleString()]);
+    recBody.innerHTML=rows.length
+      ?rows.map(([l,v])=>`<div class="mm-rec-row"><span>${l}</span><span class="mm-rec-val">${v}</span></div>`).join('')
+      :'<div class="mm-ach-empty">Joue une partie pour voir tes records !</div>';
+  }
+  // Panel Succès
+  const achArr=getAchievements();
+  const total=ACHIEVEMENTS.length;
+  const pct=total?Math.round(achArr.length/total*100):0;
+  const achCountEl=document.getElementById('mm-ach-count');
+  if(achCountEl)achCountEl.textContent=achArr.length+'/'+total;
+  const achBar=document.getElementById('mm-ach-bar');
+  if(achBar)achBar.style.width=pct+'%';
+  const achRecent=document.getElementById('mm-ach-recent');
+  if(achRecent){
+    const recent=achArr.slice(-3).reverse().map(id=>ACHIEVEMENTS.find(a=>a.id===id)).filter(Boolean);
+    achRecent.innerHTML=recent.length
+      ?recent.map(a=>`<div class="mm-ach-item"><div class="mm-ach-item-ico">${a.icon}</div><div><div class="mm-ach-item-name">${a.name}</div><div style="font-size:10px;color:#6b7280">${a.desc}</div></div></div>`).join('')
+      :'<div class="mm-ach-empty">Aucun succès débloqué pour l\'instant</div>';
+  }
   checkAndUpdateStreak();
 }
+let _narrativeStartGame=false;
 function startNewGame(){
   playSound('menu_click');
   clearSave();
-  // Afficher le tutoriel automatiquement si c'est la première partie
+  // Premier lancement : tutoriel d'abord
   if(!localStorage.getItem('cs_tuto_seen')){
-    // Initialiser quand même l'état pour avoir le menu caché
     document.getElementById('main-menu').style.display='none';
     tutoStep=0;renderTuto();
     document.getElementById('tutorial').style.display='flex';
-    // La dernière slide du tuto appellera initG() via "Commencer"
     return;
   }
+  // Chaque nouvelle partie : afficher l'intro narrative avant de lancer
+  _narrativeStartGame=true;
+  document.getElementById('main-menu').style.display='none';
+  showNarrative();
+}
+function _doStartGame(){
+  _narrativeStartGame=false;
   initG();
 }
 function resumeGame(){
@@ -1993,9 +2385,15 @@ const EVENTS_LIST=[
 let _evtOpen=false;
 function maybeFireEvent(){
   if(_evtOpen)return;
-  if(Math.random()>0.40)return; // 40% de chance par jour éligible
+  const chance=G.difficulty==='hard'?0.60:0.40;
+  if(Math.random()>chance)return;
   let pool=EVENTS_LIST;
   if(G._lastEvent)pool=pool.filter(e=>e.id!==G._lastEvent);
+  if(G.difficulty==='hard'){
+    const bad=pool.filter(e=>e.type==='bad');
+    const good=pool.filter(e=>e.type==='good');
+    pool=[...bad,...bad,...bad,...good]; // 3× plus de mauvais événements
+  }
   const ev=pool[Math.floor(Math.random()*pool.length)];
   G._lastEvent=ev.id;
   setTimeout(()=>showEventPopup(ev),600);
@@ -2185,26 +2583,52 @@ function showPackUnlockToast(pack){
 
 // ── ACHIEVEMENTS ─────────────────────────────────────────────────────────────
 const ACHIEVEMENTS=[
-  {id:'first_craft',   n:'Premier Craft',         d:'Crafte ton premier objet',            e:'⚒️'},
-  {id:'campfire_made', n:'Feu Allumé',             d:'Fabrique un Feu de camp',             e:'🔥'},
-  {id:'first_house',   n:'Chez Soi',               d:'Construis ta première Maison',        e:'🏠'},
-  {id:'first_baby',    n:'Nouveau Villageois',     d:'Obtiens un Bébé',                     e:'👶'},
-  {id:'pop5',          n:'Village Peuplé',         d:'Atteins 5 villageois en même temps',  e:'👥'},
-  {id:'first_sword',   n:'En Garde !',             d:'Fabrique une Épée',                   e:'⚔️'},
-  {id:'iron_sword_u',  n:'Forgeron',               d:'Fabrique l\'Épée de Fer',             e:'🗡️'},
-  {id:'first_shield',  n:'Défense !',              d:'Fabrique un Bouclier',                e:'🛡️'},
-  {id:'block1',        n:'Paré !',                 d:'Bloque une attaque avec le bouclier', e:'🛡️'},
-  {id:'kill1',         n:'Première Victoire',      d:'Tue ton premier monstre',             e:'💀'},
-  {id:'kill10',        n:'Chasseur',               d:'Tue 10 monstres',                     e:'⚔️'},
-  {id:'wave1_surv',    n:'Survivant I',            d:'Survie à la première vague (Jour 5)', e:'🌊'},
-  {id:'wave3_surv',    n:'Survivant III',          d:'Survie à la vague 3 (Jour 15)',       e:'🌊'},
-  {id:'day10_surv',    n:'Dix Jours',              d:'Atteins le Jour 10',                  e:'📅'},
-  {id:'day20_surv',    n:'Vingt Jours',            d:'Atteins le Jour 20',                  e:'📅'},
-  {id:'victory_u',     n:'Légende',                d:'Termine la partie (25 jours)',        e:'🏆'},
-  {id:'sell10_u',      n:'Marchand',               d:'Vends 10 cartes',                     e:'💰'},
-  {id:'expedition1',   n:'Explorateur',            d:'Complète ta première expédition',     e:'⛏️'},
-  {id:'secret1',       n:'Découverte Secrète',     d:'Crafte ta première carte secrète',    e:'🔓'},
-  {id:'all_secrets',   n:'Alchimiste',             d:'Découvre les 4 cartes secrètes',      e:'💎'},
+  // ── Progression de base ──────────────────────────────────────────────────
+  {id:'first_craft',    n:'Premier Craft',          d:'Crafte ton premier objet',                       e:'⚒️'},
+  {id:'campfire_made',  n:'Feu Allumé',             d:'Fabrique un Feu de camp',                        e:'🔥'},
+  {id:'first_house',    n:'Chez Soi',               d:'Construis ta première Maison',                   e:'🏠'},
+  {id:'first_farm',     n:'Agriculteur',             d:'Construis ta première Ferme',                    e:'🌾'},
+  {id:'first_forge',    n:'Maître Forgeron',         d:'Construis ta première Forge',                    e:'🔨'},
+  {id:'first_baby',     n:'Nouveau Villageois',      d:'Obtiens un Bébé',                                e:'👶'},
+  {id:'baby3',          n:'Famille Nombreuse',       d:'Fais naître 3 bébés dans une partie',            e:'👨‍👩‍👧'},
+  {id:'pop5',           n:'Village Peuplé',          d:'Atteins 5 villageois simultanément',             e:'👥'},
+  {id:'pop8',           n:'Grande Tribu',            d:'Atteins 8 villageois simultanément',             e:'🏘️'},
+  {id:'first_sword',    n:'En Garde !',              d:'Fabrique une Épée',                              e:'⚔️'},
+  {id:'iron_sword_u',   n:'Forgeron',                d:'Fabrique l\'Épée de Fer',                        e:'🗡️'},
+  {id:'first_shield',   n:'Défense !',               d:'Fabrique un Bouclier',                           e:'🛡️'},
+  {id:'block1',         n:'Paré !',                  d:'Bloque une attaque avec le bouclier',            e:'🛡️'},
+  // ── Combat & progression ─────────────────────────────────────────────────
+  {id:'kill1',          n:'Première Victoire',       d:'Tue ton premier monstre',                        e:'💀'},
+  {id:'kill10',         n:'Chasseur',                d:'Tue 10 monstres',                                e:'⚔️'},
+  {id:'kill30',         n:'Guerrier Aguerri',         d:'Tue 30 monstres au total',                      e:'🔱'},
+  {id:'kill_goblin_king',n:'Régicide',               d:'Tue le Roi Gobelin 👑',                          e:'👑'},
+  {id:'dragon_slayer',  n:'Pourfendeur du Dragon',   d:'Tue le Dragon 🐉',                               e:'🐉', rare:1},
+  {id:'wave1_surv',     n:'Survivant I',             d:'Survie à la première vague (Jour 5)',            e:'🌊'},
+  {id:'wave3_surv',     n:'Survivant III',           d:'Survie à la vague 3 (Jour 15)',                  e:'🌊'},
+  {id:'day10_surv',     n:'Dix Jours',               d:'Atteins le Jour 10',                             e:'📅'},
+  {id:'day20_surv',     n:'Vingt Jours',             d:'Atteins le Jour 20',                             e:'📅'},
+  {id:'day30_surv',     n:'Trente Jours',            d:'Atteins le Jour 30',                             e:'🌕'},
+  {id:'victory_u',      n:'Légende',                 d:'Termine la partie (35 jours)',                   e:'🏆', rare:1},
+  // ── Économie & exploration ────────────────────────────────────────────────
+  {id:'sell10_u',       n:'Marchand',                d:'Vends 10 cartes',                                e:'💰'},
+  {id:'sell_sword',     n:'Pacifiste ?',             d:'Vends une épée',                                 e:'💸'},
+  {id:'expedition1',    n:'Explorateur',             d:'Complète ta première expédition',                e:'⛏️'},
+  {id:'expedition3',    n:'Spéléologue',             d:'Complète 3 expéditions',                         e:'🕳️'},
+  // ── Insolites ─────────────────────────────────────────────────────────────
+  {id:'bone5',          n:'Nécromancien',            d:'Accumule 5 Os simultanément',                    e:'🦴'},
+  {id:'rename_v',       n:'Parrain du Village',      d:'Renomme un villageois',                          e:'✏️'},
+  // ── Cartes secrètes ───────────────────────────────────────────────────────
+  {id:'secret1',        n:'Découverte Secrète',      d:'Crafte ta première carte secrète',               e:'🔓'},
+  {id:'all_secrets',    n:'Alchimiste',              d:'Découvre les 4 cartes secrètes',                 e:'💎', rare:1},
+  // ── Mode Difficile ────────────────────────────────────────────────────────
+  {id:'hard_day15',     n:'Dur à Cuire',             d:'Atteins le Jour 15 en mode Difficile',           e:'💀'},
+  {id:'hard_victory',   n:'Légende Sombre',          d:'Victoire en mode Difficile',                     e:'🌑', rare:1},
+  {id:'hard_no_shield', n:'Indomptable',             d:'Victoire en Difficile sans jamais craft un bouclier', e:'🗡️', rare:1},
+  // ── Collection & méta ─────────────────────────────────────────────────────
+  {id:'all_skins',      n:'Architecte Cosmique',     d:'Possède tous les skins de plateau',              e:'🌌', rare:1},
+  {id:'hats5',          n:'Garde-robe',              d:'Possède 5 chapeaux ou plus',                     e:'🎩'},
+  {id:'streak10',       n:'Habitué',                 d:'10 jours de connexion consécutifs',              e:'🔥'},
+  {id:'streak30',       n:'Dévoué',                  d:'30 jours de connexion consécutifs',              e:'⭐', rare:1},
 ];
 function getAchievements(){try{return JSON.parse(localStorage.getItem('stacklands_achievements')||'[]');}catch(e){return[];}}
 function hasAchievement(id){return getAchievements().includes(id);}
@@ -2212,7 +2636,7 @@ function unlockAchievement(id){
   const arr=getAchievements();if(arr.includes(id))return false;
   arr.push(id);localStorage.setItem('stacklands_achievements',JSON.stringify(arr));
   // Rare achievements award Comet Dust
-  const rareIds=['victory_u','max_pop','full_craft','expedition_master','dragon_slayer','phil_master'];
+  const rareIds=ACHIEVEMENTS.filter(a=>a.rare).map(a=>a.id);
   if(rareIds.includes(id))setTimeout(()=>addCometDust(15),600);
   return true;
 }
@@ -2230,22 +2654,35 @@ function checkAchievements(){
   if(!G||!G.cards)return;
   const s=G._stats||{};
   const c=(id,cond)=>{if(cond&&!hasAchievement(id)){if(unlockAchievement(id)){const a=ACHIEVEMENTS.find(a=>a.id===id);if(a)showAchievementToast(a);}}};
-  c('first_craft',   (s.crafts||0)>=1);
-  c('campfire_made', s.madeCampfire||countT('campfire')>0);
-  c('first_house',   s.madeHouse||countT('house')>0);
-  c('first_baby',    (s.babies||0)>=1);
-  c('pop5',          countT('villager')>=5);
-  c('first_sword',   s.madeSword||s.madeIronSword||countT('sword')>0||countT('iron_sword')>0);
-  c('iron_sword_u',  s.madeIronSword||countT('iron_sword')>0);
-  c('first_shield',  s.madeShield||countT('shield')>0);
-  c('kill1',         (s.kills||0)>=1);
-  c('kill10',        (s.kills||0)>=10);
-  c('wave1_surv',    G.moon>5);
-  c('wave3_surv',    G.moon>15);
-  c('day10_surv',    G.moon>=10);
-  c('day20_surv',    G.moon>=20);
-  c('sell10_u',      (s.sells||0)>=10);
-  c('expedition1',   (s.expeditions||0)>=1);
+  c('first_craft',    (s.crafts||0)>=1);
+  c('campfire_made',  s.madeCampfire||countT('campfire')>0);
+  c('first_house',    s.madeHouse||countT('house')>0);
+  c('first_farm',     s.madeFarm||countT('farm')>0);
+  c('first_forge',    s.madeForge||countT('forge')>0);
+  c('first_baby',     (s.babies||0)>=1);
+  c('baby3',          (s.babies||0)>=3);
+  c('pop5',           countT('villager')>=5);
+  c('pop8',           countT('villager')>=8);
+  c('first_sword',    s.madeSword||s.madeIronSword||countT('sword')>0||countT('iron_sword')>0);
+  c('iron_sword_u',   s.madeIronSword||countT('iron_sword')>0);
+  c('first_shield',   s.madeShield||countT('shield')>0);
+  c('kill1',          (s.kills||0)>=1);
+  c('kill10',         (s.kills||0)>=10);
+  c('kill30',         (s.kills||0)>=30);
+  c('kill_goblin_king',s.killedGoblinKing||false);
+  c('dragon_slayer',  s.killedDragon||false);
+  c('wave1_surv',     G.moon>5);
+  c('wave3_surv',     G.moon>15);
+  c('day10_surv',     G.moon>=10);
+  c('day20_surv',     G.moon>=20);
+  c('day30_surv',     G.moon>=30);
+  c('hard_day15',     G.difficulty==='hard'&&G.moon>=15);
+  c('sell10_u',       (s.sells||0)>=10);
+  c('sell_sword',     s.soldWeapon||false);
+  c('expedition1',    (s.expeditions||0)>=1);
+  c('expedition3',    (s.expeditions||0)>=3);
+  c('bone5',          countT('bone')>=5);
+  c('block1',         (s.blocks||0)>=1);
 }
 function showAchOverlay(){
   const arr=getAchievements();
@@ -2385,13 +2822,13 @@ function renderTuto(){
 
 // ── BOARD SKINS ───────────────────────────────────────────────────────────────
 const BOARD_SKINS=[
-  {id:'default',   e:'🌿', n:'Forêt Ancestrale', desc:'Le thème de départ', cost:0,
+  {id:'default',   e:'🌿', n:'Forêt Ancestrale', desc:'Le thème de départ', cost:0, free:1,
    bg:'#1e4a1e',dot:'#265226',size:'28px 28px',hud:'#0f2310',hudb:'#2d5a2d'},
-  {id:'volcano',   e:'🌋', n:'Volcan',  desc:'Lave et cendres — pour les téméraires', cost:500,
+  {id:'volcano',   e:'🌋', n:'Volcan',  desc:'Lave et cendres — pour les téméraires', cost:600,
    bg:'#2a0800',dot:'#6b1500',size:'28px 28px',hud:'#1a0500',hudb:'#7a1500'},
-  {id:'underwater',e:'🌊', n:'Sous-Marin', desc:'Profondeurs glacées de l\'océan perdu', cost:800,
+  {id:'underwater',e:'🌊', n:'Sous-Marin', desc:'Profondeurs glacées de l\'océan perdu', cost:950,
    bg:'#001225',dot:'#003066',size:'28px 28px',hud:'#000c1a',hudb:'#004080'},
-  {id:'space',     e:'🚀', n:'Cosmique', desc:'L\'infini où naissent les comètes', cost:1200,
+  {id:'space',     e:'🚀', n:'Cosmique', desc:'L\'infini où naissent les comètes', cost:1400,
    bg:'#03010a',dot:'rgba(100,60,220,.4)',size:'32px 32px',hud:'#06000f',hudb:'#4a1a8a'},
 ];
 function getActiveSkin(){return localStorage.getItem('cs_board_skin')||'default';}
@@ -2401,6 +2838,11 @@ function buySkin(id){
   const s=BOARD_SKINS.find(s=>s.id===id);if(!s||ownsSkin(id))return;
   if(!spendCometDust(s.cost)){showDustToast('❌ Pas assez de Poussières !');return;}
   const arr=getOwnedSkins();arr.push(id);localStorage.setItem('cs_owned_skins',JSON.stringify(arr));
+  if(BOARD_SKINS.every(sk=>arr.includes(sk.id))){
+    if(!hasAchievement('all_skins')&&unlockAchievement('all_skins')){
+      const a=ACHIEVEMENTS.find(a=>a.id==='all_skins');if(a)setTimeout(()=>showAchievementToast(a),600);
+    }
+  }
   equipSkin(id);
 }
 function equipSkin(id){
@@ -2424,17 +2866,17 @@ function applyBoardSkin(){
 const HATS=[
   // Basiques permanents
   {id:'none',       e:'',   n:'Sans chapeau',      desc:'Au naturel', cost:0},
-  {id:'tophat',     e:'🎩', n:'Haut-de-Forme',     desc:'Classe et élégance', cost:150},
-  {id:'straw',      e:'👒', n:'Chapeau de Paille',  desc:'Pour les paysans stylés', cost:120},
-  {id:'helmet',     e:'🪖', n:'Casque Guerrier',    desc:'Protection assurée', cost:200},
-  {id:'crown',      e:'👑', n:'Couronne Royale',    desc:'Dignité maximale', cost:350},
-  {id:'graduation', e:'🎓', n:'Toque du Sage',      desc:'Connaissance infinie', cost:180},
+  {id:'tophat',     e:'🎩', n:'Haut-de-Forme',     desc:'Classe et élégance', cost:200},
+  {id:'straw',      e:'👒', n:'Chapeau de Paille',  desc:'Pour les paysans stylés', cost:170},
+  {id:'helmet',     e:'🪖', n:'Casque Guerrier',    desc:'Protection assurée', cost:270},
+  {id:'crown',      e:'👑', n:'Couronne Royale',    desc:'Dignité maximale', cost:425},
+  {id:'graduation', e:'🎓', n:'Toque du Sage',      desc:'Connaissance infinie', cost:230},
   // Thématiques permanents
-  {id:'lava',       e:'🔥', n:'Casque de Lave',     desc:'Thème Volcan — forgé dans la lave', cost:400, theme:'volcano'},
-  {id:'astro',      e:'🛸', n:'Casque Spatial',     desc:'Thème Cosmique — venu des étoiles', cost:500, theme:'space'},
-  {id:'pirate',     e:'🏴‍☠️', n:'Chapeau de Pirate', desc:'Thème Sous-Marin — maître des mers', cost:350, theme:'underwater'},
-  {id:'dragon_hat', e:'🐉', n:'Couronne du Dragon', desc:'Pour les grands vainqueurs', cost:800},
-  {id:'comet_hat',  e:'☄️', n:'Halo Cosmique',      desc:'La comète te couronne', cost:600},
+  {id:'lava',       e:'🔥', n:'Casque de Lave',     desc:'Thème Volcan — forgé dans la lave', cost:500, theme:'volcano'},
+  {id:'astro',      e:'🛸', n:'Casque Spatial',     desc:'Thème Cosmique — venu des étoiles', cost:600, theme:'space'},
+  {id:'pirate',     e:'🏴‍☠️', n:'Chapeau de Pirate', desc:'Thème Sous-Marin — maître des mers', cost:425, theme:'underwater'},
+  {id:'dragon_hat', e:'🐉', n:'Couronne du Dragon', desc:'Pour les grands vainqueurs', cost:950},
+  {id:'comet_hat',  e:'☄️', n:'Halo Cosmique',      desc:'La comète te couronne', cost:700},
 ];
 // Chapeaux hebdomadaires (rotation sur 8 semaines)
 const WEEKLY_HATS=[
@@ -2460,6 +2902,7 @@ function claimWeeklyHat(){
   const claimed=JSON.parse(localStorage.getItem('cs_claimed_weeks')||'[]');
   claimed.push(getCurrentWeekIdx());localStorage.setItem('cs_claimed_weeks',JSON.stringify(claimed));
   playSound('achievement');showDustToast('🎁 '+hat.e+' '+hat.n+' reçu !');
+  _checkHatAch(getOwnedHats());
   equipHat(hat.id);
 }
 function getEquippedHat(){return localStorage.getItem('cs_equipped_hat')||'none';}
@@ -2470,7 +2913,15 @@ function buyHat(id){
   const h=HATS.find(h=>h.id===id);if(!h||ownsHat(id))return;
   if(!spendCometDust(h.cost)){showDustToast('❌ Pas assez de Poussières !');return;}
   const arr=getOwnedHats();arr.push(id);localStorage.setItem('cs_owned_hats',JSON.stringify(arr));
+  _checkHatAch(arr);
   equipHat(id);
+}
+function _checkHatAch(arr){
+  const all=[...getOwnedHats(),...(arr||[])];
+  const total=new Set(all).size;
+  if(total>=5&&!hasAchievement('hats5')&&unlockAchievement('hats5')){
+    const a=ACHIEVEMENTS.find(a=>a.id==='hats5');if(a)setTimeout(()=>showAchievementToast(a),600);
+  }
 }
 function equipHat(id){
   localStorage.setItem('cs_equipped_hat',id);
@@ -2573,6 +3024,44 @@ function renderBoutiqueTab(tab){
       +`<div style="font-size:10px;color:#6b7280;margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;">🎨 Thématiques</div><div class="hat-grid">${renderHatGrid(thematics)}</div>`
       +`<div style="font-size:10px;color:#6b7280;margin:12px 0 6px;letter-spacing:1px;text-transform:uppercase;">Classiques</div><div class="hat-grid">${renderHatGrid(basics)}</div>`
       +weeklyOwnedSect;
+  }else if(tab==='dust'){
+    const today=new Date().getDay(); // 0=Sun..6=Sat
+    const claimed=hasClaimedDailyDust();
+    const wDays=getWeekClaimedDays();
+    // Build 7-day grid Mon→Sun (display order 1,2,3,4,5,6,0)
+    const ORDER=[1,2,3,4,5,6,0];
+    const dayTiles=ORDER.map(d=>{
+      const isToday=d===today;
+      const isClaimed=wDays.includes(d)||( isToday&&claimed );
+      const amt=DAILY_DUST_AMT[d];
+      let cls='dust-day';
+      if(isToday)cls+=' today';
+      if(isClaimed)cls+=' claimed';
+      if(isToday&&!claimed)cls+=' claimable';
+      const icon=isClaimed?'✅':(isToday?'☄️':'🌑');
+      const onclick=(isToday&&!claimed)?`onclick="claimDailyDust()" title="Cliquer pour récupérer"`:'';
+      return `<div class="${cls}" ${onclick}>
+        <div class="dust-day-name">${DAILY_DUST_NAMES[d]}</div>
+        <div class="dust-day-icon">${icon}</div>
+        <div class="dust-day-amt">+${amt} ☄️</div>
+      </div>`;
+    }).join('');
+    const allClaimed=wDays.length===7;
+    const daysLeft=7-wDays.length;
+    const weekBonusTxt=allClaimed
+      ?`<div class="dust-week-bonus">🏆 Semaine complète ! Bonus <b>+100 ☄️</b> déjà reçu ✅</div>`
+      :`<div class="dust-week-bonus">Complète les 7 jours pour un bonus de <b>+100 ☄️</b> — encore <b>${daysLeft}</b> jour${daysLeft>1?'s':''}</div>`;
+    const claimBtn=claimed
+      ?`<div style="text-align:center;margin-top:12px;color:#4ade80;font-weight:700;font-size:13px;">✅ Déjà récupéré aujourd'hui · Reviens demain !</div>`
+      :`<div style="text-align:center;margin-top:12px;"><button class="ps-buy" style="font-size:14px;padding:10px 28px;" onclick="claimDailyDust()">☄️ Récupérer +${DAILY_DUST_AMT[today]} ☄️ aujourd'hui</button></div>`;
+    el.innerHTML=`
+      <div style="font-size:12px;color:#9ca3af;text-align:center;margin-bottom:10px;">
+        Un bonus de poussières à récupérer chaque jour.<br>
+        <span style="color:#f7d060;font-weight:700;">${DAILY_DUST_FULL[today]}</span> → <b style="color:#c4b5fd;">+${DAILY_DUST_AMT[today]} ☄️</b>
+      </div>
+      <div class="dust-calendar">${dayTiles}</div>
+      ${weekBonusTxt}
+      ${claimBtn}`;
   }else if(tab==='info'){
     const wh=getCurrentWeekHat();const whClaimed=hasClaimedThisWeek()||ownsHat(wh.id);
     el.innerHTML=`
@@ -2688,6 +3177,43 @@ function showDustToast(msg){
   document.body.appendChild(t);setTimeout(()=>t.remove(),2800);
 }
 
+// ── DAILY DUST CALENDAR ───────────────────────────────────────────────────────
+// Amounts by JS getDay(): 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+const DAILY_DUST_AMT={0:50,1:40,2:30,3:30,4:30,5:30,6:30};
+const DAILY_DUST_NAMES=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const DAILY_DUST_FULL=['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+
+function hasClaimedDailyDust(){return localStorage.getItem('cs_daily_dust_date')===todayStr();}
+function claimDailyDust(){
+  if(hasClaimedDailyDust())return;
+  const day=new Date().getDay();
+  const base=DAILY_DUST_AMT[day];
+  // track claimed days this week (Mon-Sun week, keyed by ISO week)
+  const wk=_isoWeekKey();
+  let wdays=JSON.parse(localStorage.getItem('cs_week_dust_days_'+wk)||'[]');
+  if(!wdays.includes(day))wdays.push(day);
+  localStorage.setItem('cs_week_dust_days_'+wk,JSON.stringify(wdays));
+  localStorage.setItem('cs_daily_dust_date',todayStr());
+  addCometDust(base);
+  // weekly completion bonus: all 7 days claimed this week
+  if(wdays.length===7){
+    addCometDust(100,true);
+    showDustToast('🎉 Semaine complète ! +100 ☄️ bonus');
+  }
+  renderBoutiqueTab('dust');
+}
+function _isoWeekKey(){
+  // returns "YYYY-Www" — stable regardless of timezone drift
+  const d=new Date();
+  const jan4=new Date(d.getFullYear(),0,4);
+  const startOfW1=new Date(jan4);startOfW1.setDate(jan4.getDate()-(jan4.getDay()||7)+1);
+  const wNum=Math.ceil(((d-startOfW1)/86400000+1)/7);
+  return d.getFullYear()+'-W'+String(wNum).padStart(2,'0');
+}
+function getWeekClaimedDays(){
+  const wk=_isoWeekKey();
+  try{return JSON.parse(localStorage.getItem('cs_week_dust_days_'+wk)||'[]');}catch(e){return[];}
+}
 // ── STREAK ────────────────────────────────────────────────────────────────────
 function todayStr(){return new Date().toISOString().slice(0,10);}
 function getStreak(){return parseInt(localStorage.getItem('cs_streak')||'0');}
@@ -2708,6 +3234,10 @@ function checkAndUpdateStreak(){
   else if(streak===7)earned+=50;
   else if(streak===30)earned+=200;
   addCometDust(earned,true);
+  // Streak achievements
+  const _ach=(id)=>{if(!hasAchievement(id)&&unlockAchievement(id)){const a=ACHIEVEMENTS.find(a=>a.id===id);if(a)setTimeout(()=>showAchievementToast(a),2000);}};
+  if(streak>=10)_ach('streak10');
+  if(streak>=30)_ach('streak30');
   showStreakPopup(streak,earned);
 }
 function showStreakPopup(streak,earned){
@@ -2725,13 +3255,13 @@ function closeStreakPopup(){document.getElementById('streak-popup').style.displa
 
 // ── PERMANENT BONUSES ────────────────────────────────────────────────────────
 const PERMA_BONUSES=[
-  {id:'gold',   e:'✨', n:'Éclat Stellaire',       cost:1000, desc:'Commence chaque partie avec +15 pièces d\'or'},
-  {id:'pop',    e:'👥', n:'Mémoire des Ancêtres',   cost:1500, desc:'Commence chaque partie avec 1 villageois supplémentaire'},
-  {id:'iron',   e:'⚒️', n:'Forge des Étoiles',      cost:2000, desc:'Commence avec 1 minerai de fer en bonus'},
-  {id:'revive', e:'💙', n:'Cristal de Survie',      cost:3000, desc:'Une résurrection gratuite par partie (50% des villageois)'},
-  {id:'soul',   e:'🌟', n:'Âme de la Comète',       cost:5000, desc:'Toutes les Poussières gagnées sont doublées (×2)'},
-  {id:'speed2', e:'⚡', n:'Vitesse ×2',             cost:6000, desc:'Débloque la vitesse ×2 (bouton ⏩ en jeu)'},
-  {id:'speed3', e:'🚀', n:'Vitesse ×3',             cost:15000,desc:'Débloque la vitesse ×3 (bouton ⏩ en jeu) — nécessite ×2'},
+  {id:'gold',   e:'✨', n:'Éclat Stellaire',       cost:1150, desc:'Commence chaque partie avec +15 pièces d\'or'},
+  {id:'pop',    e:'👥', n:'Mémoire des Ancêtres',   cost:1650, desc:'Commence chaque partie avec 1 villageois supplémentaire'},
+  {id:'iron',   e:'⚒️', n:'Forge des Étoiles',      cost:2200, desc:'Commence avec 1 minerai de fer en bonus'},
+  {id:'revive', e:'💙', n:'Cristal de Survie',      cost:3300, desc:'Une résurrection gratuite par partie (50% des villageois)'},
+  {id:'soul',   e:'🌟', n:'Âme de la Comète',       cost:5500, desc:'Toutes les Poussières gagnées sont doublées (×2)'},
+  {id:'speed2', e:'⚡', n:'Vitesse ×2',             cost:6500, desc:'Débloque la vitesse ×2 (bouton ⏩ en jeu)'},
+  {id:'speed3', e:'🚀', n:'Vitesse ×3',             cost:16000,desc:'Débloque la vitesse ×3 (bouton ⏩ en jeu) — nécessite ×2'},
 ];
 function getOwnedBonuses(){try{return JSON.parse(localStorage.getItem('cs_perma_bonuses')||'[]');}catch(e){return[];}}
 function hasPermaBonus(id){return getOwnedBonuses().includes(id);}
@@ -2769,6 +3299,7 @@ function showNarrative(){
 }
 function closeNarrative(){
   document.getElementById('narrative-intro').style.display='none';
+  if(_narrativeStartGame)_doStartGame();
 }
 
 // ── CONCLUSION (A / B / C) ───────────────────────────────────────────────────
@@ -2844,6 +3375,9 @@ function applyRename(){
     G.cards[_renameId].name=name;
     const el=cel(_renameId);
     if(el){const nm=el.querySelector('.card-name');if(nm)nm.textContent=name||CD['villager'].n;}
+    if(name&&!hasAchievement('rename_v')&&unlockAchievement('rename_v')){
+      const a=ACHIEVEMENTS.find(a=>a.id==='rename_v');if(a)setTimeout(()=>showAchievementToast(a),400);
+    }
   }
   closeRenameInput();
 }
@@ -2867,8 +3401,907 @@ function closeRenameInput(){
   });
 })();
 
+// ── SUPABASE CONFIG ───────────────────────────────────────────────────────────
+const SUPABASE_URL='https://vchoanysqkwfjfgsfemg.supabase.co';
+const SUPABASE_ANON_KEY='sb_publishable_FnvGDdMbkBsvJieHCrlVOw_JLSMiV8L';
+
+// ── DÉFI QUOTIDIEN ────────────────────────────────────────────────────────────
+const DAILY_CONSTRAINTS=[
+  {id:'no_gold',    label:'🪙 Sans or de départ',    desc:'Tu commences avec 0🪙.',                        apply(){G.gold=0;}},
+  {id:'bonus_gold', label:'💰 Abondance',             desc:'+8🪙 au départ.',                              apply(){G.gold+=8;}},
+  {id:'hungry',     label:'😤 Villageois affamés',    desc:'Chaque villageois mange 1 repas de plus.',    apply(){G.foodPerPop+=1;}},
+  {id:'wolf_start', label:'🐺 Loup à la porte',      desc:'Un loup apparaît dès le début.',              apply(){const t=document.getElementById('table').getBoundingClientRect();spawn('wolf',t.width-120,t.height/2+(Math.random()-.5)*60);}},
+  {id:'bonus_vill', label:'👤 Village prospère',      desc:'+1 villageois de départ.',                    apply(){spawn('villager',460,180);}},
+  {id:'no_flint',   label:'🔷 Silex épuisé',          desc:'Pas de silex — feu impossible au début.',    apply(){Object.values(G.cards).filter(c=>c.type==='flint').forEach(c=>delCard(c.id));}},
+  {id:'pack_tax',   label:'💸 Taxe du marché',        desc:'Les packs coûtent 3🪙 de plus.',              apply(){G.packCostAdd=(G.packCostAdd||0)+3;}},
+  {id:'berry_bonus',label:'🫐 Forêt généreuse',       desc:'+1 buisson + 3 baies au départ.',             apply(){spawn('berry_bush',70,200);spawn('berry',180,200);spawn('berry',180,300);spawn('berry',280,300);}},
+  {id:'bonus_rock', label:'⛏️ Filons découverts',     desc:'+1 rocher de départ.',                       apply(){spawn('rock',590,70);}},
+  {id:'pauper',     label:'🏚️ Village appauvri',      desc:'-3🪙 et 1 baie en moins.',                   apply(){G.gold=Math.max(0,G.gold-3);const r=Object.values(G.cards).find(c=>c.type==='berry');if(r)delCard(r.id);}},
+];
+let _pendingChallengeConstraints=null;
+
+function seededRNG(seed){
+  let s=seed>>>0;
+  return()=>{s=Math.imul(s,1664525)+1013904223>>>0;return s/0xFFFFFFFF;};
+}
+function getDailyChallengeKey(){
+  const d=new Date();
+  return `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
+}
+function getDailyConstraints(){
+  const rng=seededRNG(parseInt(getDailyChallengeKey()));
+  return [...DAILY_CONSTRAINTS].sort(()=>rng()-.5).slice(0,2);
+}
+function showDailyChallenge(){
+  const cs=getDailyConstraints();
+  const key=getDailyChallengeKey();
+  const best=parseInt(localStorage.getItem('cs_daily_best_'+key)||'0');
+  const d=new Date();
+  document.getElementById('dc-date').textContent=d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  document.getElementById('dc-constraints').innerHTML=cs.map(c=>
+    `<div class="dc-constraint"><div class="dc-c-label">${c.label}</div><div class="dc-c-desc">${c.desc}</div></div>`
+  ).join('');
+  document.getElementById('dc-best').textContent=best?'🏅 Ton meilleur score aujourd\'hui : '+best.toLocaleString():'Pas encore joué aujourd\'hui.';
+  document.getElementById('daily-challenge').style.display='flex';
+}
+function closeDailyChallenge(){document.getElementById('daily-challenge').style.display='none';}
+function startDailyChallenge(){
+  closeDailyChallenge();
+  clearSave();
+  _pendingChallengeConstraints=getDailyConstraints();
+  document.getElementById('main-menu').style.display='none';
+  initG();
+}
+
+// ── CLASSEMENT MONDIAL ────────────────────────────────────────────────────────
+async function fetchScores(filter){
+  if(!SUPABASE_URL||!SUPABASE_ANON_KEY)return null;
+  let url=SUPABASE_URL+'/rest/v1/scores?order=score.desc&limit=20&select=player_name,score,difficulty,days,challenge_key,created_at';
+  if(filter==='normal')url+='&difficulty=eq.normal';
+  else if(filter==='hard')url+='&difficulty=eq.hard';
+  else if(filter==='daily')url+='&challenge_key=eq.'+getDailyChallengeKey();
+  try{
+    const r=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY}});
+    return r.ok?await r.json():null;
+  }catch{return null;}
+}
+async function showLeaderboard(filter='all'){
+  document.getElementById('leaderboard').style.display='flex';
+  document.querySelectorAll('.lb-tab').forEach(t=>t.classList.toggle('active',t.dataset.filter===filter));
+  const body=document.getElementById('lb-body');
+  if(!SUPABASE_URL){
+    body.innerHTML='<tr><td colspan="5" class="lb-msg">⚙️ Classement non configuré.<br><small style="color:#4b5563">Configure SUPABASE_URL + SUPABASE_ANON_KEY dans le code.</small></td></tr>';
+    return;
+  }
+  body.innerHTML='<tr><td colspan="5" class="lb-msg">⏳ Chargement...</td></tr>';
+  const scores=await fetchScores(filter);
+  if(!scores||!scores.length){
+    body.innerHTML='<tr><td colspan="5" class="lb-msg" style="font-style:italic;color:#4b5563">Aucun score — sois le premier !</td></tr>';
+    return;
+  }
+  const me=localStorage.getItem('cs_player_name')||'';
+  body.innerHTML=scores.map((s,i)=>{
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
+    const diff=s.difficulty==='hard'?'💀':'⚔️';
+    const tag=s.challenge_key?'📅 ':'';
+    const date=new Date(s.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+    const isMe=me&&s.player_name===me;
+    return `<tr class="${isMe?'lb-you':''}"><td class="lb-rank">${medal}</td><td>${s.player_name}${isMe?' 👈':''}</td><td><b>${s.score.toLocaleString()}</b></td><td style="font-size:11px">${tag}${diff} ${s.days}j</td><td style="color:#6b7280;font-size:11px">${date}</td></tr>`;
+  }).join('');
+}
+function closeLeaderboard(){document.getElementById('leaderboard').style.display='none';}
+
+// ── SCORE SUBMISSION ──────────────────────────────────────────────────────────
+async function submitScore(name,score,difficulty,days,challengeKey){
+  if(!SUPABASE_URL||!SUPABASE_ANON_KEY)return false;
+  try{
+    const r=await fetch(SUPABASE_URL+'/rest/v1/scores',{
+      method:'POST',
+      headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY,'Content-Type':'application/json',Prefer:'return=minimal'},
+      body:JSON.stringify({player_name:name,score,difficulty,days,challenge_key:challengeKey||null})
+    });
+    return r.ok||r.status===201;
+  }catch{return false;}
+}
+function showScoreSubmit(containerId,score,difficulty,days,challengeKey){
+  const el=document.getElementById(containerId);if(!el)return;
+  const saved=localStorage.getItem('cs_player_name')||'';
+  const ck=challengeKey?`'${challengeKey}'`:'null';
+  el.innerHTML=`<div class="score-submit">
+    <div class="score-submit-title">🌍 Publier dans le classement mondial</div>
+    <div class="score-submit-row">
+      <input class="score-submit-input" id="${containerId}-name" placeholder="Ton pseudo (max 20 car.)" maxlength="20" value="${saved}">
+      <button class="score-submit-btn" onclick="doSubmitScore('${containerId}',${score},'${difficulty}',${days},${ck})">Envoyer ➤</button>
+    </div>
+  </div>`;
+}
+async function doSubmitScore(containerId,score,difficulty,days,challengeKey){
+  const input=document.getElementById(containerId+'-name');
+  const name=(input?.value||'').trim().slice(0,20);
+  if(!name){if(input)input.style.borderColor='#ef4444';return;}
+  localStorage.setItem('cs_player_name',name);
+  if(input)input.disabled=true;
+  const ok=await submitScore(name,score,difficulty,days,challengeKey);
+  const el=document.getElementById(containerId);
+  if(el)el.innerHTML=ok
+    ?'<div class="score-submit-done">✅ Score envoyé ! <a href="#" onclick="showLeaderboard();return false;" style="color:#f7d060;text-decoration:underline">Voir le classement ↗</a></div>'
+    :'<div class="score-submit-done" style="color:#f87171">❌ Envoi échoué. Classement non configuré ou connexion perdue.</div>';
+}
+
+// ── CONFIRMATION MODALE ──────────────────────────────────────────────────────
+function showConfirm(title,msg,onYes){
+  document.getElementById('confirm-title').textContent=title;
+  document.getElementById('confirm-msg').textContent=msg;
+  document.getElementById('confirm-modal').style.display='flex';
+  window._confirmCb=onYes;
+}
+function closeConfirm(){document.getElementById('confirm-modal').style.display='none';window._confirmCb=null;}
+function doConfirm(){const cb=window._confirmCb;closeConfirm();if(cb)cb();}
+function confirmRestart(){
+  if(G&&!G.over)showConfirm('Recommencer ?','La partie en cours sera perdue.',()=>startNewGame());
+  else startNewGame();
+}
+function confirmMenu(){
+  if(G&&!G.over)showConfirm('Retourner au menu ?','Ta partie sera sauvegardée.',()=>goMainMenu());
+  else goMainMenu();
+}
+
+// ── VOLUME INIT ───────────────────────────────────────────────────────────────
+(function initVolSliders(){
+  const sx=document.getElementById('sfx-vol');if(sx)sx.value=_sfxVol;
+  const mx=document.getElementById('music-vol');if(mx)mx.value=_musicVol;
+})();
+
+// ── CONSEIL POPUP (stub) ──────────────────────────────────────────────────────
+const CONSEILS=[
+  'Empile tes villageois sur les nœuds de production pour ne jamais manquer de ressources.',
+  'Garde toujours au moins 2 épées avant une vague de monstres.',
+  'Le Feu de Camp est essentiel — Baie+Feu=×3 nourriture, Pomme+Feu=×5.',
+  'Les expéditions rapportent énormément : 2 épées + 3 villageois = butin légendaire.',
+  'La Pierre Philosophale produit de l\'or en boucle — à crafter dès que possible.',
+  'En co-op, utilisez les recettes co-op pour les boss — elles sont indispensables au jour 40+.',
+  'Le Guerrier doit toujours avoir des épées disponibles, le Bâtisseur gère la nourriture.',
+  'Pingue (clic-droit plateau) pour signaler un danger à ton partenaire !',
+];
+function showConseilPopup(){
+  const msg=CONSEILS[Math.floor(Math.random()*CONSEILS.length)];
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a3a1a;border:2px solid #4a8a4a;border-radius:14px;padding:24px 28px;max-width:360px;width:90%;color:#d1fae5;font-size:14px;line-height:1.6;z-index:99000;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,.6);';
+  t.innerHTML='<div style="font-size:20px;margin-bottom:10px;">💡 Conseil</div><p>'+msg+'</p><button onclick="this.closest(\'div\').remove()" style="margin-top:14px;background:#16a34a;color:#fff;border:none;padding:7px 20px;border-radius:7px;cursor:pointer;font-weight:700;">OK</button>';
+  document.body.appendChild(t);
+}
+
+// ── CO-OP RECETTES ────────────────────────────────────────────────────────────
+RECIPES.push(
+  {i:['iron_sword','iron_sword'],           o:['iron_sword','iron_sword','gem','gem'],    keep:['iron_sword','iron_sword'],t:6, rep:0,coop:true,d:'CO-OP ⚜️ 2 Épées de Fer → 2 Épées + 2 Gemmes'},
+  {i:['stew','stew'],                       o:['elixir'],                                keep:[],                         t:5, rep:0,coop:true,d:'CO-OP 🍱 2 Ragoûts → Élixir Vital'},
+  {i:['villager','villager','house'],       o:['baby','baby','gold','gold'],             keep:['house'],                  t:10,rep:0,coop:true,d:'CO-OP 👨‍👩‍👧 2 Villageois + Maison → 2 Bébés + 2 Or'},
+  {i:['iron_ore','iron_ore','campfire'],    o:['iron_sword','iron_sword'],               keep:['campfire'],               t:8, rep:0,coop:true,d:'CO-OP 🔥 2 Minerais + Feu → 2 Épées de Fer'},
+  {i:['bone','bone','bone','bone','bone'],  o:['war_potion','war_potion'],               keep:[],                         t:6, rep:0,coop:true,d:'CO-OP 🦴 5 Os → 2 Potions de Guerre'},
+  {i:['golden_bar','gem'],                  o:['elixir','elixir','golden_bar'],          keep:[],                         t:8, rep:0,coop:true,secret:1,d:'CO-OP 🌀 Lingot + Gemme → 2 Élixirs + Lingot'}
+);
+
+// Patcher checkRecipe pour filtrer les recettes co-op
+const _origCheckRecipe=checkRecipe;
+checkRecipe=function(sid){
+  const s=G.stacks[sid];if(!s)return;
+  const types=sortedTypes(s.ids);
+  const diff=G.difficulty||'normal';
+  for(const r of RECIPES){
+    if(r.hardOnly&&diff!=='hard')continue;
+    if(r.normalOnly&&diff==='hard')continue;
+    if(r.coop&&!G._coopMode)continue;
+    if(arrEq(types,[...r.i].sort())){
+      if(!s.recipe)playSound('craft_start');
+      s.recipe=r;s.prog=0;updateSV(sid);
+      if(r.coop){const el=cel(s.ids[0]);if(el)el.classList.add('coop-recipe-glow');}
+      return;
+    }
+  }
+  if(types.includes('cave_entrance')){
+    const vCount=types.filter(t=>t==='villager').length;
+    const sCount=types.filter(t=>t==='sword'||t==='iron_sword').length;
+    const others=types.filter(t=>t!=='cave_entrance'&&t!=='villager'&&t!=='sword'&&t!=='iron_sword');
+    if(vCount>=1&&vCount<=3&&sCount<=2&&others.length===0){
+      if(!s.recipe)playSound('craft_start');
+      s.recipe={type:'expedition',t:40,vCount,sCount,keep:[]};
+      s.prog=0;updateSV(sid);return;
+    }
+  }
+  s.recipe=null;
+  const el=cel(s.ids[0]);if(el)el.classList.remove('coop-recipe-glow');
+  updateSV(sid);
+};
+
+// Patcher loop pour les modificateurs de rôle
+const _origLoop=loop;
+loop=function(ts){
+  if(G.over||G.paused||G.secretReveal)return;
+  if(!G.ts)G.ts=ts;
+  const rawDt=((ts-G.ts)/1000)*(G.speed||1);G.ts=ts;
+  G.moonProg+=rawDt/G.moonDur;
+  if(G.moonProg>=.8&&!G._faminWarned){
+    G._faminWarned=true;
+    const pop=countT('villager')+countT('baby');
+    const food=Object.values(G.cards).filter(c=>CD[c.type]?.food).reduce((s,c)=>s+(CD[c.type].food||0),0);
+    const needed2=pop*(G.foodPerPop||1);
+    if(food<needed2&&pop>0){log('⚠️ Famine proche ! Il faut '+needed2+' repas, tu en as '+food+' !');playSound('error');}
+  }
+  if(G.moonProg>=1){G.moonProg=0;G.moon++;G._faminWarned=false;endMoon();if(G.over)return;}
+  document.getElementById('moon-fill').style.width=(G.moonProg*100)+'%';
+  const toExec=[];
+  for(const[sidStr,s]of Object.entries(G.stacks)){
+    if(!s.recipe)continue;
+    const isCombat=s.recipe.i?.some(t=>CD[t]?.monster);
+    const roleMult=G._coopMode?((COOP.role==='builder'&&!isCombat)?0.8:(COOP.role==='warrior'&&isCombat)?0.75:1):1;
+    s.prog+=rawDt/(s.recipe.t*(roleMult||1));
+    const isExp=s.recipe.type==='expedition';
+    const rootEl=cel(s.ids[0]);
+    if(rootEl){isExp?rootEl.classList.add('expedition-active'):rootEl.classList.remove('expedition-active');}
+    const fill=rootEl?.querySelector('.card-bar-fill');
+    if(fill){fill.style.background=isExp?'#8b5cf6':s.recipe.coop?'#818cf8':'#4ade80';fill.style.width=(Math.min(s.prog,1)*100)+'%';}
+    if(s.prog>=1){s.prog=0;toExec.push(parseInt(sidStr));}
+  }
+  toExec.forEach(sid=>{if(G.stacks[sid])execRecipe(sid);});
+  const toAttack=[];
+  for(const[idStr,c]of Object.entries(G.cards)){
+    const id=parseInt(idStr),d=CD[c.type];if(!d||!d.monster)continue;
+    const inCombat=c.sid&&G.stacks[c.sid]?.recipe;
+    const el=cel(id);
+    if(!inCombat){
+      const effMax=d.aggroMax*(G.aggroMult||1);
+      c.aggro=(c.aggro||0)+rawDt;const pct=c.aggro/effMax;
+      if(el){
+        const bar=el.querySelector('.card-bar'),fill=el.querySelector('.card-bar-fill');
+        if(bar)bar.style.display='block';
+        if(fill){fill.style.background='#ef4444';fill.style.width=Math.min(pct*100,100)+'%';}
+        if(pct>=.7){el.classList.add('danger-pulse');if(d.boss)el.classList.add('boss-pulse');}else{el.classList.remove('danger-pulse');el.classList.remove('boss-pulse');}
+      }
+      if(c.aggro>=effMax)toAttack.push(id);
+    }else{if(el)el.classList.remove('danger-pulse');}
+  }
+  toAttack.forEach(id=>{if(G.cards[id])monsterAttack(id);});
+  if(G.over)return;
+  // Co-op: sync curseur et état
+  if(G._coopMode&&COOP.channel){
+    const now=Date.now();
+    if(now-COOP._lastCursorBcast>80){COOP._lastCursorBcast=now;broadcastCoopCursor();}
+    if(COOP.isHost&&now-COOP._lastStateBcast>600){COOP._lastStateBcast=now;broadcastCoopState();}
+  }
+  requestAnimationFrame(loop);
+};
+
+// ── CO-OP BOSS SPAWNS ────────────────────────────────────────────────────────
+function spawnCoopBoss(day){
+  const tbl=document.getElementById('table').getBoundingClientRect();
+  const cx=tbl.width/2,cy=tbl.height/2;
+  const wa=document.getElementById('wave-alert');
+  if(day===40){
+    spawn('goblin_king',cx+(Math.random()-.5)*140,cy+(Math.random()-.5)*100);
+    ['troll','troll','troll','goblin','goblin','goblin','goblin'].forEach(t=>spawn(t,40+Math.random()*(tbl.width-180),40+Math.random()*(tbl.height-180)));
+    wa.innerHTML='👑 BOSS CO-OP J40 : ROI GOBELIN + ARMÉE ! Coordonnez-vous !';
+    wa.style.background='rgba(100,0,140,.95)';
+    log('👑 BOSS CO-OP Jour 40 ! Roi Gobelin + Armée ! Utilisez les recettes co-op !');
+    playSound('goblin_king_appear');
+  }else if(day===45){
+    spawn('dragon',cx-100,cy+(Math.random()-.5)*80);
+    spawn('goblin_king',cx+100,cy+(Math.random()-.5)*80);
+    ['troll','troll','troll','troll','goblin','goblin'].forEach(t=>spawn(t,40+Math.random()*(tbl.width-180),40+Math.random()*(tbl.height-180)));
+    wa.innerHTML='🐉👑 BOSS CO-OP J45 : DRAGON + ROI GOBELIN ! Forces unies !';
+    wa.style.background='rgba(140,0,0,.97)';
+    log('🐉 BOSS CO-OP Jour 45 ! Dragon + Roi Gobelin + 4 Trolls ! Maximum de coordination !');
+    playSound('dragon_appear');
+  }else if(day===50){
+    spawn('dragon',cx-150,cy-50);spawn('dragon',cx+150,cy-50);
+    spawn('goblin_king',cx-80,cy+60);spawn('goblin_king',cx+80,cy+60);
+    for(let i=0;i<8;i++)spawn(i%2?'troll':'goblin',40+Math.random()*(tbl.width-180),40+Math.random()*(tbl.height-180));
+    wa.innerHTML='💀 BOSS FINAL CO-OP J50 : 2 DRAGONS + 2 ROIS + HORDE ! Tout ou rien !';
+    wa.style.background='rgba(40,0,0,.99)';
+    log('💀 ASSAUT FINAL CO-OP JOUR 50 ! 2 Dragons + 2 Rois Gobelins + Horde ! Victoire ou Mort !');
+    playSound('dragon_appear');setTimeout(()=>playSound('dragon_appear'),600);setTimeout(()=>playSound('troll_appear'),1200);
+  }
+  wa.style.display='block';setTimeout(()=>{wa.style.display='none';wa.style.background='';},8000);
+  playSound('wave_start');
+}
+
+function spawnCoopDailyMonsters(day){
+  let monsters=[];
+  if(day<10)monsters=Array(1+Math.floor(day/4)).fill(0).map(()=>Math.random()>.5?'wolf':'goblin');
+  else if(day<20)monsters=['goblin','goblin',...(Math.random()>.6?['wolf']:[])];
+  else if(day<30)monsters=['troll','goblin',...(Math.random()>.5?['goblin']:[])];
+  else if(day<40)monsters=['troll','troll','goblin',...(Math.random()>.5?['goblin']:[])];
+  else monsters=['troll','troll','goblin','goblin','wolf'];
+  const tbl=document.getElementById('table').getBoundingClientRect();
+  monsters.forEach(type=>spawn(type,40+Math.random()*(tbl.width-180),40+Math.random()*(tbl.height-180)));
+  if(monsters.length){
+    playSound('wave_start');
+    const wa=document.getElementById('wave-alert');
+    wa.style.background='rgba(0,40,100,.92)';
+    wa.textContent='👥 CO-OP J'+day+' — '+monsters.map(t=>CD[t].e+' '+CD[t].n).join(', ')+' !';
+    wa.style.display='block';setTimeout(()=>{wa.style.display='none';wa.style.background='';},3000);
+    log('⚔️ CO-OP Jour '+day+' — '+monsters.map(t=>CD[t].n).join(', ')+' !');
+  }
+}
+
+// ── CO-OP STATE ───────────────────────────────────────────────────────────────
+const COOP={
+  active:false,isHost:false,roomCode:null,channel:null,
+  partnerName:null,role:null,partnerRole:null,
+  spectators:[],isSpectator:false,
+  peerConn:null,localStream:null,voiceOn:false,
+  _lastCursorBcast:0,_lastStateBcast:0,_syncInterval:null,
+  _selectedRole:null
+};
+
+let _supabaseClient=null;
+function getSupabase(){
+  if(_supabaseClient)return _supabaseClient;
+  if(typeof supabase==='undefined'||!SUPABASE_URL||!SUPABASE_ANON_KEY)return null;
+  _supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  return _supabaseClient;
+}
+
+// ── CO-OP LOBBY UI ────────────────────────────────────────────────────────────
+function startCoopGame(){playSound('menu_click');document.getElementById('main-menu').style.display='none';document.getElementById('coop-lobby').style.display='flex';}
+function closeCoopLobby(){document.getElementById('coop-lobby').style.display='none';showMainMenu();}
+function showCoopTab(tab){
+  ['create','join','spectate'].forEach(t=>{
+    document.getElementById('coop-panel-'+t).style.display=t===tab?'block':'none';
+    document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+  });
+}
+
+function genRoomCode(){return Math.random().toString(36).substring(2,8).toUpperCase();}
+function copyRoomCode(){const c=document.getElementById('create-code-display')?.textContent;if(c)navigator.clipboard?.writeText(c).then(()=>showCoopToast('📋 Code copié !'));}
+
+async function createCoopRoom(){
+  const sb=getSupabase();
+  if(!sb){setCoopStatus('create','⚠️ Configure SUPABASE_URL + SUPABASE_ANON_KEY pour le multijoueur en ligne.',true);return;}
+  const code=genRoomCode();
+  COOP.roomCode=code;COOP.isHost=true;
+  document.getElementById('create-code-display').textContent=code;
+  document.getElementById('create-code-wrap').style.display='block';
+  setCoopStatus('create','<span class="coop-wait">⏳ En attente d\'un joueur…</span>');
+  const ch=sb.channel('coop_'+code,{config:{broadcast:{self:false}}});
+  ch.on('broadcast',{event:'join'},({payload})=>{
+    COOP.partnerName=payload.name;
+    setCoopStatus('create','<span class="coop-ok">✅ '+payload.name+' a rejoint !</span>');
+    playSound('achievement');
+    setTimeout(()=>startRoleSelection(),800);
+  })
+  .on('broadcast',{event:'role_picked'},({payload})=>{COOP.partnerRole=payload.role;updateRoleUI();})
+  .on('broadcast',{event:'role_ready'},({payload})=>{startCoopGameBothReady(payload);})
+  .on('broadcast',{event:'action'},({payload})=>{if(COOP.active)applyCoopAction(payload);})
+  .on('broadcast',{event:'cursor'},({payload})=>{updatePartnerCursor(payload.x,payload.y,payload.name);})
+  .on('broadcast',{event:'pause'},({payload})=>{syncCoopPause(payload.paused);})
+  .on('broadcast',{event:'emote'},({payload})=>{showRemoteEmote(payload.text,payload.x,payload.y);})
+  .on('broadcast',{event:'ping'},({payload})=>{showPing(payload.x,payload.y,false);})
+  .on('broadcast',{event:'voice_signal'},({payload})=>{handleVoiceSignal(payload);})
+  .subscribe();
+  COOP.channel=ch;
+}
+
+async function joinCoopRoom(){
+  const sb=getSupabase();
+  if(!sb){setCoopStatus('join','⚠️ Configure SUPABASE_URL + SUPABASE_ANON_KEY.',true);return;}
+  const code=(document.getElementById('join-code-input')?.value||'').trim().toUpperCase();
+  if(code.length<4){setCoopStatus('join','<span class="coop-err">Code invalide</span>');return;}
+  COOP.roomCode=code;COOP.isHost=false;
+  setCoopStatus('join','<span class="coop-wait">⏳ Connexion…</span>');
+  const ch=sb.channel('coop_'+code,{config:{broadcast:{self:false}}});
+  ch.on('broadcast',{event:'game_start'},({payload})=>{receiveCoopGameStart(payload);})
+  .on('broadcast',{event:'role_picked'},({payload})=>{COOP.partnerRole=payload.role;updateRoleUI();})
+  .on('broadcast',{event:'state'},({payload})=>{if(!COOP.isHost&&COOP.active)applyCoopState(payload);})
+  .on('broadcast',{event:'action'},({payload})=>{if(COOP.active)applyCoopAction(payload);})
+  .on('broadcast',{event:'cursor'},({payload})=>{updatePartnerCursor(payload.x,payload.y,payload.name);})
+  .on('broadcast',{event:'pause'},({payload})=>{syncCoopPause(payload.paused);})
+  .on('broadcast',{event:'emote'},({payload})=>{showRemoteEmote(payload.text,payload.x,payload.y);})
+  .on('broadcast',{event:'ping'},({payload})=>{showPing(payload.x,payload.y,false);})
+  .on('broadcast',{event:'voice_signal'},({payload})=>{handleVoiceSignal(payload);})
+  .subscribe(async status=>{
+    if(status==='SUBSCRIBED'){
+      const name=localStorage.getItem('cs_player_name')||'Joueur 2';
+      await ch.send({type:'broadcast',event:'join',payload:{name}});
+      setCoopStatus('join','<span class="coop-ok">✅ Connecté ! En attente du démarrage…</span>');
+      setTimeout(()=>startRoleSelection(),600);
+    }
+  });
+  COOP.channel=ch;
+}
+
+async function joinAsSpectator(){
+  const sb=getSupabase();
+  if(!sb){setCoopStatus('spec','⚠️ Configure SUPABASE_URL + SUPABASE_ANON_KEY.',true);return;}
+  const code=(document.getElementById('spec-code-input')?.value||'').trim().toUpperCase();
+  if(code.length<4){setCoopStatus('spec','<span class="coop-err">Code invalide</span>');return;}
+  COOP.roomCode=code;COOP.isSpectator=true;
+  setCoopStatus('spec','<span class="coop-wait">⏳ Connexion spectateur…</span>');
+  const ch=sb.channel('coop_'+code,{config:{broadcast:{self:false}}});
+  ch.on('broadcast',{event:'state'},({payload})=>{applyCoopState(payload);})
+  .on('broadcast',{event:'action'},({payload})=>{if(COOP.active)applyCoopAction(payload);})
+  .subscribe(async status=>{
+    if(status==='SUBSCRIBED'){
+      setCoopStatus('spec','<span class="coop-ok">✅ En mode spectateur</span>');
+      COOP.channel=ch;COOP.active=true;
+      document.getElementById('coop-lobby').style.display='none';
+      document.getElementById('spectator-banner').style.display='block';
+    }
+  });
+}
+
+function setCoopStatus(panel,html,isErr){
+  const el=document.getElementById(panel+'-status')||document.getElementById('create-status');
+  if(el)el.innerHTML=html;
+}
+
+// ── SÉLECTION RÔLE ────────────────────────────────────────────────────────────
+function startRoleSelection(){
+  document.getElementById('coop-lobby').style.display='none';
+  document.getElementById('role-select').style.display='flex';
+  COOP._selectedRole=null;
+  document.getElementById('role-confirm-btn').disabled=true;
+  updateRoleUI();
+}
+function selectRole(r){
+  COOP._selectedRole=r;
+  document.getElementById('role-builder').classList.toggle('selected',r==='builder');
+  document.getElementById('role-warrior').classList.toggle('selected',r==='warrior');
+  document.getElementById('role-confirm-btn').disabled=false;
+  if(COOP.channel)COOP.channel.send({type:'broadcast',event:'role_picked',payload:{role:r}});
+  updateRoleUI();
+}
+function updateRoleUI(){
+  const info=document.getElementById('role-partner-info');
+  if(!info)return;
+  const pr=COOP.partnerRole;
+  if(pr)info.textContent=(COOP.partnerName||'Ton allié')+' a choisi : '+(pr==='builder'?'🏗️ Bâtisseur':'⚔️ Guerrier');
+  else info.textContent='En attente du choix de '+(COOP.partnerName||'ton allié')+'…';
+  if(COOP._selectedRole&&pr&&COOP._selectedRole===pr){
+    document.getElementById('role-status').innerHTML='<span class="coop-err">⚠️ Même rôle ! Choisissez des rôles différents.</span>';
+    document.getElementById('role-confirm-btn').disabled=true;
+  }else{
+    document.getElementById('role-status').innerHTML='';
+    document.getElementById('role-confirm-btn').disabled=!COOP._selectedRole;
+  }
+}
+async function confirmRole(){
+  if(!COOP._selectedRole)return;
+  COOP.role=COOP._selectedRole;
+  document.getElementById('role-status').innerHTML='<span class="coop-ok">✅ Rôle confirmé !</span>';
+  document.getElementById('role-confirm-btn').disabled=true;
+  if(COOP.channel)await COOP.channel.send({type:'broadcast',event:'role_ready',payload:{role:COOP.role,name:localStorage.getItem('cs_player_name')||'Joueur'}});
+  if(COOP.isHost&&COOP.partnerRole)launchCoopGame();
+}
+function startCoopGameBothReady(payload){
+  if(!COOP.role)COOP.partnerRole=payload.role;
+  if(COOP.isHost)return;
+  launchCoopGame();
+}
+function receiveCoopGameStart(payload){COOP.role=COOP.role||'builder';launchCoopGame();}
+
+function launchCoopGame(){
+  document.getElementById('role-select').style.display='none';
+  initCoopGame();
+}
+
+// ── INIT JEU CO-OP ────────────────────────────────────────────────────────────
+function initCoopGame(){
+  const startGold=8+(hasPermaBonus('gold')?15:0);
+  G={gold:startGold,moon:1,moonProg:0,moonDur:55,cards:{},stacks:{},nid:1,drag:null,ts:null,
+     over:false,paused:false,secretReveal:false,
+     _stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0,coopRituals:0,coopPings:0,coopEmotes:0},
+     _faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,
+     _quest:null,_lastEvent:null,difficulty:'normal',aggroMult:0.85,foodPerPop:1,
+     packCostAdd:0,scoreMult:1.5,_reviveAvail:hasPermaBonus('revive'),_coopMode:true};
+  document.getElementById('hwinday').textContent='/50';
+  document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
+  clearLog();
+  ['overlay','victory','pause','main-menu'].forEach(id=>document.getElementById(id).style.display='none');
+  buildShop();applyBoardSkin();
+  // Spawn initial — plus de ressources pour 2 joueurs
+  spawn('berry_bush',70,70);spawn('berry_bush',200,70);
+  spawn('tree',330,70);spawn('tree',460,70);
+  spawn('villager',590,70);spawn('villager',70,190);
+  spawn('rock',200,190);spawn('flint',330,190);
+  spawn('berry',460,190);spawn('berry',590,190);
+  if(hasPermaBonus('pop'))spawn('villager',70,310);
+  if(hasPermaBonus('iron'))spawn('iron_ore',200,310);
+  // Bonus de rôle
+  if(COOP.role==='builder'){spawn('villager',720,70);log('🏗️ Bâtisseur : +1 villageois, crafts 20% plus rapides !');}
+  else if(COOP.role==='warrior'){spawn('sword',720,70);log('⚔️ Guerrier : +1 épée, combat 25% plus rapide !');}
+  COOP.active=true;
+  COOP._lastCursorBcast=0;COOP._lastStateBcast=0;
+  // Barre co-op
+  document.getElementById('coop-hud').style.display='flex';
+  document.getElementById('coop-partner-label').textContent='👥 '+(COOP.partnerName||'Allié');
+  // Curseur partenaire dans le plateau
+  const tbl=document.getElementById('table');
+  const pc=document.getElementById('partner-cursor');
+  if(pc&&tbl)tbl.appendChild(pc);
+  if(pc)pc.style.display='none';
+  document.getElementById('partner-cursor-label').textContent=COOP.partnerName||'P2';
+  // Ping : clic-droit sur le plateau vide
+  document.getElementById('table').addEventListener('contextmenu',handleTableRightClick,{capture:true});
+  // Voice
+  setTimeout(()=>initVoiceChat(),1200);
+  updateHUD();updateDustUI();
+  log('👥 MODE CO-OP J50 ! Monstres chaque jour dès le J6. Boss aux J40, J45, J50.');
+  log('🌀 Recettes co-op exclusives disponibles — essentielles pour les boss !');
+  log('💡 Q/E/R/T/Y = emotes | Clic-droit plateau = ping | M = micro');
+  if(COOP.isHost)log('📡 Tu es l\'hôte de la partie.');
+  requestAnimationFrame(loop);
+}
+
+// ── CO-OP SYNC ────────────────────────────────────────────────────────────────
+function serializeCoopState(){
+  return{
+    gold:G.gold,moon:G.moon,moonProg:G.moonProg,over:G.over,foodPerPop:G.foodPerPop,
+    nid:G.nid,_stats:G._stats,
+    cards:Object.fromEntries(Object.entries(G.cards).map(([id,c])=>[id,{type:c.type,x:c.x,y:c.y,aggro:c.aggro||0,name:c.name||null,sid:c.sid}])),
+    stacks:Object.fromEntries(Object.entries(G.stacks).map(([sid,s])=>[sid,{ids:[...s.ids],rx:s.rx,ry:s.ry,prog:s.prog||0,recipe:s.recipe?{t:s.recipe.t,o:s.recipe.o,keep:s.recipe.keep,coop:s.recipe.coop||false}:null}]))
+  };
+}
+async function broadcastCoopState(){
+  if(!COOP.channel)return;
+  await COOP.channel.send({type:'broadcast',event:'state',payload:serializeCoopState()});
+}
+function applyCoopState(state){
+  if(COOP.isHost||!state)return;
+  G.gold=state.gold;G.moon=state.moon;G.moonProg=state.moonProg;G.over=state.over;
+  G.foodPerPop=state.foodPerPop;G._stats=state._stats||G._stats;
+  if(state.nid>G.nid)G.nid=state.nid;
+  // Cartes
+  const rcvIds=new Set(Object.keys(state.cards).map(Number));
+  Object.keys(G.cards).map(Number).forEach(id=>{if(!rcvIds.has(id)){const e=cel(id);if(e)e.remove();delete G.cards[id];}});
+  Object.entries(state.cards).forEach(([idStr,sc])=>{
+    const id=Number(idStr);
+    if(!G.cards[id]){G.cards[id]={id,type:sc.type,x:sc.x,y:sc.y,sid:sc.sid,aggro:sc.aggro||0,name:sc.name||null};createCardDOM(id,sc.type);}
+    else{
+      G.cards[id].x=sc.x;G.cards[id].y=sc.y;G.cards[id].aggro=sc.aggro||0;G.cards[id].sid=sc.sid;
+      if(G.drag?.id!==id){const el=cel(id);if(el){el.style.left=sc.x+'px';el.style.top=sc.y+'px';}}
+    }
+  });
+  // Piles
+  G.stacks={};
+  Object.entries(state.stacks).forEach(([sidStr,ss])=>{
+    const sid=Number(sidStr);
+    G.stacks[sid]={id:sid,ids:[...ss.ids],rx:ss.rx,ry:ss.ry,prog:ss.prog||0,recipe:ss.recipe};
+  });
+  document.getElementById('moon-fill').style.width=(G.moonProg*100)+'%';
+  updateHUD();
+  if(G.over)showVictory();
+}
+async function broadcastCoopAction(action){
+  if(!COOP.channel)return;
+  await COOP.channel.send({type:'broadcast',event:'action',payload:action});
+}
+function applyCoopAction(action){
+  if(action.type==='card_move'&&G.cards[action.id]){
+    const c=G.cards[action.id];c.x=action.x;c.y=action.y;
+    const el=cel(action.id);if(el&&G.drag?.id!==action.id){el.style.left=action.x+'px';el.style.top=action.y+'px';}
+  }
+}
+async function broadcastCoopCursor(){
+  if(!COOP.channel)return;
+  const tbl=document.getElementById('table');if(!tbl)return;
+  const r=tbl.getBoundingClientRect();
+  await COOP.channel.send({type:'broadcast',event:'cursor',payload:{x:COOP._cx||0,y:COOP._cy||0,name:localStorage.getItem('cs_player_name')||'P1'}});
+}
+function updatePartnerCursor(x,y,name){
+  const pc=document.getElementById('partner-cursor');if(!pc)return;
+  pc.style.display='block';pc.style.left=x+'px';pc.style.top=y+'px';
+  const lbl=document.getElementById('partner-cursor-label');if(lbl)lbl.textContent=name||'P2';
+}
+// Tracking curseur local
+document.addEventListener('mousemove',e=>{
+  const tbl=document.getElementById('table');if(!tbl||!G._coopMode)return;
+  const r=tbl.getBoundingClientRect();
+  COOP._cx=e.clientX-r.left;COOP._cy=e.clientY-r.top;
+});
+
+// ── CO-OP PAUSE SYNC ──────────────────────────────────────────────────────────
+const _origTogglePause=togglePause;
+togglePause=function(){
+  if(G.over)return;
+  G.paused=!G.paused;
+  const po=document.getElementById('pause');
+  if(G.paused){
+    const nextWave=G.moon%5===0?G.moon+5:Math.ceil(G.moon/5)*5;
+    document.getElementById('pause-info').textContent='Jour '+G.moon+' / '+getWinDay()+(G._coopMode?' | Mode Co-op':' — Prochaine vague : Jour '+Math.min(nextWave,WIN_DAY));
+    po.style.display='flex';
+  }else{po.style.display='none';G.ts=null;requestAnimationFrame(loop);}
+  if(COOP.active&&COOP.channel)COOP.channel.send({type:'broadcast',event:'pause',payload:{paused:G.paused,name:localStorage.getItem('cs_player_name')||'Allié'}});
+};
+function syncCoopPause(paused){
+  if(G.paused===paused)return;
+  G.paused=paused;
+  const po=document.getElementById('pause');
+  if(paused){document.getElementById('pause-info').textContent='⏸ Ton allié a mis en pause';po.style.display='flex';}
+  else{po.style.display='none';G.ts=null;requestAnimationFrame(loop);}
+}
+
+// ── VOIX WEBRTC ───────────────────────────────────────────────────────────────
+const STUN={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
+async function initVoiceChat(){
+  try{
+    COOP.localStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+    COOP.peerConn=new RTCPeerConnection(STUN);
+    COOP.localStream.getTracks().forEach(t=>COOP.peerConn.addTrack(t,COOP.localStream));
+    COOP.peerConn.ontrack=e=>{const a=document.getElementById('remote-audio');if(a)a.srcObject=e.streams[0];};
+    COOP.peerConn.onicecandidate=e=>{
+      if(e.candidate&&COOP.channel)COOP.channel.send({type:'broadcast',event:'voice_signal',payload:{type:'ice',candidate:e.candidate}});
+    };
+    if(COOP.isHost){
+      const offer=await COOP.peerConn.createOffer();
+      await COOP.peerConn.setLocalDescription(offer);
+      COOP.channel.send({type:'broadcast',event:'voice_signal',payload:{type:'offer',sdp:offer}});
+    }
+    COOP.voiceOn=true;
+    updateMicBtn(true);
+    document.getElementById('voice-indicator').style.display='block';
+    log('🎤 Vocal activé ! Appuie sur M pour couper le micro.');
+  }catch(err){
+    log('❌ Micro non disponible ('+err.message+'). Vocal désactivé.');
+  }
+}
+async function handleVoiceSignal(p){
+  if(!COOP.peerConn)return;
+  try{
+    if(p.type==='offer'){
+      await COOP.peerConn.setRemoteDescription(p.sdp);
+      const ans=await COOP.peerConn.createAnswer();
+      await COOP.peerConn.setLocalDescription(ans);
+      COOP.channel.send({type:'broadcast',event:'voice_signal',payload:{type:'answer',sdp:ans}});
+    }else if(p.type==='answer'){await COOP.peerConn.setRemoteDescription(p.sdp);}
+    else if(p.type==='ice'){await COOP.peerConn.addIceCandidate(p.candidate);}
+  }catch(e){}
+}
+function toggleMic(){
+  if(!COOP.localStream)return;
+  const t=COOP.localStream.getAudioTracks()[0];if(!t)return;
+  t.enabled=!t.enabled;
+  updateMicBtn(t.enabled);
+  document.getElementById('voice-indicator').style.display=t.enabled?'block':'none';
+}
+function updateMicBtn(on){
+  const btn=document.getElementById('mic-btn');if(!btn)return;
+  btn.textContent=on?'🎤':'🔇';
+  btn.className='coop-hud-btn '+(on?'mic-on':'mic-off');
+}
+document.addEventListener('keydown',e=>{if(e.key.toLowerCase()==='m'&&G._coopMode&&document.activeElement.tagName!=='INPUT')toggleMic();});
+
+// ── EMOTES & PING ─────────────────────────────────────────────────────────────
+const EMOTE_MAP={q:'👍 OK !',e:'🆘 Aide !',r:'⚔️ Attaque !',t:'⚠️ Attention !',y:'🎉 Super !'};
+function sendEmote(key){
+  const text=EMOTE_MAP[key];if(!text)return;
+  G._stats.coopEmotes=(G._stats.coopEmotes||0)+1;
+  const tbl=document.getElementById('table');if(!tbl)return;
+  const r=tbl.getBoundingClientRect();
+  const x=30+Math.random()*Math.min(r.width-100,200),y=60+Math.random()*100;
+  showLocalEmote(text,x,y);
+  if(COOP.channel)COOP.channel.send({type:'broadcast',event:'emote',payload:{text,x,y}});
+  checkCoopAchievements();
+}
+function showLocalEmote(text,x,y){
+  const el=document.createElement('div');el.className='emote-pop';
+  el.style.cssText='left:'+x+'px;top:'+y+'px;';
+  el.textContent=text;
+  document.getElementById('table')?.appendChild(el);
+  setTimeout(()=>el.remove(),750);
+}
+function showRemoteEmote(text,x,y){
+  const el=document.createElement('div');el.className='emote-pop';
+  el.style.cssText='left:'+x+'px;top:'+y+'px;border-color:#f472b6;color:#f9a8d4;';
+  el.textContent=(COOP.partnerName||'Allié')+' : '+text;
+  document.getElementById('table')?.appendChild(el);
+  setTimeout(()=>el.remove(),750);
+}
+document.addEventListener('keydown',e=>{
+  if(!G._coopMode||document.activeElement.tagName==='INPUT')return;
+  if(EMOTE_MAP[e.key.toLowerCase()])sendEmote(e.key.toLowerCase());
+});
+function handleTableRightClick(e){
+  if(!G._coopMode)return;
+  const target=e.target;
+  if(target.classList.contains('card'))return; // laisse le sell fonctionner sur les cartes
+  e.preventDefault();
+  const tbl=document.getElementById('table').getBoundingClientRect();
+  const x=e.clientX-tbl.left,y=e.clientY-tbl.top;
+  sendPing(x,y);
+}
+function sendPing(x,y){
+  G._stats.coopPings=(G._stats.coopPings||0)+1;
+  showPing(x,y,true);
+  if(COOP.channel)COOP.channel.send({type:'broadcast',event:'ping',payload:{x,y}});
+  checkCoopAchievements();
+}
+function showPing(x,y,isLocal){
+  const el=document.createElement('div');el.className='ping-ring';
+  el.style.cssText='left:'+x+'px;top:'+y+'px;border-color:'+(isLocal?'#f7d060':'#f472b6')+';';
+  document.getElementById('table')?.appendChild(el);
+  setTimeout(()=>el.remove(),950);
+}
+
+// ── RÔLES CO-OP ───────────────────────────────────────────────────────────────
+// Les modificateurs sont appliqués dans le loop() patché ci-dessus.
+// Builder: recettes non-combat × 0.8, Warrior: recettes combat × 0.75
+
+// ── VICTOIRE CO-OP ───────────────────────────────────────────────────────────
+const _origShowVictory=showVictory;
+showVictory=function(){
+  if(!G._coopMode){_origShowVictory();return;}
+  updateGlobalStats(true);
+  if(!hasAchievement('coop_first')&&unlockAchievement('coop_first')){const a=ACHIEVEMENTS.find(a=>a.id==='coop_first');if(a)showAchievementToast(a);}
+  playSound('victory');
+  const sc=calcScore();
+  document.getElementById('vscore').textContent='👥 Victoire Co-op ! Survivé 50 jours avec '+(COOP.partnerName||'ton allié')+' !';
+  document.getElementById('vic-score').textContent='Score : '+sc.toLocaleString();
+  document.getElementById('vic-breakdown').textContent=scoreBreakdown();
+  document.getElementById('victory-stats').textContent='⚒️ '+(G._stats?.crafts||0)+' crafts  |  💀 '+(G._stats?.kills||0)+' monstres  |  🌀 '+(G._stats?.coopRituals||0)+' rituels co-op';
+  addCometDust(250,true);
+  setTimeout(()=>{
+    document.getElementById('victory').style.display='flex';
+    spawnConfetti();
+    const notice=document.createElement('div');
+    notice.style.cssText='margin:10px 0;color:#a5b4fc;font-size:14px;font-weight:700;';
+    notice.textContent='☄️ +250 Poussières de Comète Co-op ! (500 partagées)';
+    document.getElementById('vic-submit')?.parentNode?.insertBefore(notice,document.getElementById('vic-submit'));
+  },400);
+  checkCoopAchievements();
+};
+
+// ── SUCCÈS CO-OP ─────────────────────────────────────────────────────────────
+ACHIEVEMENTS.push(
+  {id:'coop_first',    n:'Alliance Forgée',    d:'Remporte ta première victoire en co-op',               e:'🤝',   coop:true, rare:1},
+  {id:'coop_boss40',   n:'Titans',             d:'Défaite le Boss J40 en co-op',                         e:'👑',   coop:true},
+  {id:'coop_boss45',   n:'Invincibles',        d:'Défaite le Boss J45 en co-op',                         e:'🐉',   coop:true, rare:1},
+  {id:'coop_boss50',   n:'Légendes Co-op',     d:'Victoire au Boss Final J50 en co-op',                  e:'💀',   coop:true, rare:1},
+  {id:'coop_alchemy5', n:'Alchimistes',        d:'Exécute 5 recettes co-op dans une partie',             e:'🌀',   coop:true},
+  {id:'coop_emote20',  n:'Expressifs',         d:'Envoie 20 emotes en co-op',                            e:'🎭',   coop:true},
+  {id:'coop_ping30',   n:'Stratèges',          d:'Ping 30 fois dans une partie co-op',                   e:'🎯',   coop:true},
+  {id:'coop_builder',  n:'Grand Bâtisseur',    d:'En Bâtisseur, exécute 25 crafts dans une partie',      e:'🏗️',  coop:true},
+  {id:'coop_warrior',  n:'Grand Guerrier',     d:'En Guerrier, tue 20 monstres dans une partie',         e:'⚔️',  coop:true},
+  {id:'coop_voice',    n:'Bavards',            d:'Joue une partie complète avec le vocal activé',        e:'🎤',   coop:true}
+);
+function checkCoopAchievements(){
+  if(!G._coopMode)return;
+  const s=G._stats||{};
+  const c=(id,cond)=>{if(cond&&!hasAchievement(id)){if(unlockAchievement(id)){const a=ACHIEVEMENTS.find(a=>a.id===id);if(a)showAchievementToast(a);}}};
+  c('coop_alchemy5',(s.coopRituals||0)>=5);
+  c('coop_emote20',(s.coopEmotes||0)>=20);
+  c('coop_ping30',(s.coopPings||0)>=30);
+  c('coop_builder',COOP.role==='builder'&&(s.crafts||0)>=25);
+  c('coop_warrior',COOP.role==='warrior'&&(s.kills||0)>=20);
+  c('coop_voice',COOP.voiceOn&&G.moon>=50);
+}
+// Débloquer boss achievements au moment du kill
+const _origExecRecipe=execRecipe;
+execRecipe=function(sid){
+  const s=G.stacks[sid];
+  if(s?.recipe?.coop)G._stats.coopRituals=(G._stats.coopRituals||0)+1;
+  _origExecRecipe(sid);
+  if(G._coopMode){
+    // Check boss kills
+    const killed=Object.keys(G.cards);
+    const hadGK=!killed.some(id=>G.cards[id]?.type==='goblin_king');
+    const hadDragon=!killed.some(id=>G.cards[id]?.type==='dragon');
+    if(hadGK&&G.moon===40&&!hasAchievement('coop_boss40')){if(unlockAchievement('coop_boss40')){const a=ACHIEVEMENTS.find(a=>a.id==='coop_boss40');if(a)showAchievementToast(a);}}
+    if(hadDragon&&G.moon===45&&!hasAchievement('coop_boss45')){if(unlockAchievement('coop_boss45')){const a=ACHIEVEMENTS.find(a=>a.id==='coop_boss45');if(a)showAchievementToast(a);}}
+    checkCoopAchievements();
+  }
+};
+
+// ── TOAST CO-OP ───────────────────────────────────────────────────────────────
+function showCoopToast(msg){
+  const t=document.createElement('div');
+  t.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1e1b4b;border:1px solid #4f46e5;color:#c7d2fe;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 14px rgba(0,0,0,.5);animation:toastIn .3s ease;';
+  t.textContent=msg;document.body.appendChild(t);
+  setTimeout(()=>{t.style.animation='toastOut .3s ease forwards';setTimeout(()=>t.remove(),300);},2500);
+}
+
 // ── START ─────────────────────────────────────────────────────────────────────
 showMainMenu();
 </script>
+
+<!-- ── CONFIRMATION MODALE ── -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99500;justify-content:center;align-items:center;">
+  <div class="confirm-box">
+    <h3 id="confirm-title">Confirmer</h3>
+    <p id="confirm-msg"></p>
+    <div class="confirm-btns">
+      <button class="obtn red" onclick="doConfirm()">Oui, confirmer</button>
+      <button class="obtn" onclick="closeConfirm()">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── LOBBY CO-OP ── -->
+<div id="coop-lobby">
+  <div class="coop-lobby-box">
+    <div class="coop-lobby-title">👥 MODE CO-OP</div>
+    <div class="coop-lobby-sub">Jouez à deux en ligne — 50 jours, boss légendaires, alchimie coopérative</div>
+    <div class="coop-tabs">
+      <button class="coop-tab active" id="tab-create" onclick="showCoopTab('create')">Créer une partie</button>
+      <button class="coop-tab" id="tab-join" onclick="showCoopTab('join')">Rejoindre</button>
+      <button class="coop-tab" id="tab-spectate" onclick="showCoopTab('spectate')">Spectateur</button>
+    </div>
+    <!-- Panel Créer -->
+    <div id="coop-panel-create">
+      <p style="font-size:12px;color:#6b7280;margin-bottom:14px;">Crée une salle et partage le code à ton ami</p>
+      <button class="coop-btn" style="font-size:16px;padding:14px 32px;" onclick="createCoopRoom()">🎮 Créer la salle</button>
+      <div id="create-code-wrap" style="display:none;margin-top:16px;">
+        <div style="font-size:12px;color:#6b7280;">Code à partager :</div>
+        <div class="coop-room-code" id="create-code-display">------</div>
+        <button class="coop-btn sec" onclick="copyRoomCode()">📋 Copier le code</button>
+      </div>
+      <div class="coop-status" id="create-status"></div>
+    </div>
+    <!-- Panel Rejoindre -->
+    <div id="coop-panel-join" style="display:none;">
+      <p style="font-size:12px;color:#6b7280;margin-bottom:14px;">Entre le code donné par ton ami</p>
+      <input class="coop-input" id="join-code-input" placeholder="CODE" maxlength="6" oninput="this.value=this.value.toUpperCase()">
+      <button class="coop-btn" onclick="joinCoopRoom()">🔗 Rejoindre</button>
+      <div class="coop-status" id="join-status"></div>
+    </div>
+    <!-- Panel Spectateur -->
+    <div id="coop-panel-spectate" style="display:none;">
+      <p style="font-size:12px;color:#6b7280;margin-bottom:14px;">Observe une partie en cours (lecture seule)</p>
+      <input class="coop-input" id="spec-code-input" placeholder="CODE" maxlength="6" oninput="this.value=this.value.toUpperCase()">
+      <button class="coop-btn sec" onclick="joinAsSpectator()">👁️ Regarder</button>
+      <div class="coop-status" id="spec-status"></div>
+    </div>
+    <div class="coop-sep">────────────────────────</div>
+    <button class="coop-btn sec" style="font-size:13px;" onclick="closeCoopLobby()">← Retour au menu</button>
+  </div>
+</div>
+
+<!-- ── SÉLECTION DE RÔLE ── -->
+<div id="role-select">
+  <div class="role-box">
+    <div class="role-title">Choisis ton rôle</div>
+    <div class="role-sub" id="role-sub">Les deux joueurs doivent choisir un rôle différent</div>
+    <div class="role-cards">
+      <div class="role-card" id="role-builder" onclick="selectRole('builder')">
+        <div class="role-emoji">🏗️</div>
+        <div class="role-name">Bâtisseur</div>
+        <div class="role-perks">✅ Crafts 20% plus rapides<br>✅ +1 Villageois au départ<br>✅ Recettes co-op exclusives</div>
+        <div class="role-desc">Spécialiste de la production et du village</div>
+      </div>
+      <div class="role-card" id="role-warrior" onclick="selectRole('warrior')">
+        <div class="role-emoji">⚔️</div>
+        <div class="role-name">Guerrier</div>
+        <div class="role-perks">✅ Combat 25% plus rapide<br>✅ +1 Épée au départ<br>✅ Aggro monstres réduite</div>
+        <div class="role-desc">Spécialiste du combat et de la défense</div>
+      </div>
+    </div>
+    <div id="role-partner-info" style="font-size:12px;color:#6b7280;margin-bottom:16px;min-height:16px;"></div>
+    <button class="coop-btn" id="role-confirm-btn" onclick="confirmRole()" disabled>Confirmer le rôle</button>
+    <div class="coop-status" id="role-status"></div>
+  </div>
+</div>
+
+<!-- ── BARRE CO-OP EN JEU ── -->
+<div id="coop-hud">
+  <span class="coop-partner-name" id="coop-partner-label">👥 —</span>
+  <button class="coop-hud-btn mic-on" id="mic-btn" onclick="toggleMic()" title="Micro (M)">🎤</button>
+  <button class="coop-hud-btn" onclick="sendEmote('q')" title="OK (Q)">👍</button>
+  <button class="coop-hud-btn" onclick="sendEmote('e')" title="Aide ! (E)">🆘</button>
+  <button class="coop-hud-btn" onclick="sendEmote('r')" title="Attaque ! (R)">⚔️</button>
+  <button class="coop-hud-btn" onclick="sendEmote('t')" title="Attention ! (T)">⚠️</button>
+  <button class="coop-hud-btn" onclick="sendEmote('y')" title="Super ! (Y)">🎉</button>
+  <span style="font-size:10px;color:#4b5563;border-left:1px solid #1e2a5a;padding-left:8px;">Ping: clic-droit plateau</span>
+</div>
+<div id="voice-indicator">🎤 Micro actif</div>
+<div id="spectator-banner">👁️ MODE SPECTATEUR — Vous observez la partie</div>
+
+<!-- ── CURSEUR PARTENAIRE ── -->
+<div id="partner-cursor">
+  <div class="partner-cursor-dot"></div>
+  <div class="partner-cursor-label" id="partner-cursor-label">P2</div>
+</div>
+
+<!-- ── AUDIO DISTANT (WebRTC) ── -->
+<audio id="remote-audio" autoplay playsinline style="display:none;"></audio>
+
 </body>
 </html>
