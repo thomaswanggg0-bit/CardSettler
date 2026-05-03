@@ -420,7 +420,8 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 .boss-pulse{animation:boss-pulse .6s infinite;}
 /* ── DIFFICULTÉ ── */
 .diff-selector{display:flex;gap:10px;justify-content:flex-start;margin-bottom:2px;}
-.diff-btn{background:#0f2310;color:#6b8;border:2px solid #2d5a2d;border-radius:9px;padding:10px 28px;cursor:pointer;font-size:14px;font-weight:700;transition:all .15s;width:140px;}
+.diff-btn{background:#0f2310;color:#6b8;border:2px solid #2d5a2d;border-radius:9px;padding:10px 18px;cursor:pointer;font-size:13px;font-weight:700;transition:all .15s;}
+.diff-btn.active-easy{border-color:#22d3ee;color:#67e8f9;background:#0a1f24;}
 .diff-btn.active-normal{border-color:#16a34a;color:#4ade80;background:#0d2a1a;}
 .diff-btn.active-hard{border-color:#ef4444;color:#fca5a5;background:#2a0a0a;box-shadow:0 0 12px rgba(239,68,68,.3);}
 .diff-btn:hover{opacity:.8;}
@@ -802,6 +803,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
         <div style="display:flex;align-items:center;gap:6px;"><label style="font-size:10px;color:#6b8;">🎵</label><input type="range" class="vol-slider" id="music-vol" min="0" max="1" step="0.05" value="0.5" oninput="setMusicVol(this.value)" style="width:55px;"></div>
       </div>
       <div class="diff-selector" style="margin:0;">
+        <button class="diff-btn" id="diff-easy" onclick="setDifficulty('easy')">🌱 Facile</button>
         <button class="diff-btn active-normal" id="diff-normal" onclick="setDifficulty('normal')">⚔️ Normal</button>
         <button class="diff-btn" id="diff-hard" onclick="setDifficulty('hard')">💀 Difficile</button>
       </div>
@@ -1050,15 +1052,17 @@ let selectedMode='normal'; // 'normal' | 'infinite'
 let G={};
 let selectedDifficulty=localStorage.getItem('cs_difficulty')||'normal';
 const DIFF_PARAMS={
+  easy:  {moonDur:90,aggroMult:1.5,foodPerPop:1,packCostAdd:0,scoreMult:0.6},
   normal:{moonDur:60,aggroMult:1.0,foodPerPop:1,packCostAdd:0,scoreMult:1},
   hard:  {moonDur:45,aggroMult:0.6,foodPerPop:2,packCostAdd:2,scoreMult:2},
 };
 function setDifficulty(d){
   selectedDifficulty=d;localStorage.setItem('cs_difficulty',d);
+  document.getElementById('diff-easy').className='diff-btn'+(d==='easy'?' active-easy':'');
   document.getElementById('diff-normal').className='diff-btn'+(d==='normal'?' active-normal':'');
   document.getElementById('diff-hard').className='diff-btn'+(d==='hard'?' active-hard':'');
-  const notes={normal:'Mode Normal — paramètres standards',hard:'💀 Difficile — jours courts, monstres rapides, double ration ×2 pack'};
-  document.getElementById('mm-diff-note').textContent=notes[d];
+  const notes={easy:'🌱 Facile — jours longs, monstres lents, idéal pour débuter',normal:'Mode Normal — paramètres standards',hard:'💀 Difficile — jours courts, monstres rapides, double ration ×2 pack'};
+  document.getElementById('mm-diff-note').textContent=notes[d]||'';
   playSound('menu_click');
 }
 
@@ -1276,7 +1280,7 @@ function buildShop(){
 function initG(infiniteMode){
   const isInf=infiniteMode||selectedMode==='infinite';
   const dp=DIFF_PARAMS[isInf?'normal':selectedDifficulty]||DIFF_PARAMS.normal;
-  const startGold=(selectedDifficulty==='hard'&&!isInf?3:5)+(hasPermaBonus('gold')?15:0);
+  const startGold=(selectedDifficulty==='hard'&&!isInf?3:selectedDifficulty==='easy'&&!isInf?8:5)+(hasPermaBonus('gold')?15:0);
   G={gold:startGold,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,_quest:null,_lastEvent:null,difficulty:isInf?'infinite':selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult,_reviveAvail:hasPermaBonus('revive'),_infiniteMode:isInf};
   const sb=document.getElementById('speed-btn');if(sb){sb.textContent='⏩ ×1';sb.className='';sb.id='speed-btn';}
   const bb=document.getElementById('bm-btn');if(bb)bb.style.display='none';
@@ -1288,6 +1292,7 @@ function initG(infiniteMode){
   if(hasPermaBonus('pop'))spawn('villager',460,70);
   spawn('berry',hasPermaBonus('pop')?590:460,70);
   if(selectedDifficulty!=='hard')spawn('berry',hasPermaBonus('pop')?590:460,180);
+  if(selectedDifficulty==='easy'&&!isInf)spawn('berry',hasPermaBonus('pop')?720:590,180);
   spawn('flint',330,180);
   if(hasPermaBonus('iron'))spawn('iron_ore',590,180);
   updateHUD();
@@ -2062,6 +2067,7 @@ function scoreBreakdown(){
 }
 function _showDefeatScreen(title,msg){
   updateGlobalStats(false);
+  if(G._infiniteMode){showOverInfinite(title,msg);return;}
   document.getElementById('over-title').textContent=title;
   document.getElementById('over-msg').textContent=msg;
   document.getElementById('fscore').textContent='Tu as survécu '+G.moon+' jours.';
@@ -2072,6 +2078,26 @@ function _showDefeatScreen(title,msg){
   showConclusion('b',()=>{
     document.getElementById('overlay').style.display='flex';
     showScoreSubmit('over-submit',sc,G.difficulty,G.moon,G._dailyChallengeKey||null);
+  });
+}
+function showOverInfinite(title,msg){
+  const gs=getGlobalStats();
+  const prev=gs.infBestDays||0;
+  const isNew=G.moon>prev;
+  if(isNew){gs.infBestDays=G.moon;saveGlobalStats(gs);}
+  const kills=G._stats?.kills||0,crafts=G._stats?.crafts||0;
+  document.getElementById('over-title').textContent=title+' ♾️';
+  document.getElementById('over-msg').textContent=msg;
+  document.getElementById('fscore').textContent=isNew?'🎉 Nouveau record personnel !':'Record : Jour '+prev;
+  document.getElementById('over-score').textContent='♾️ Jour '+G.moon+' atteint';
+  document.getElementById('over-breakdown').textContent='💀 '+kills+' monstres tués · ⚒️ '+crafts+' crafts'+(isNew?' · 🏆 +50 ⭐ record !':'');
+  if(isNew)addCometDust(50);
+  const sc=calcScore();
+  showConclusion('b',()=>{
+    document.getElementById('overlay').style.display='flex';
+    document.getElementById('over-submit').innerHTML=
+      '<button class="obtn" style="margin-bottom:8px;width:100%;" onclick="showLeaderboard(\'infinite\')">♾️ Classement Infini</button>';
+    showScoreSubmit('over-submit',sc,'infinite',G.moon,null);
   });
 }
 function showOverFamine(){_showDefeatScreen('☠️ Famine !','Tes villageois sont morts de faim.');}
@@ -2130,6 +2156,7 @@ function showVictory(){
 // ── MENU PRINCIPAL ────────────────────────────────────────────────────────────
 function showMainMenu(){
   ['overlay','victory','pause'].forEach(id=>document.getElementById(id).style.display='none');
+  setDifficulty(selectedDifficulty);
   // Stats globales
   const gs=getGlobalStats();
   const achCount=getAchievements().length;
