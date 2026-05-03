@@ -1574,7 +1574,12 @@ document.addEventListener('mouseup',()=>{
 document.addEventListener('touchend',()=>{if(G.drag){const fakeUp=new Event('mouseup');document.dispatchEvent(fakeUp);}},{passive:true});
 function canPotentiallyRecipe(types){
   const sorted=[...types].sort();
+  const diff=G?.difficulty||'normal';
+  const isInf=G?._infiniteMode||false;
   for(const r of RECIPES){
+    if(r.hardOnly&&diff!=='hard')continue;
+    if(r.normalOnly&&diff==='hard')continue;
+    if(r.infinite&&!isInf)continue;
     const ri=[...r.i];let ok=true;
     for(const t of sorted){const idx=ri.indexOf(t);if(idx===-1){ok=false;break;}ri.splice(idx,1);}
     if(ok)return true;
