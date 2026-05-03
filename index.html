@@ -2,11 +2,13 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>CardSettler</title>
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
-*{margin:0;padding:0;box-sizing:border-box;user-select:none;}
-body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column;}
+*{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent;}
+body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column;touch-action:none;}
+@media(max-width:600px){#hud{gap:7px;padding:5px 8px;font-size:11px;}.stat{font-size:11px;}#log{width:180px;display:none;}#shop{bottom:8px;right:8px;}.pbtn{font-size:11px;padding:6px 10px;}}
 /* HUD */
 #hud{background:#0f2310;border-bottom:2px solid #2d5a2d;padding:8px 14px;display:flex;align-items:center;gap:14px;flex-shrink:0;z-index:100;flex-wrap:wrap;}
 #moon-wrap{flex:1;min-width:80px;height:18px;background:#0a1a0a;border-radius:9px;overflow:hidden;border:1px solid #2d5a2d;}
@@ -72,44 +74,67 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 /* Wave alert */
 #wave-alert{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(160,0,0,0.93);color:#fff;font-size:20px;font-weight:700;padding:14px 30px;border-radius:12px;z-index:500;pointer-events:none;text-align:center;border:2px solid #ef4444;}
 #obj{font-size:11px;color:#f7d060;white-space:nowrap;}
-/* ── MENU PRINCIPAL ─────────────────────────────────────────── */
-#main-menu{display:grid;grid-template-columns:1fr 300px;position:fixed;inset:0;background:linear-gradient(160deg,#071407 0%,#0f2a0f 40%,#0a1e0a 100%);z-index:99000;padding:40px 6%;gap:32px;align-items:start;overflow-y:auto;}
-.mm-left{display:flex;flex-direction:column;gap:10px;}
-.mm-right{display:flex;flex-direction:column;gap:14px;position:sticky;top:40px;}
-.mm-logo{font-size:64px;line-height:1;filter:drop-shadow(0 0 20px rgba(100,200,80,.4));}
-.mm-title{font-size:48px;font-weight:900;color:#f7d060;letter-spacing:4px;text-shadow:0 0 30px rgba(247,208,96,.4);line-height:1.1;}
-.mm-sub{color:#6b8;font-size:13px;margin-bottom:6px;}
-.mm-nav{display:flex;flex-direction:column;gap:8px;max-width:420px;}
-.mbtn{background:#0f2310;color:#d1fae5;border:2px solid #2d5a2d;border-radius:10px;padding:13px 20px;cursor:pointer;font-size:15px;font-weight:700;width:100%;transition:background .15s,border-color .15s,transform .1s;text-align:center;}
+/* ── MENU PRINCIPAL — Style Fortnite ──────────────────────── */
+#main-menu{display:flex;flex-direction:column;position:fixed;inset:0;background:linear-gradient(160deg,#040e04 0%,#071407 40%,#050f05 100%);z-index:99000;overflow-y:auto;}
+.mm-header{display:flex;align-items:center;justify-content:space-between;padding:18px 28px 14px;flex-shrink:0;background:rgba(0,0,0,.45);border-bottom:1px solid rgba(74,138,74,.25);flex-wrap:wrap;gap:10px;}
+.mm-logo{font-size:48px;line-height:1;filter:drop-shadow(0 0 20px rgba(100,200,80,.5));}
+.mm-title{font-size:38px;font-weight:900;color:#f7d060;letter-spacing:4px;text-shadow:0 0 30px rgba(247,208,96,.4);line-height:1.1;}
+.mm-sub{color:#4ade80;font-size:12px;margin-top:2px;}
+.mm-header-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+/* Grille des grandes cartes */
+.mm-cards-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:14px;padding:18px 28px;flex:1;min-height:0;}
+@media(max-width:700px){.mm-cards-grid{grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);}.mm-header{padding:12px 16px;}.mm-actions{padding:0 16px 12px;}.mm-footer{padding:10px 16px;}}
+@media(max-width:420px){.mm-cards-grid{grid-template-columns:1fr;grid-template-rows:repeat(6,auto);}}
+.mm-big-card{position:relative;border-radius:16px;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;justify-content:flex-end;transition:transform .18s cubic-bezier(.17,.67,.36,1.15),box-shadow .18s;border:2px solid transparent;}
+.mm-big-card:hover{transform:translateY(-6px) scale(1.02);}
+.mm-big-card:active{transform:scale(.97);}
+.mm-big-card-bg{position:absolute;inset:0;z-index:0;}
+.mm-big-card-content{position:relative;z-index:1;padding:18px 20px;background:linear-gradient(0deg,rgba(0,0,0,.88) 0%,rgba(0,0,0,.35) 60%,transparent 100%);}
+.mm-big-card-emoji{font-size:44px;margin-bottom:6px;line-height:1;filter:drop-shadow(0 0 12px rgba(0,0,0,.6));}
+.mm-big-card-title{font-size:20px;font-weight:900;color:#fff;margin-bottom:4px;text-shadow:0 2px 6px rgba(0,0,0,.6);}
+.mm-big-card-desc{font-size:11px;color:rgba(255,255,255,.72);line-height:1.45;}
+.mm-big-card-badge{position:absolute;top:12px;right:12px;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);border-radius:8px;padding:4px 10px;font-size:11px;font-weight:800;border:1px solid rgba(255,255,255,.2);letter-spacing:.5px;}
+.mm-card-normal{border-color:#22c55e;} .mm-card-normal:hover{border-color:#4ade80;box-shadow:0 14px 44px rgba(34,197,94,.35);}
+.mm-card-infinite{border-color:#f97316;} .mm-card-infinite:hover{border-color:#fb923c;box-shadow:0 14px 44px rgba(249,115,22,.35);}
+.mm-card-coop{border-color:#6366f1;} .mm-card-coop:hover{border-color:#a5b4fc;box-shadow:0 14px 44px rgba(99,102,241,.35);}
+.mm-card-resume{border-color:#ca8a04;} .mm-card-resume:hover{border-color:#fbbf24;box-shadow:0 14px 44px rgba(202,138,4,.35);}
+.mm-card-resume.disabled-card{opacity:.45;cursor:not-allowed;pointer-events:none;}
+.mm-card-daily{border-color:#3b82f6;} .mm-card-daily:hover{border-color:#60a5fa;box-shadow:0 14px 44px rgba(59,130,246,.35);}
+.mm-card-boutique{border-color:#7c3aed;} .mm-card-boutique:hover{border-color:#a78bfa;box-shadow:0 14px 44px rgba(124,58,237,.4);}
+/* Petits boutons secondaires */
+.mbtn{background:#0f2310;color:#d1fae5;border:2px solid #2d5a2d;border-radius:10px;padding:11px 18px;cursor:pointer;font-size:14px;font-weight:700;transition:background .15s,border-color .15s,transform .1s;text-align:center;}
 .mbtn:hover{background:#1a3a1a;border-color:#4a8a4a;transform:translateY(-2px);}
 .mbtn:disabled{background:#111;border-color:#333;color:#555;cursor:not-allowed;transform:none;}
 .mbtn.disc{background:#1a0a0a;border-color:#4a1a1a;color:#fca5a5;}
 .mbtn.disc:hover{background:#2a1010;border-color:#8a2d2d;}
 .mbtn.mbtn-lg{font-size:19px;padding:17px 20px;border-color:#4a8a4a;background:#0e2510;}
-.mbtn.mbtn-sm{font-size:13px;padding:10px 20px;border-color:#1e3a1e;color:#86efac;}
-.mm-boutique-btn{background:linear-gradient(160deg,#120030,#2a0858,#120030);border:2px solid #7c3aed;border-radius:16px;color:#c4b5fd;font-size:20px;font-weight:900;padding:0;cursor:pointer;transition:all .2s;text-align:center;min-height:170px;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;box-shadow:0 0 30px rgba(124,58,237,.2);}
-.mm-boutique-btn:hover{border-color:#a78bfa;transform:translateY(-2px);box-shadow:0 0 50px rgba(124,58,237,.5);}
-.mm-boutique-ico{font-size:44px;line-height:1;}
-.mm-boutique-sub{font-size:11px;color:#9ca3af;}
-.mm-dust-panel{background:rgba(124,58,237,.12);border:1px solid rgba(124,58,237,.3);border-radius:12px;padding:14px 16px;}
-.mm-dust-row{font-size:13px;color:#c4b5fd;margin:4px 0;}
-.mm-dust-row b{color:#f7d060;}
-#resume-info{color:#6b8;font-size:12px;margin-top:-4px;min-height:16px;}
-.mm-version{color:#2d5a2d;font-size:11px;text-align:center;}
-.mm-panel{background:rgba(0,0,0,.25);border:1px solid rgba(74,138,74,.25);border-radius:12px;padding:14px 16px;}
-.mm-panel-title{font-size:11px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px;}
-.mm-rec-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:#86efac;padding:3px 0;border-bottom:1px solid rgba(74,138,74,.1);}
+.mbtn.mbtn-sm{font-size:12px;padding:8px 16px;border-color:#1e3a1e;color:#86efac;}
+.mbtn.mbtn-coop{font-size:16px;padding:14px 20px;border-color:#6d28d9;background:linear-gradient(135deg,#0f0a2a,#1e1254);color:#a5b4fc;}
+.mbtn.mbtn-coop:hover{border-color:#a78bfa;box-shadow:0 0 20px rgba(109,40,217,.4);}
+.mm-actions{display:flex;gap:8px;padding:0 28px 16px;flex-wrap:wrap;justify-content:center;}
+/* Pied de page stats */
+.mm-footer{display:flex;gap:16px;padding:12px 28px;background:rgba(0,0,0,.4);border-top:1px solid rgba(74,138,74,.2);flex-shrink:0;align-items:flex-start;flex-wrap:wrap;justify-content:center;}
+.mm-footer-col{flex:1;min-width:160px;}
+.mm-panel-title{font-size:10px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.mm-rec-row{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#86efac;padding:2px 0;border-bottom:1px solid rgba(74,138,74,.1);}
 .mm-rec-row:last-child{border-bottom:none;}
 .mm-rec-val{color:#f7d060;font-weight:700;}
-.mm-ach-bar-wrap{background:rgba(0,0,0,.3);border-radius:20px;height:7px;margin:6px 0 10px;overflow:hidden;}
+.mm-ach-bar-wrap{background:rgba(0,0,0,.3);border-radius:20px;height:6px;margin:4px 0 8px;overflow:hidden;}
 .mm-ach-bar{height:100%;background:linear-gradient(90deg,#4ade80,#f7d060);border-radius:20px;transition:width .5s ease;}
-.mm-ach-count{color:#f7d060;font-weight:700;float:right;}
-.mm-ach-recent{display:flex;flex-direction:column;gap:5px;margin-top:4px;}
-.mm-ach-item{display:flex;align-items:center;gap:7px;font-size:11px;color:#d1fae5;background:rgba(74,138,74,.08);border-radius:7px;padding:5px 8px;}
-.mm-ach-item-ico{font-size:16px;line-height:1;}
+.mm-ach-count{color:#f7d060;font-weight:700;}
+.mm-ach-recent{display:flex;flex-direction:column;gap:4px;}
+.mm-ach-item{display:flex;align-items:center;gap:6px;font-size:10px;color:#d1fae5;background:rgba(74,138,74,.08);border-radius:6px;padding:4px 7px;}
+.mm-ach-item-ico{font-size:14px;line-height:1;}
 .mm-ach-item-name{color:#86efac;font-weight:600;}
-.mm-ach-empty{font-size:11px;color:#4b5563;font-style:italic;text-align:center;padding:6px 0;}
+.mm-ach-empty{font-size:10px;color:#4b5563;font-style:italic;text-align:center;padding:4px 0;}
 .mm-boutique-badge{background:#f7d060;color:#1a0050;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.5px;}
+.mm-version{color:#2d5a2d;font-size:10px;align-self:flex-end;margin-left:auto;}
+#resume-info{color:rgba(255,255,255,.6);font-size:11px;}
+/* Infini badge HUD */
+#hdiff-inf{font-size:11px;font-weight:800;color:#fb923c;letter-spacing:1px;margin-left:4px;vertical-align:middle;display:none;}
+.mm-dust-row{font-size:12px;color:#c4b5fd;margin:3px 0;}
+.mm-dust-row b{color:#f7d060;}
+.mm-diff-note{font-size:11px;color:#6b7280;min-height:16px;}
 /* ── LEADERBOARD ──────────────────────────────────────────── */
 #leaderboard{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:99500;justify-content:center;align-items:center;}
 .lb-box{background:linear-gradient(160deg,#071407,#0f2a0f);border:2px solid #2d5a2d;border-radius:16px;padding:28px 32px;max-width:600px;width:94%;max-height:88vh;overflow-y:auto;color:#fff;}
@@ -479,7 +504,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 <body>
 <!-- HUD -->
 <div id="hud">
-  <span class="stat">📅 Jour <b id="hday">1</b><span id="hwinday">/35</span><span id="hdiff">💀 HARD</span></span>
+  <span class="stat">📅 Jour <b id="hday">1</b><span id="hwinday">/35</span><span id="hdiff">💀 HARD</span><span id="hdiff-inf" style="display:none;font-size:11px;font-weight:800;color:#fb923c;letter-spacing:1px;margin-left:4px;">♾️ INFINI</span></span>
   <div id="moon-wrap"><div id="moon-fill"></div></div>
   <span class="stat">🪙 <b id="hgold">5</b></span>
   <span class="stat" id="hfood-wrap">🍖 <b id="hfood">0</b>/<b id="hpop">0</b></span>
@@ -545,10 +570,11 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
       <button class="lb-close" onclick="closeLeaderboard()">✕</button>
     </div>
     <div class="lb-tabs">
-      <button class="lb-tab active" data-filter="all"    onclick="showLeaderboard('all')">🌍 Tous</button>
-      <button class="lb-tab"        data-filter="normal" onclick="showLeaderboard('normal')">⚔️ Normal</button>
-      <button class="lb-tab"        data-filter="hard"   onclick="showLeaderboard('hard')">💀 Difficile</button>
-      <button class="lb-tab"        data-filter="daily"  onclick="showLeaderboard('daily')">📅 Défi du Jour</button>
+      <button class="lb-tab active" data-filter="all"      onclick="showLeaderboard('all')">🌍 Tous</button>
+      <button class="lb-tab"        data-filter="normal"   onclick="showLeaderboard('normal')">⚔️ Normal</button>
+      <button class="lb-tab"        data-filter="hard"     onclick="showLeaderboard('hard')">💀 Difficile</button>
+      <button class="lb-tab"        data-filter="infinite" onclick="showLeaderboard('infinite')">♾️ Infini</button>
+      <button class="lb-tab"        data-filter="daily"    onclick="showLeaderboard('daily')">📅 Défi</button>
     </div>
     <table class="lb-table">
       <thead><tr><th>#</th><th>Joueur</th><th>Score</th><th>Mode</th><th>Date</th></tr></thead>
@@ -726,57 +752,119 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 
 <!-- ── MENU PRINCIPAL ── -->
 <div id="main-menu">
-  <div class="mm-left">
+  <!-- En-tête -->
+  <div class="mm-header">
     <div style="display:flex;align-items:center;gap:14px;">
       <div class="mm-logo" id="mm-logo" onclick="eggLogoClick()" style="cursor:pointer;" title="???">🏘️</div>
       <div>
         <div class="mm-title">CARDSETTLER</div>
-        <div class="mm-sub">Survive 35 jours, repousse les vagues de monstres</div>
+        <div class="mm-sub" id="mm-stats">Survive, construis, combat !</div>
       </div>
     </div>
-    <div class="diff-selector" style="margin:6px 0 2px;">
-      <button class="diff-btn active-normal" id="diff-normal" onclick="setDifficulty('normal')">⚔️ Normal</button>
-      <button class="diff-btn" id="diff-hard" onclick="setDifficulty('hard')">💀 Difficile</button>
-    </div>
-    <div class="mm-diff-note" id="mm-diff-note">Mode Normal</div>
-    <div id="mm-stats"></div>
-    <div class="mm-nav">
-      <button class="mbtn mbtn-lg" onclick="startNewGame()">🆕 Nouvelle Partie</button>
-      <button class="mbtn mbtn-coop" onclick="startCoopGame()">👥 Mode Co-op — Jour 50</button>
-      <button class="mbtn" id="btn-resume" onclick="resumeGame()" disabled>▶ Reprendre la partie</button>
-      <p id="resume-info"></p>
-      <button class="mbtn mbtn-sm" onclick="showNarrative()">🌌 L'Histoire</button>
-      <button class="mbtn mbtn-sm" onclick="showTutorial()" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📖 Tutoriel</button>
-      <button class="mbtn mbtn-sm" onclick="showAchOverlay()" style="background:#071e14;border-color:#1a4a2a;color:#4ade80;">🏅 Succès</button>
-      <button class="mbtn mbtn-sm" onclick="showLeaderboard()" style="border-color:#78350f;background:#1a0a00;color:#fbbf24;">🏆 Classement Mondial</button>
-      <button class="mbtn mbtn-sm" id="btn-daily" onclick="showDailyChallenge()" style="border-color:#1e3a8a;background:#030d1a;color:#93c5fd;">📅 Défi du Jour</button>
-      <button class="mbtn mbtn-sm disc" onclick="disconnect()">🚪 Déconnexion</button>
+    <div class="mm-header-right">
+      <div style="font-size:12px;color:#c4b5fd;">☄️ <b id="mm-comet-val">0</b> Poussières &nbsp;·&nbsp; 🔥 Série : <b id="mm-streak-val">0</b>j</div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <div style="display:flex;align-items:center;gap:6px;"><label style="font-size:10px;color:#6b8;">🔊</label><input type="range" class="vol-slider" id="sfx-vol" min="0" max="1" step="0.05" value="0.8" oninput="setSfxVol(this.value)" style="width:55px;"></div>
+        <div style="display:flex;align-items:center;gap:6px;"><label style="font-size:10px;color:#6b8;">🎵</label><input type="range" class="vol-slider" id="music-vol" min="0" max="1" step="0.05" value="0.5" oninput="setMusicVol(this.value)" style="width:55px;"></div>
+      </div>
+      <div class="diff-selector" style="margin:0;">
+        <button class="diff-btn active-normal" id="diff-normal" onclick="setDifficulty('normal')">⚔️ Normal</button>
+        <button class="diff-btn" id="diff-hard" onclick="setDifficulty('hard')">💀 Difficile</button>
+      </div>
+      <div class="mm-diff-note" id="mm-diff-note" style="font-size:10px;">Mode Normal</div>
     </div>
   </div>
-  <div class="mm-right">
-    <button class="mm-boutique-btn" id="btn-boutique" onclick="showBoutique()">
-      <div class="mm-boutique-ico">🛍️</div>
-      <div>BOUTIQUE</div>
-      <div class="mm-boutique-sub">Skins · Chapeaux · Bonus permanents</div>
-    </button>
-    <div class="mm-dust-panel">
-      <div class="mm-dust-row">☄️ <b id="mm-comet-val">0</b> Poussières de Comète</div>
-      <div class="mm-dust-row">🔥 Série : <b id="mm-streak-val">0</b> j. consécutifs</div>
-      <div class="vol-section">
-        <div class="vol-row"><label>🔊 Effets</label><input type="range" class="vol-slider" id="sfx-vol" min="0" max="1" step="0.05" value="0.8" oninput="setSfxVol(this.value)"></div>
-        <div class="vol-row"><label>🎵 Musique</label><input type="range" class="vol-slider" id="music-vol" min="0" max="1" step="0.05" value="0.5" oninput="setMusicVol(this.value)"></div>
+
+  <!-- Grille des grandes cartes -->
+  <div class="mm-cards-grid">
+    <!-- Nouvelle Partie -->
+    <div class="mm-big-card mm-card-normal" onclick="startNewGame()">
+      <div class="mm-big-card-bg" style="background:linear-gradient(135deg,#062112 0%,#0d3318 50%,#1a4a2a 100%);"></div>
+      <div class="mm-big-card-content">
+        <div class="mm-big-card-emoji">⚔️</div>
+        <div class="mm-big-card-title">Nouvelle Partie</div>
+        <div class="mm-big-card-desc">Normal ou Difficile · 35 jours · Repousse les vagues de monstres et bâtis ton village</div>
       </div>
+      <div class="mm-big-card-badge" style="color:#4ade80;">🆕 JOUER</div>
     </div>
-    <div class="mm-panel" id="mm-records-panel">
+
+    <!-- Mode Infini -->
+    <div class="mm-big-card mm-card-infinite" onclick="startInfiniteGame()">
+      <div class="mm-big-card-bg" style="background:linear-gradient(135deg,#2a0d00 0%,#1a0500 50%,#3a1500 100%);background-image:radial-gradient(ellipse at 70% 30%,rgba(249,115,22,.2) 0%,transparent 60%);"></div>
+      <div class="mm-big-card-content">
+        <div class="mm-big-card-emoji">♾️</div>
+        <div class="mm-big-card-title">Mode Infini</div>
+        <div class="mm-big-card-desc">Survie sans limite · Nouveaux monstres · Classement ∞ · 🎯 Succès Jour 100</div>
+      </div>
+      <div class="mm-big-card-badge" style="color:#fb923c;">∞ INFINI</div>
+    </div>
+
+    <!-- Mode Co-op -->
+    <div class="mm-big-card mm-card-coop" onclick="startCoopGame()">
+      <div class="mm-big-card-bg" style="background:linear-gradient(135deg,#050a30 0%,#1a1a54 100%);background-image:radial-gradient(ellipse at 30% 70%,rgba(99,102,241,.25) 0%,transparent 60%);"></div>
+      <div class="mm-big-card-content">
+        <div class="mm-big-card-emoji">👥</div>
+        <div class="mm-big-card-title">Mode Co-op</div>
+        <div class="mm-big-card-desc">2 joueurs en ligne · 50 jours · Boss légendaires · Rôles Bâtisseur & Guerrier</div>
+      </div>
+      <div class="mm-big-card-badge" style="color:#a5b4fc;">👥 CO-OP</div>
+    </div>
+
+    <!-- Reprendre -->
+    <div class="mm-big-card mm-card-resume disabled-card" id="btn-resume" onclick="resumeGame()">
+      <div class="mm-big-card-bg" style="background:linear-gradient(135deg,#1a1000 0%,#3a2800 100%);"></div>
+      <div class="mm-big-card-content">
+        <div class="mm-big-card-emoji">▶️</div>
+        <div class="mm-big-card-title">Reprendre</div>
+        <div class="mm-big-card-desc" id="resume-info">Aucune sauvegarde</div>
+      </div>
+      <div class="mm-big-card-badge" style="color:#fbbf24;">💾 SAUV.</div>
+    </div>
+
+    <!-- Défi du Jour -->
+    <div class="mm-big-card mm-card-daily" onclick="showDailyChallenge()">
+      <div class="mm-big-card-bg" style="background:linear-gradient(135deg,#030d1a 0%,#0a2040 100%);background-image:radial-gradient(ellipse at 50% 50%,rgba(59,130,246,.2) 0%,transparent 65%);"></div>
+      <div class="mm-big-card-content">
+        <div class="mm-big-card-emoji">📅</div>
+        <div class="mm-big-card-title">Défi du Jour</div>
+        <div class="mm-big-card-desc">Contraintes quotidiennes · Classement journalier · Défis uniques renouvelés chaque jour</div>
+      </div>
+      <div class="mm-big-card-badge" style="color:#60a5fa;" id="btn-daily">📅 DÉFI</div>
+    </div>
+
+    <!-- Boutique -->
+    <div class="mm-big-card mm-card-boutique" id="btn-boutique" onclick="showBoutique()">
+      <div class="mm-big-card-bg" style="background:linear-gradient(135deg,#120030 0%,#2a0858 100%);background-image:radial-gradient(ellipse at 60% 40%,rgba(124,58,237,.3) 0%,transparent 60%);"></div>
+      <div class="mm-big-card-content">
+        <div class="mm-big-card-emoji">🛍️</div>
+        <div class="mm-big-card-title">Boutique</div>
+        <div class="mm-big-card-desc">Skins · Chapeaux · Bonus permanents · Cosmétiques débloquables par gameplay</div>
+      </div>
+      <div class="mm-big-card-badge" style="color:#a78bfa;">✨ STORE</div>
+    </div>
+  </div>
+
+  <!-- Actions secondaires -->
+  <div class="mm-actions">
+    <button class="mbtn mbtn-sm" onclick="showLeaderboard()" style="border-color:#78350f;background:#1a0a00;color:#fbbf24;">🏆 Classement</button>
+    <button class="mbtn mbtn-sm" onclick="showAchOverlay()" style="background:#071e14;border-color:#1a4a2a;color:#4ade80;">🏅 Succès &nbsp;<span id="mm-ach-count">0/0</span></button>
+    <button class="mbtn mbtn-sm" onclick="showTutorial()" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📖 Tutoriel</button>
+    <button class="mbtn mbtn-sm" onclick="showNarrative()">🌌 L'Histoire</button>
+    <button class="mbtn mbtn-sm disc" onclick="disconnect()">🚪 Déconnexion</button>
+  </div>
+
+  <!-- Pied de page stats -->
+  <div class="mm-footer">
+    <div class="mm-footer-col" id="mm-records-panel">
       <div class="mm-panel-title">📊 Mes Records</div>
       <div id="mm-records-body"></div>
     </div>
-    <div class="mm-panel">
-      <div class="mm-panel-title">🏅 Succès <span class="mm-ach-count" id="mm-ach-count">0/0</span></div>
+    <div class="mm-footer-col">
+      <div class="mm-panel-title">🏅 Succès &nbsp;<span class="mm-ach-count" id="mm-ach-count-footer">0/0</span></div>
       <div class="mm-ach-bar-wrap"><div class="mm-ach-bar" id="mm-ach-bar" style="width:0%"></div></div>
       <div class="mm-ach-recent" id="mm-ach-recent"></div>
     </div>
-    <div class="mm-version">CardSettler v1.0</div>
+    <div class="mm-version">CardSettler v2.0</div>
   </div>
 </div>
 
@@ -817,6 +905,11 @@ const CD = {
   // Cartes secrètes
   goblin_king: {n:'Roi Gobelin',  e:'👑', bg:'#3b0764',c:'#f5f3ff',monster:1,aggroMax:8, boss:true,desc:'BOSS — 2⚔️ ou 🗡️. Laisse 5🪙. Attaque en 8s'},
   dragon:      {n:'Dragon',       e:'🐉', bg:'#450a0a', c:'#fef2f2',monster:1,aggroMax:6, boss:true,desc:'BOSS FINAL — 🗡️+⚔️ ou 3⚔️. Laisse Gemme+3🪙. Attaque en 6s'},
+  // ── Monstres Mode Infini ──────────────────────────────────────────────────
+  skeleton:    {n:'Squelette',    e:'💀', bg:'#1a1a2e',c:'#e2e8f0',monster:1,aggroMax:10,desc:'Mode ∞ — Rapide et fragile. 1⚔️ suffit. Laisse un Os.'},
+  vampire:     {n:'Vampire',      e:'🧛', bg:'#1a0020',c:'#f5d0fe',monster:1,aggroMax:8, desc:'Mode ∞ — Résistant. Nécessite 🗡️ Épée de Fer. Laisse 2🪙.'},
+  ogre:        {n:'Ogre',         e:'🦣', bg:'#1a0800',c:'#fde68a',monster:1,aggroMax:7, boss:true, desc:'Mode ∞ — BOSS COLOSSAL. 🗡️+2⚔️ ou 3⚔️. Laisse Or+Os.'},
+  wraith:      {n:'Spectre',      e:'👻', bg:'#0a0a1e',c:'#ddd5fe',monster:1,aggroMax:9, desc:'Mode ∞ — Hante le village. 🗡️ ou 2⚔️. Laisse Gemme.'},
   elixir:       {n:'Élixir Vital',    e:'🧪', bg:'#d1fae5',c:'#065f46', food:10, secret:1, desc:'Nourriture : +10', sdesc:'Un élixir magique qui nourrit instantanément tout ton village.', skeep:'Garde-le pour une urgence de famine, ou utilise-le quand tu as beaucoup de villageois.', sbonus:'Nourrit 10 villageois en une seule fois !'},
   golden_bar:   {n:'Lingot d\'Or',    e:'💛', bg:'#fef9c3',c:'#a16207', sellValue:8, secret:1, desc:'Vaut 8 pièces à la vente', sdesc:'Un lingot d\'or pur forgé par alchimie.', skeep:'Revends-le immédiatement (clic droit) pour 8 pièces d\'or !', sbonus:'8× la valeur d\'une carte normale (1 pièce)'},
   war_potion:   {n:'Potion de Guerre',e:'⚡', bg:'#fce7f3',c:'#9d174d', secret:1, desc:'Accélère le combat ×10 (empile sur épée+monstre)', sdesc:'Une potion alchimique qui décuple la vitesse au combat.', skeep:'Empile-la avec ton épée et un monstre pour un combat ultra-rapide !', sbonus:'Combat 10× plus vite — parfait contre les Trolls !'},
@@ -879,6 +972,18 @@ const RECIPES = [
   // War potion bosses
   {i:['war_potion','sword','sword','goblin_king'],o:['gold','gold','gold','gold','gold'],keep:['sword','sword'],t:.8,rep:0,d:'⚡ Potion+2⚔️+Roi Gobelin → 5 Or'},
   {i:['war_potion','iron_sword','goblin_king'],   o:['gold','gold','gold','gold','gold'],keep:['iron_sword'], t:.5,rep:0,d:'⚡ Potion+🗡️+Roi Gobelin → 5 Or'},
+  // ── Combats Mode Infini ────────────────────────────────────────────────────
+  {i:['sword','skeleton'],          o:['bone'],              keep:['sword'],                       t:3,  rep:0, infinite:1, d:'💀 ⚔️+Squelette → Os'},
+  {i:['iron_sword','skeleton'],     o:['bone','bone'],       keep:['iron_sword'],                  t:2,  rep:0, infinite:1, d:'💀 🗡️+Squelette → 2 Os'},
+  {i:['iron_sword','vampire'],      o:['gold','gold'],       keep:['iron_sword'],                  t:7,  rep:0, infinite:1, d:'🧛 🗡️+Vampire → 2 Or'},
+  {i:['sword','sword','vampire'],   o:['gold'],              keep:['sword','sword'],               t:14, rep:0, infinite:1, d:'🧛 2⚔️+Vampire → Or (lent)'},
+  {i:['iron_sword','sword','sword','ogre'], o:['gold','gold','gold','bone'], keep:['iron_sword','sword','sword'], t:15, rep:0, infinite:1, d:'🦣 🗡️+2⚔️+Ogre → 3 Or+Os'},
+  {i:['sword','sword','sword','ogre'],      o:['gold','gold','bone'],        keep:['sword','sword','sword'],      t:20, rep:0, infinite:1, d:'🦣 3⚔️+Ogre → 2 Or+Os'},
+  {i:['iron_sword','wraith'],        o:['gem'],              keep:['iron_sword'],                  t:6,  rep:0, infinite:1, d:'👻 🗡️+Spectre → Gemme'},
+  {i:['sword','sword','wraith'],     o:['gem'],              keep:['sword','sword'],               t:11, rep:0, infinite:1, d:'👻 2⚔️+Spectre → Gemme'},
+  {i:['war_potion','sword','skeleton'],      o:['bone'],     keep:['sword'],                       t:.5, rep:0, d:'⚡ Potion+⚔️+Squelette → Os'},
+  {i:['war_potion','iron_sword','vampire'],  o:['gold','gold'], keep:['iron_sword'],               t:.5, rep:0, d:'⚡ Potion+🗡️+Vampire → 2 Or'},
+  {i:['war_potion','iron_sword','wraith'],   o:['gem'],      keep:['iron_sword'],                  t:.5, rep:0, d:'⚡ Potion+🗡️+Spectre → Gemme'},
 ];
 
 const PACKS = {
@@ -906,6 +1011,7 @@ const PACKS = {
 };
 
 const WIN_DAY=35, CW=82, CH=104, SO=24;
+let selectedMode='normal'; // 'normal' | 'infinite'
 let G={};
 let selectedDifficulty=localStorage.getItem('cs_difficulty')||'normal';
 const DIFF_PARAMS={
@@ -1132,10 +1238,11 @@ function buildShop(){
 }
 
 // ── STATE ────────────────────────────────────────────────────────────────────
-function initG(){
-  const dp=DIFF_PARAMS[selectedDifficulty]||DIFF_PARAMS.normal;
-  const startGold=(selectedDifficulty==='hard'?3:5)+(hasPermaBonus('gold')?15:0);
-  G={gold:startGold,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,_quest:null,_lastEvent:null,difficulty:selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult,_reviveAvail:hasPermaBonus('revive')};
+function initG(infiniteMode){
+  const isInf=infiniteMode||selectedMode==='infinite';
+  const dp=DIFF_PARAMS[isInf?'normal':selectedDifficulty]||DIFF_PARAMS.normal;
+  const startGold=(selectedDifficulty==='hard'&&!isInf?3:5)+(hasPermaBonus('gold')?15:0);
+  G={gold:startGold,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,_quest:null,_lastEvent:null,difficulty:isInf?'infinite':selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult,_reviveAvail:hasPermaBonus('revive'),_infiniteMode:isInf};
   const sb=document.getElementById('speed-btn');if(sb){sb.textContent='⏩ ×1';sb.className='';sb.id='speed-btn';}
   const bb=document.getElementById('bm-btn');if(bb)bb.style.display='none';
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
@@ -1154,7 +1261,8 @@ function initG(){
   if(hasPermaBonus('pop'))log('👥 Mémoire des Ancêtres : villageois supplémentaire !');
   if(hasPermaBonus('iron'))log('⚒️ Forge des Étoiles : minerai de fer en bonus !');
   log('🌅 Empile les cartes pour crafter !');
-  if(selectedDifficulty==='hard')log('💀 Mode Difficile : -2🪙 de départ, 1 baie en moins, repas ×2, jours plus courts. Bonne chance !');
+  if(G._infiniteMode){log('♾️ MODE INFINI — Pas de limite ! Nouveaux monstres après J35. Vise le Jour 100 !');if(!hasAchievement('inf_first')&&unlockAchievement('inf_first')){const a=ACHIEVEMENTS.find(a=>a.id==='inf_first');if(a)setTimeout(()=>showAchievementToast(a),2000);}}
+  else if(selectedDifficulty==='hard')log('💀 Mode Difficile : -2🪙 de départ, 1 baie en moins, repas ×2, jours plus courts. Bonne chance !');
   else log('⚔️ Première vague de monstres au Jour 5 !');
   // Appliquer les contraintes du défi quotidien si actives
   if(_pendingChallengeConstraints){
@@ -1181,7 +1289,12 @@ function createCardDOM(id,type){
   el.innerHTML=`<div class="stack-badge"></div>${hatHtml}<div class="card-cat ${catCls}"></div><div class="card-emoji">${d.e}</div><div class="card-name">${displayName}</div>${editDot}<div class="card-bar"><div class="card-bar-fill"></div></div>`;
   setTimeout(()=>el.classList.remove('card-spawn'),420);
   el.addEventListener('mousedown',e=>{e.preventDefault();startDrag(e,id);});
+  el.addEventListener('touchstart',e=>{e.preventDefault();const t=e.touches[0];startDrag({clientX:t.clientX,clientY:t.clientY},id);},{passive:false});
   if(type==='villager')el.addEventListener('dblclick',e=>showRenameInput(id,e));
+  // Long press sur mobile = vente (contextmenu sur desktop)
+  let _longPressTimer=null;
+  el.addEventListener('touchstart',()=>{_longPressTimer=setTimeout(()=>sellCard(id),700);},{passive:true});
+  el.addEventListener('touchend',()=>{clearTimeout(_longPressTimer);},{passive:true});
   el.addEventListener('contextmenu',e=>{e.preventDefault();sellCard(id);});
   el.addEventListener('mouseenter',e=>{showTooltip(e,type);if(type==='villager'){const desc=ttEl.querySelector('.tt-desc');if(desc)desc.textContent=(desc.textContent||'')+' · ✏️ Double-clic pour renommer';}});
   el.addEventListener('mouseleave',hideTooltip);
@@ -1297,7 +1410,16 @@ function execRecipe(sid){
     goneTypes.forEach(t=>{
       if(t==='goblin_king'){addCometDust(10);G._stats.killedGoblinKing=true;}
       else if(t==='dragon'){addCometDust(25);G._stats.killedDragon=true;}
+      else if(t==='ogre'){addCometDust(20);G._stats.killedOgre=true;}
+      else if(t==='vampire'){G._stats.killedVampires=(G._stats.killedVampires||0)+1;addCometDust(5);}
+      else if(t==='wraith'){addCometDust(8);}
+      else if(t==='skeleton'){addCometDust(3);}
     });
+    // Mettre à jour record infini
+    if(G._infiniteMode){
+      const gs=getGlobalStats();
+      if(G.moon>(gs.infBestDays||0)){gs.infBestDays=G.moon;saveGlobalStats(gs);}
+    }
   }
   if(r.o.includes('baby'))G._stats.babies=(G._stats.babies||0)+1;
   // Bébé → villageois : villageois devient plus rare dans les paquets
@@ -1345,12 +1467,12 @@ function startDrag(e,id){
   G.drag={id,ox:e.clientX-er.left,oy:e.clientY-er.top,tl:tr.left,tt:tr.top};
   el.classList.add('dragging');el.style.zIndex=9999;
 }
-document.addEventListener('mousemove',e=>{
+function _handleDragMove(cx,cy){
   if(!G.drag)return;
   if(G.drag.stackDrag){
     const s=G.stacks[G.drag.sid];if(!s)return;
-    const nx=e.clientX-G.drag.tl-G.drag.ox;
-    const ny=e.clientY-G.drag.tt-G.drag.oy;
+    const nx=cx-G.drag.tl-G.drag.ox;
+    const ny=cy-G.drag.tt-G.drag.oy;
     s.rx=nx;s.ry=ny;
     s.ids.forEach((cid,i)=>{
       if(!G.cards[cid])return;
@@ -1360,9 +1482,11 @@ document.addEventListener('mousemove',e=>{
     return;
   }
   const c=G.cards[G.drag.id],el=cel(G.drag.id);if(!c||!el)return;
-  c.x=e.clientX-G.drag.tl-G.drag.ox;c.y=e.clientY-G.drag.tt-G.drag.oy;
+  c.x=cx-G.drag.tl-G.drag.ox;c.y=cy-G.drag.tt-G.drag.oy;
   el.style.left=c.x+'px';el.style.top=c.y+'px';
-});
+}
+document.addEventListener('mousemove',e=>_handleDragMove(e.clientX,e.clientY));
+document.addEventListener('touchmove',e=>{if(G.drag){e.preventDefault();const t=e.touches[0];_handleDragMove(t.clientX,t.clientY);}},{passive:false});
 document.addEventListener('mouseup',()=>{
   if(!G.drag)return;
   if(G.drag.stackDrag){
@@ -1407,6 +1531,7 @@ document.addEventListener('mouseup',()=>{
   }
   updateHUD();
 });
+document.addEventListener('touchend',()=>{if(G.drag){const fakeUp=new Event('mouseup');document.dispatchEvent(fakeUp);}},{passive:true});
 function findTarget(dragId){
   const dc=G.cards[dragId];
   for(const [idStr,c] of Object.entries(G.cards)){
@@ -1488,6 +1613,8 @@ function monsterAttack(mid){
 function spawnWave(){
   // Hard mode jour 35 : assaut final dévastateur
   if(G.difficulty==='hard' && G.moon===35){spawnHardFinalAssault();return;}
+  // Mode Infini : vagues spéciales après J35
+  if(G._infiniteMode && G.moon>35){spawnInfiniteWave();return;}
   const waveNum=Math.floor(G.moon/5);
   let monsters;
   const isBossWave20=G.moon===20,isBossWave30=G.moon===30;
@@ -1536,6 +1663,64 @@ function spawnWave(){
   }
   const diff=G.difficulty==='hard'?' (Difficile !)':'';
   log('⚔️ Vague '+waveNum+diff+' ! Empile des épées sur les monstres !');
+}
+
+function spawnInfiniteWave(){
+  const day=G.moon;
+  const tbl=document.getElementById('table').getBoundingClientRect();
+  const cx=tbl.width/2, cy=tbl.height/2;
+  const wave=Math.floor(day/5);
+  let monsters=[];
+  const wa=document.getElementById('wave-alert');
+  // Paliers progressifs infinis
+  if(day===40){
+    monsters=['troll','troll','skeleton','skeleton'];
+    spawn('goblin_king',cx,cy-60);
+    wa.innerHTML='♾️ J40 — ROI GOBELIN + Horde ! Squelettes rapides !';wa.style.background='rgba(100,0,140,.93)';
+  } else if(day===50){
+    monsters=['vampire','vampire','troll'];
+    spawn('ogre',cx,cy);
+    wa.innerHTML='♾️ J50 — OGRE BOSS + Vampires ! Utilisez l\'Épée de Fer !';wa.style.background='rgba(80,0,0,.97)';
+    log('🦣 L\'OGRE DÉBARQUE ! 🗡️+2⚔️ pour le vaincre !');playSound('dragon_appear');
+  } else if(day===60){
+    monsters=['wraith','wraith','vampire','skeleton','skeleton'];
+    spawn('dragon',cx,cy-60);
+    wa.innerHTML='♾️ J60 — DRAGON + Spectres + Vampires !';wa.style.background='rgba(140,0,0,.97)';
+    log('🐉 Le Dragon revient, encore plus fort !');playSound('dragon_appear');
+  } else if(day===75){
+    monsters=['ogre','wraith','wraith','vampire','vampire'];
+    spawn('dragon',cx-100,cy);spawn('goblin_king',cx+100,cy);
+    wa.innerHTML='♾️ J75 — DRAGON + ROI + OGRE ! Maximum de forces !';wa.style.background='rgba(40,0,40,.99)';
+    playSound('dragon_appear');setTimeout(()=>playSound('dragon_appear'),700);
+  } else if(day===100){
+    // Vague finale légendaire du Jour 100
+    spawn('dragon',cx-120,cy-40);spawn('dragon',cx+120,cy-40);
+    spawn('ogre',cx,cy+60);spawn('goblin_king',cx-80,cy);spawn('goblin_king',cx+80,cy);
+    for(let i=0;i<4;i++)monsters.push(i%2?'vampire':'wraith');
+    wa.innerHTML='⚠️ JOUR 100 — HORDE FINALE LÉGENDAIRE !';wa.style.background='rgba(0,0,0,.99)';
+    wa.style.color='#f7d060';
+    log('💯 JOUR 100 ATTEINT ! Légendaire ! La Horde Finale débarque !');
+    addCometDust(100,true);playSound('dragon_appear');setTimeout(()=>playSound('dragon_appear'),500);setTimeout(()=>playSound('dragon_appear'),1000);
+    checkAchievements();
+  } else {
+    // Vagues normales infini scalées
+    const skeletons=Math.min(1+Math.floor((day-35)/15),4);
+    const vampires=day>=45?Math.min(1+Math.floor((day-45)/20),3):0;
+    const wraiths=day>=55?Math.min(1+Math.floor((day-55)/25),2):0;
+    const ogres=day>=65&&day%20===5?1:0;
+    for(let i=0;i<skeletons;i++)monsters.push('skeleton');
+    for(let i=0;i<vampires;i++)monsters.push('vampire');
+    for(let i=0;i<wraiths;i++)monsters.push('wraith');
+    if(ogres)monsters.push('ogre');
+    if(!monsters.length)monsters=['troll','skeleton'];
+    wa.innerHTML='♾️ Vague Infinie J'+day+' ! '+monsters.map(t=>CD[t].e+' '+CD[t].n).join(', ')+' !';
+    wa.style.background='rgba(40,10,0,.93)';
+  }
+  monsters.forEach(type=>spawn(type,40+Math.random()*(tbl.width-180),40+Math.random()*(tbl.height-180)));
+  wa.style.display='block';setTimeout(()=>{wa.style.display='none';wa.style.background='';wa.style.color='';},5000);
+  playSound('wave_start');
+  log('♾️ Vague Infinie J'+day+' ! '+monsters.map(t=>CD[t].n).join(', ')+' !');
+  checkAchievements();
 }
 
 function maybeSpawnRaider(){
@@ -1635,9 +1820,9 @@ function loop(ts){
 }
 
 // ── MOON / FOOD ───────────────────────────────────────────────────────────────
-function getWinDay(){return G._coopMode?50:WIN_DAY;}
+function getWinDay(){return G._coopMode?50:G._infiniteMode?99999:WIN_DAY;}
 function endMoon(){
-  if(G.moon>getWinDay()){G.over=true;showVictory();return;}
+  if(!G._infiniteMode&&G.moon>getWinDay()){G.over=true;showVictory();return;}
   // Résolution pillard (avant la nourriture)
   if(G._raider){
     if(G.cards[G._raider]){
@@ -1681,6 +1866,13 @@ function endMoon(){
     if(G.difficulty==='hard'&&G.moon>=31&&G.moon<=34)spawnHardDailyWave(G.moon);
     // Hard mode : gobelin pillard (jours 5–30, hors vague, 35% de chance)
     if(G.difficulty==='hard'&&G.moon>4&&G.moon<31&&G.moon%5!==0)maybeSpawnRaider();
+    // Mode infini : jalons de survie
+    if(G._infiniteMode){
+      if(G.moon===35){const wa=document.getElementById('wave-alert');wa.innerHTML='🎉 JOUR 35 en Mode Infini ! Tu aurais gagné en Normal… mais l\'aventure continue !';wa.style.background='rgba(20,80,20,.95)';wa.style.display='block';setTimeout(()=>{wa.style.display='none';wa.style.background='';},4000);addCometDust(20,true);}
+      if(G.moon===50){addCometDust(30,true);const a=ACHIEVEMENTS.find(a=>a.id==='inf_day50');if(a&&!hasAchievement('inf_day50'))showAchievementToast(a);}
+      if(G.moon===75){addCometDust(50,true);}
+      checkAchievements();
+    }
   }
   // Quête : vérifier complétion + nouvelle quête
   checkDailyQuest();
@@ -1751,12 +1943,16 @@ function updateHUD(){
   foodWrap.style.color=food>=pop?'#86efac':'#fca5a5';
   if(food<pop&&pop>0)foodWrap.classList.add('famine-warn');else foodWrap.classList.remove('famine-warn');
   const winDay=getWinDay();
-  const hwinday=document.getElementById('hwinday');if(hwinday)hwinday.textContent='/'+winDay;
+  const hwinday=document.getElementById('hwinday');if(hwinday)hwinday.textContent=G._infiniteMode?' ♾️':'/'+winDay;
   let objText;
   if(G._coopMode){
     const nextBoss=G.moon<40?40:G.moon<45?45:G.moon<50?50:50;
     const coopBossLabel={40:'👑 BOSS J40',45:'🐉👑 BOSS J45',50:'💀 BOSS FINAL J50'}[nextBoss]||'';
     objText='👥 '+(G.moon>=40?coopBossLabel:'⚔️ Monstres quotidiens')+' | 🎯 Objectif : J50';
+  } else if(G._infiniteMode){
+    const nextWave=G.moon%5===0?G.moon+5:Math.ceil(G.moon/5)*5;
+    const infBoss=nextWave===40?'👑OGRE':nextWave===50?'🦣OGRE':nextWave===60?'🐉DRAGON':nextWave===75?'⚠️HORDE':nextWave===100?'💯FINAL':'';
+    objText='♾️ Vague ∞ J'+nextWave+(infBoss?' — '+infBoss:'')+' | ⏩ Continue !';
   } else if(G.difficulty==='hard'&&G.moon>=30&&G.moon<35){
     objText='⚠️ Assaut J'+(G.moon+1)+' | '+(G.moon===34?'💀 ASSAUT FINAL J35':'⚔️ Encore '+(35-G.moon)+' jours');
   } else if(G.difficulty==='hard'&&G.moon===35){
@@ -1769,6 +1965,8 @@ function updateHUD(){
   document.getElementById('obj').textContent=objText;
   const hdiff=document.getElementById('hdiff');
   if(hdiff)hdiff.style.display=G.difficulty==='hard'?'inline':'none';
+  const hdinf=document.getElementById('hdiff-inf');
+  if(hdinf)hdinf.style.display=G._infiniteMode?'inline':'none';
   Object.keys(PACKS).forEach(k=>{const b=document.getElementById('b-'+k);if(b)b.disabled=G.gold<(PACKS[k].cost+(G.packCostAdd||0));});
   updateQuestHUD();
 }
@@ -1831,33 +2029,45 @@ function showVictory(){
   }
   playSound('victory');
   const sc=calcScore();
-  document.getElementById('vscore').textContent='Tu as repoussé toutes les vagues et survécu '+WIN_DAY+' jours !';
+  if(G._infiniteMode){
+    document.getElementById('vscore').textContent='Tu as repoussé toutes les vagues et survécu '+G.moon+' jours en Mode Infini !';
+  } else {
+    document.getElementById('vscore').textContent='Tu as repoussé toutes les vagues et survécu '+WIN_DAY+' jours !';
+  }
   document.getElementById('vic-score').textContent='Score : '+sc.toLocaleString();
   document.getElementById('vic-breakdown').textContent=scoreBreakdown();
   document.getElementById('victory-stats').textContent='⚒️ '+(G._stats?.crafts||0)+' crafts  |  💀 '+(G._stats?.kills||0)+' monstres  |  🏅 '+getAchievements().length+'/'+ACHIEVEMENTS.length+' succès';
   if(G._dailyChallengeKey){const k='cs_daily_best_'+G._dailyChallengeKey;if(sc>parseInt(localStorage.getItem(k)||'0'))localStorage.setItem(k,sc);}
   const conclusionType=getTotalDust()>=3000?'c':'a';
-  const bonusDust=G.difficulty==='hard'?80:30;
+  const bonusDust=G._infiniteMode?50:G.difficulty==='hard'?80:30;
   addCometDust(bonusDust,true);
-  showConclusion(conclusionType,()=>{
-    document.getElementById('victory').style.display='flex';
-    spawnConfetti();
-    showScoreSubmit('vic-submit',sc,G.difficulty,G.moon,G._dailyChallengeKey||null);
-  });
+  // Mode infini : proposer de continuer ou arrêter
+  if(!G._infiniteMode){
+    showConclusion(conclusionType,()=>{
+      document.getElementById('victory').style.display='flex';
+      spawnConfetti();
+      showScoreSubmit('vic-submit',sc,G.difficulty,G.moon,G._dailyChallengeKey||null);
+      // Proposer de continuer en Mode Infini
+      const vbr=document.getElementById('victory').querySelector('.btn-row');
+      if(vbr&&!vbr.querySelector('.inf-continue-btn')){
+        const infBtn=document.createElement('button');
+        infBtn.className='obtn green inf-continue-btn';infBtn.textContent='♾️ Continuer en Infini !';
+        infBtn.onclick=()=>{document.getElementById('victory').style.display='none';G._infiniteMode=true;G.over=false;G.paused=false;G.difficulty='infinite';document.getElementById('main-menu').style.display='none';requestAnimationFrame(loop);log('♾️ Mode Infini activé — Nouveaux monstres arrivent !')};
+        vbr.insertBefore(infBtn,vbr.firstChild);
+      }
+    });
+  } else {
+    showConclusion(conclusionType,()=>{
+      document.getElementById('victory').style.display='flex';
+      spawnConfetti();
+      showScoreSubmit('vic-submit',sc,'infinite',G.moon,null);
+    });
+  }
 }
 
 // ── MENU PRINCIPAL ────────────────────────────────────────────────────────────
 function showMainMenu(){
   ['overlay','victory','pause'].forEach(id=>document.getElementById(id).style.display='none');
-  const hasS=hasSave();
-  const btn=document.getElementById('btn-resume');
-  btn.disabled=!hasS;
-  const info=document.getElementById('resume-info');
-  if(hasS){
-    try{const d=JSON.parse(localStorage.getItem('stacklands_save'));
-      info.textContent='Partie sauvegardée — Jour '+d.moon+' / '+WIN_DAY;}
-    catch(e){info.textContent='';}
-  }else{info.textContent='Aucune sauvegarde';}
   // Stats globales
   const gs=getGlobalStats();
   const achCount=getAchievements().length;
@@ -1872,6 +2082,17 @@ function showMainMenu(){
   }
   document.getElementById('main-menu').style.display='flex';
   updateDustUI();
+  // Carte Reprendre : activer/désactiver
+  const resumeCard=document.getElementById('btn-resume');
+  if(resumeCard){
+    const hasS=hasSave();
+    resumeCard.classList.toggle('disabled-card',!hasS);
+    const info=document.getElementById('resume-info');
+    if(info){
+      if(hasS){try{const d=JSON.parse(localStorage.getItem('stacklands_save'));info.textContent='Partie sauvegardée — Jour '+d.moon+(d.difficulty==='infinite'?' ♾️':(d.difficulty==='hard'?' 💀':''));}catch(e){info.textContent='Partie sauvegardée';}}
+      else{info.textContent='Aucune sauvegarde';}
+    }
+  }
   // Badge chapeau gratuit si non réclamé
   const btnB=document.getElementById('btn-boutique');
   if(btnB){
@@ -1887,6 +2108,7 @@ function showMainMenu(){
     if(gs.totalGames)rows.push(['🎮 Parties jouées',gs.totalGames]);
     if(gs.wins)rows.push(['🏆 Victoires',gs.wins+(gs.totalGames?' ('+Math.round(gs.wins/gs.totalGames*100)+'%)':'')]);
     if(gs.bestDays)rows.push(['📅 Meilleure partie',gs.bestDays+' jours']);
+    if(gs.infBestDays)rows.push(['♾️ Infini record',gs.infBestDays+' jours']);
     if(gs.totalKills)rows.push(['💀 Monstres tués',gs.totalKills.toLocaleString()]);
     if(gs.totalCrafts)rows.push(['⚒️ Objets craftés',gs.totalCrafts.toLocaleString()]);
     recBody.innerHTML=rows.length
@@ -1899,13 +2121,15 @@ function showMainMenu(){
   const pct=total?Math.round(achArr.length/total*100):0;
   const achCountEl=document.getElementById('mm-ach-count');
   if(achCountEl)achCountEl.textContent=achArr.length+'/'+total;
+  const achCountFooter=document.getElementById('mm-ach-count-footer');
+  if(achCountFooter)achCountFooter.textContent=achArr.length+'/'+total;
   const achBar=document.getElementById('mm-ach-bar');
   if(achBar)achBar.style.width=pct+'%';
   const achRecent=document.getElementById('mm-ach-recent');
   if(achRecent){
     const recent=achArr.slice(-3).reverse().map(id=>ACHIEVEMENTS.find(a=>a.id===id)).filter(Boolean);
     achRecent.innerHTML=recent.length
-      ?recent.map(a=>`<div class="mm-ach-item"><div class="mm-ach-item-ico">${a.icon}</div><div><div class="mm-ach-item-name">${a.name}</div><div style="font-size:10px;color:#6b7280">${a.desc}</div></div></div>`).join('')
+      ?recent.map(a=>`<div class="mm-ach-item"><div class="mm-ach-item-ico">${a.e}</div><div><div class="mm-ach-item-name">${a.n}</div><div style="font-size:10px;color:#6b7280">${a.d}</div></div></div>`).join('')
       :'<div class="mm-ach-empty">Aucun succès débloqué pour l\'instant</div>';
   }
   checkAndUpdateStreak();
@@ -1928,10 +2152,20 @@ function startNewGame(){
 }
 function _doStartGame(){
   _narrativeStartGame=false;
+  selectedMode='normal';
   initG();
+}
+function startInfiniteGame(){
+  playSound('menu_click');
+  clearSave();
+  selectedMode='infinite';
+  document.getElementById('main-menu').style.display='none';
+  initG(true);
 }
 function resumeGame(){
   playSound('menu_click');
+  const card=document.getElementById('btn-resume');
+  if(card&&card.classList.contains('disabled-card'))return;
   if(!loadGame())startNewGame();
 }
 function goMainMenu(){
@@ -1963,7 +2197,7 @@ function togglePause(){
   const po=document.getElementById('pause');
   if(G.paused){
     const nextWave=G.moon%5===0?G.moon+5:Math.ceil(G.moon/5)*5;
-    document.getElementById('pause-info').textContent='Jour '+G.moon+' / '+WIN_DAY+' — Prochaine vague : Jour '+Math.min(nextWave,WIN_DAY);
+    document.getElementById('pause-info').textContent='Jour '+G.moon+(G._infiniteMode?' ♾️ Infini':' / '+(G._coopMode?50:WIN_DAY))+(G._infiniteMode?'':' — Prochaine vague : Jour '+Math.min(nextWave,getWinDay()));
     po.style.display='flex';
   }else{po.style.display='none';G.ts=null;requestAnimationFrame(loop);}
 }
@@ -1975,13 +2209,15 @@ document.addEventListener('keydown',e=>{
 // ── RECIPE BOOK ───────────────────────────────────────────────────────────────
 function showRB(){
   const diff=G?.difficulty||selectedDifficulty||'normal';
+  const isInf=G._infiniteMode||false;
   const visible=RECIPES.filter(r=>{
     if(r.secret)return false;
+    if(r.infinite&&!isInf)return false;
     if(r.hardOnly&&diff!=='hard')return false;
     if(r.normalOnly&&diff==='hard')return false;
     return true;
   });
-  const diffLabel=diff==='hard'?'<div style="font-size:11px;color:#fca5a5;margin-bottom:8px;">💀 Mode Difficile — Troll nécessite 3⚔️ ou 🗡️+⚔️</div>':'';
+  const diffLabel=(diff==='hard'?'<div style="font-size:11px;color:#fca5a5;margin-bottom:8px;">💀 Mode Difficile — Troll nécessite 3⚔️ ou 🗡️+⚔️</div>':'')+(isInf?'<div style="font-size:11px;color:#fb923c;margin-bottom:8px;">♾️ Mode Infini — 💀 Squelette · 🧛 Vampire · 👻 Spectre · 🦣 Ogre</div>':'');
   document.getElementById('rlist').innerHTML=diffLabel+visible.map(r=>`
     <div style="font-size:13px;padding:6px 0;border-bottom:1px solid #1e3a1e;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <span>${r.i.map(t=>CD[t]?.e+'&nbsp;'+(CD[t]?.n||t)).join(' + ')}</span>
@@ -2629,6 +2865,14 @@ const ACHIEVEMENTS=[
   {id:'hats5',          n:'Garde-robe',              d:'Possède 5 chapeaux ou plus',                     e:'🎩'},
   {id:'streak10',       n:'Habitué',                 d:'10 jours de connexion consécutifs',              e:'🔥'},
   {id:'streak30',       n:'Dévoué',                  d:'30 jours de connexion consécutifs',              e:'⭐', rare:1},
+  // ── Mode Infini ───────────────────────────────────────────────────────────
+  {id:'inf_first',      n:'L\'Éternel',              d:'Commence le Mode Infini',                        e:'♾️'},
+  {id:'inf_day50',      n:'Demi-Centenaire',         d:'Atteins le Jour 50 en Mode Infini',              e:'🔥', rare:1},
+  {id:'inf_day75',      n:'Survivant Légendaire',    d:'Atteins le Jour 75 en Mode Infini',              e:'💫', rare:1},
+  {id:'inf_day100',     n:'Centenaire',              d:'Atteins le Jour 100 en Mode Infini !',           e:'💯', rare:1},
+  {id:'inf_kill_ogre',  n:'Tueur d\'Ogres',          d:'Tue un Ogre en Mode Infini',                     e:'🦣'},
+  {id:'inf_kill_vampire',n:'Chasseur de Vampires',   d:'Tue 5 Vampires en Mode Infini',                  e:'🧛'},
+  {id:'inf_kill30_inf', n:'Exterminateur Infini',    d:'Tue 30 monstres en Mode Infini',                 e:'☠️', rare:1},
 ];
 function getAchievements(){try{return JSON.parse(localStorage.getItem('stacklands_achievements')||'[]');}catch(e){return[];}}
 function hasAchievement(id){return getAchievements().includes(id);}
@@ -2683,6 +2927,27 @@ function checkAchievements(){
   c('expedition3',    (s.expeditions||0)>=3);
   c('bone5',          countT('bone')>=5);
   c('block1',         (s.blocks||0)>=1);
+  // ── Succès Mode Infini ────────────────────────────────────────────────
+  c('inf_first',      G._infiniteMode||false);
+  c('inf_day50',      G._infiniteMode&&G.moon>=50);
+  c('inf_day75',      G._infiniteMode&&G.moon>=75);
+  c('inf_day100',     G._infiniteMode&&G.moon>=100);
+  c('inf_kill_ogre',  G._infiniteMode&&(s.killedOgre||false));
+  c('inf_kill_vampire',G._infiniteMode&&(s.killedVampires||0)>=5);
+  c('inf_kill30_inf', G._infiniteMode&&(s.kills||0)>=30);
+  // Débloquer cosmétiques par gameplay
+  checkGameplayCosmetics();
+}
+function checkGameplayCosmetics(){
+  // Skin "Volcan" débloqué par 50 kills total (toutes parties)
+  const gs=getGlobalStats();
+  if((gs.totalKills||0)>=50&&!ownsSkin('volcano')){
+    const arr=getOwnedSkins();arr.push('volcano');localStorage.setItem('cs_owned_skins',JSON.stringify(arr));
+    const t=document.createElement('div');
+    t.style.cssText='position:fixed;top:72px;right:16px;background:linear-gradient(135deg,#450a0a,#7f1d1d);color:#fef2f2;padding:10px 16px;border-radius:10px;font-size:13px;font-weight:700;z-index:99900;box-shadow:0 4px 16px rgba(0,0,0,.5);border:1px solid #dc2626;';
+    t.innerHTML='🌋 <b>Skin Volcan débloqué !</b><br><small style="font-weight:400;font-size:11px;">50 monstres tués en tout !</small>';
+    document.body.appendChild(t);setTimeout(()=>t.remove(),4000);
+  }
 }
 function showAchOverlay(){
   const arr=getAchievements();
@@ -2721,57 +2986,62 @@ function closeSecretReveal(){
 
 // ── STATS GLOBALES ────────────────────────────────────────────────────────────
 function getGlobalStats(){try{return JSON.parse(localStorage.getItem('stacklands_global_stats')||'{}');}catch(e){return{};}}
+function saveGlobalStats(s){localStorage.setItem('stacklands_global_stats',JSON.stringify(s));}
 function updateGlobalStats(won){
   const s=getGlobalStats();
   s.totalGames=(s.totalGames||0)+1;
-  s.bestDays=Math.max(s.bestDays||0,G.moon||1);
+  if(G._infiniteMode){
+    s.infBestDays=Math.max(s.infBestDays||0,G.moon||1);
+  } else {
+    s.bestDays=Math.max(s.bestDays||0,G.moon||1);
+  }
   s.totalCrafts=(s.totalCrafts||0)+(G._stats?.crafts||0);
   s.totalKills=(s.totalKills||0)+(G._stats?.kills||0);
-  if(won)s.wins=(s.wins||0)+1;
-  localStorage.setItem('stacklands_global_stats',JSON.stringify(s));
+  if(won&&!G._infiniteMode)s.wins=(s.wins||0)+1;
+  saveGlobalStats(s);
 }
 
 // ── TUTORIEL ──────────────────────────────────────────────────────────────────
 const TUTO = [
   {
     emoji:'🏘️',
-    title:'Bienvenue dans Stacklands !',
-    text:'Stacklands est un jeu de cartes à empiler.\n\nTu gères un petit village : récolte des ressources, fabrique des objets, nourris tes villageois et repousse les vagues de monstres.\n\n🎯 Objectif : survivre 25 jours !'
+    title:'Bienvenue dans CardSettler !',
+    text:'CardSettler est un jeu de cartes à empiler.\n\nTu gères un petit village : récolte des ressources, fabrique des objets, nourris tes villageois et repousse les vagues de monstres.\n\n🎯 Objectif NORMAL : survivre 35 jours !\n♾️ Objectif INFINI : aller le plus loin possible !\n\n➡️ Clique "Suivant" pour apprendre les règles étape par étape.'
   },
   {
     emoji:'🃏',
-    title:'Empiler des cartes',
-    text:'Glisse une carte sur une autre pour les empiler.\n\n✅ Si la combinaison correspond à une recette → une barre verte apparaît et le craft démarre automatiquement.\n\n❌ Si les cartes tremblent en rouge → aucune recette, mauvaise combinaison.\n\n💡 Survole une carte pour voir ses recettes dans le tooltip !'
+    title:'Empiler des cartes — Le principe de base',
+    text:'👆 GLISSE une carte sur une autre pour les empiler.\n\n✅ Barre VERTE qui apparaît = recette trouvée, craft automatique en cours !\n\n❌ Cartes qui TREMBLENT = mauvaise combinaison.\n\n💡 ASTUCE : Survole une carte pour voir ses recettes en temps réel dans le coin.\n\n📱 Sur mobile : glisse directement avec ton doigt !'
   },
   {
     emoji:'🧑',
-    title:'Récolter des ressources',
-    text:'Empile un Villageois 🧑 sur une ressource pour produire en boucle :\n\n🌳 + 🧑 → Bois (en continu)\n🪨 + 🧑 → Pierre\n🫐 + 🧑 → Baie\n🌾 + 🧑 → Pomme\n🌿 + 🧑 → Bois + Baie (zone forêt)\n⛰️ + 🧑 → Minerai de fer (grotte)\n\nLe villageois reste toujours sur la ressource !'
+    title:'Les Villageois — Ta main-d\'œuvre',
+    text:'Le Villageois 🧑 est ta carte la plus précieuse.\n\nEmpile-le sur une ressource pour produire EN BOUCLE :\n\n🌳 + 🧑 → Bois ♻️\n🪨 + 🧑 → Pierre ♻️\n🫐 + 🧑 → Baie ♻️\n🌾 + 🧑 → Pomme ♻️\n\nLe villageois RESTE sur la ressource et produit indéfiniment !\n\n✨ Double-clique sur un villageois pour lui donner un prénom !'
   },
   {
     emoji:'⚒️',
-    title:'Fabriquer des objets',
-    text:'Empile plusieurs cartes pour crafter :\n\n🔷 + 🪵 → 🔥 Feu de camp\n🪵×3 + 🧑 → 🟫 Planche\n🪨×3 + 🧑 → 🧱 Brique\n🔷 + 🟫 + 🧑 → ⚔️ Épée\n🟫×2 + 🧑 → 🛡️ Bouclier\n🪨×3 + 🟫 + 🧑 → 🔨 Forge\n\n📖 Ouvre le Livre de Recettes (en haut) pour voir tout !'
+    title:'Crafter des objets — Recettes clés',
+    text:'Combine plusieurs cartes pour fabriquer des objets :\n\n🔷 Silex + 🪵 Bois → 🔥 Feu de camp\n🪵×3 + 🧑 → 🟫 Planche\n🪨×3 + 🧑 → 🧱 Brique\n🔷 + 🟫 + 🧑 → ⚔️ Épée  ← PRIORITÉ !\n🟫×2 + 🧑 → 🛡️ Bouclier\n🧱×2 + 🟫×2 + 🧑 → 🏠 Maison\n🧱 + 🟫×2 + 🧑 → 🌾 Ferme\n\n📖 Clique "Recettes" en haut pour voir toutes les combinaisons !'
   },
   {
     emoji:'🍖',
-    title:'La nourriture & les jours',
-    text:'La barre en haut = le temps avant la fin du jour (60s).\n\nÀ chaque fin de jour, tes villageois mangent autant de nourriture que leur nombre.\n\n🍖 Nourriture insuffisante → ☠️ FAMINE → partie perdue !\n\n💡 Cuisine tes baies sur un 🔥 feu de camp pour obtenir plus :\n🫐 Baie = 1 repas\n🍇 Baie cuite = 3 repas\n🍲 Ragoût = 5 repas'
+    title:'Nourriture & Jours — Ne laisse pas mourir de faim !',
+    text:'La barre jaune en haut = temps avant la fin du jour.\n\n⚠️ À chaque fin de jour : tes villageois mangent !\n(1 repas par villageois)\n\nSi tu n\'as pas assez de nourriture → ☠️ FAMINE = partie perdue !\n\n💡 Cuisine pour multiplier l\'effet :\n🫐 Baie brute = 1 repas\n🫐 + 🔥 → 🍇 Baie cuite = 3 repas\n🍎 + 🔥 → 🍲 Ragoût = 5 repas\n\n🌾 Une Ferme + Villageois produit des Pommes en boucle !'
   },
   {
     emoji:'⚔️',
-    title:'Combattre les monstres',
-    text:'Tous les 5 jours, une vague de monstres arrive !\n\n🐺 Loup → attaque en 15 secondes\n👺 Gobelin → attaque en 12 secondes\n👹 Troll → attaque en 10 secondes\n\nPour combattre : empile une ⚔️ Épée sur le monstre.\n\n⚠️ La barre rouge = temps avant l\'attaque.\nQuand la carte pulse en rouge → URGENT, agis vite !\n\nL\'épée survit après le combat 👍'
+    title:'Les Monstres — Survie en combat !',
+    text:'Tous les 5 jours, une vague de monstres arrive !\n\n🐺 Loup = 1⚔️ en 15s   |   👺 Gobelin = 1⚔️ en 12s\n👹 Troll = 2⚔️ en 10s (ou 🗡️ seule !)\n\nPour combattre : EMPILE ⚔️ Épée sur le monstre.\n\n🔴 Barre rouge sur le monstre = temps avant attaque !\nPulse rouge = URGENT → agis tout de suite !\n\n✅ L\'épée SURVIT après le combat.\n🛡️ Bouclier : empile sur un monstre qui attaque pour bloquer !'
   },
   {
-    emoji:'🛡️',
-    title:'Se protéger & progresser',
-    text:'🛡️ Bouclier (2 Planches + 🧑) → bloque une attaque de monstre\n\n🔨 Forge (3 Pierres + Planche + 🧑) → nécessaire pour l\'épée de fer\n\n🗡️ Épée de Fer (Forge + 2 Minerais + 🧑) → 2-3× plus rapide que l\'épée normale, bat les trolls seule !\n\n💰 Achète des Paquets avec l\'Or 🪙 pour obtenir de nouvelles cartes. Le Paquet Combat se débloque au Jour 3, le Paquet Exploration au Jour 8.'
+    emoji:'🏆',
+    title:'Progression & Modes de jeu',
+    text:'🎯 Mode Normal : survie 35 jours → Victoire !\n💀 Mode Difficile : jours plus courts, monstres plus rapides.\n♾️ Mode Infini : aucune limite ! Nouveaux monstres :\n   💀 Squelette — 🧛 Vampire — 👻 Spectre — 🦣 Ogre\n\nPRIORITÉS en début de partie :\n1️⃣ Assigne un 🧑 à chaque ressource\n2️⃣ Fabrique une ⚔️ Épée avant le Jour 5\n3️⃣ Construis un 🔥 Feu pour cuisiner\n4️⃣ Maintiens toujours plus de 🍖 nourriture que de 👥 villageois\n\n☄️ Gagne des Poussières de Comète → débloque des cosmétiques !'
   },
   {
     emoji:'🎮',
-    title:'Tu es prêt !',
-    text:'Résumé des règles :\n\n1️⃣ Récolte ressources avec 🧑 villageois\n2️⃣ Nourris tes villageois chaque jour\n3️⃣ Fabrique des outils et bâtiments\n4️⃣ Combats les vagues avec des épées\n5️⃣ Utilise boucliers et forge pour progresser\n\n🎯 Survive 25 jours = VICTOIRE !\n\nLa partie est sauvegardée automatiquement chaque jour. Bonne chance ! 🍀'
+    title:'Tu es prêt à jouer !',
+    text:'✅ Résumé :\n\n1️⃣ Empile 🧑 sur ressources → production en boucle\n2️⃣ Nourris tes villageois chaque jour\n3️⃣ Fabrique ⚔️ Épée avant Jour 5 !\n4️⃣ Cuisine tes aliments sur 🔥\n5️⃣ Empile épée sur monstre pour combattre\n\n💡 Conseils :\n• Clique-droit sur une carte = vendre\n• Appuie sur Échap = Pause\n• Clique 💡 Conseil pour des astuces en cours de partie\n• Tapis = tu peux acheter des Paquets 📦 en haut à droite\n\n🍀 Bonne chance, Chef de Village !'
   },
 ];
 let tutoStep=0;
@@ -3459,6 +3729,7 @@ async function fetchScores(filter){
   let url=SUPABASE_URL+'/rest/v1/scores?order=score.desc&limit=20&select=player_name,score,difficulty,days,challenge_key,created_at';
   if(filter==='normal')url+='&difficulty=eq.normal';
   else if(filter==='hard')url+='&difficulty=eq.hard';
+  else if(filter==='infinite')url+='&difficulty=eq.infinite&order=days.desc';
   else if(filter==='daily')url+='&challenge_key=eq.'+getDailyChallengeKey();
   try{
     const r=await fetch(url,{headers:{apikey:SUPABASE_ANON_KEY,Authorization:'Bearer '+SUPABASE_ANON_KEY}});
@@ -3482,11 +3753,12 @@ async function showLeaderboard(filter='all'){
   const me=localStorage.getItem('cs_player_name')||'';
   body.innerHTML=scores.map((s,i)=>{
     const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'#'+(i+1);
-    const diff=s.difficulty==='hard'?'💀':'⚔️';
+    const diff=s.difficulty==='hard'?'💀':s.difficulty==='infinite'?'♾️':'⚔️';
     const tag=s.challenge_key?'📅 ':'';
     const date=new Date(s.created_at).toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
     const isMe=me&&s.player_name===me;
-    return `<tr class="${isMe?'lb-you':''}"><td class="lb-rank">${medal}</td><td>${s.player_name}${isMe?' 👈':''}</td><td><b>${s.score.toLocaleString()}</b></td><td style="font-size:11px">${tag}${diff} ${s.days}j</td><td style="color:#6b7280;font-size:11px">${date}</td></tr>`;
+    const scoreCol=filter==='infinite'?`<b>${s.days}j</b>`:s.score.toLocaleString();
+    return `<tr class="${isMe?'lb-you':''}"><td class="lb-rank">${medal}</td><td>${s.player_name}${isMe?' 👈':''}</td><td><b>${scoreCol}</b></td><td style="font-size:11px">${tag}${diff} ${s.days}j</td><td style="color:#6b7280;font-size:11px">${date}</td></tr>`;
   }).join('');
 }
 function closeLeaderboard(){document.getElementById('leaderboard').style.display='none';}
