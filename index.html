@@ -192,6 +192,16 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 .tut-feedback{font-size:13px;min-height:38px;line-height:1.6;border-radius:8px;padding:0 4px;}
 .tbtn:disabled{opacity:.4;cursor:not-allowed;}
 .tut-dot.quiz{background:#c084fc;width:10px;height:10px;}
+.tut-hl{outline:3px solid #f7d060!important;outline-offset:2px;box-shadow:0 0 26px rgba(247,208,96,.7)!important;z-index:800!important;animation:tut-hl-pulse 1.1s ease-in-out infinite alternate;}
+@keyframes tut-hl-pulse{to{box-shadow:0 0 44px rgba(251,191,36,.95)!important;outline-color:#fbbf24!important;}}
+#tut-live{display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:49000;}
+.tl-box{background:rgba(3,12,3,.97);border:2px solid #22c55e;border-radius:16px;padding:16px 22px 12px;max-width:460px;min-width:300px;text-align:center;box-shadow:0 6px 32px rgba(0,0,0,.8);}
+.tl-step{font-size:11px;color:#4ade80;font-weight:700;letter-spacing:1px;margin-bottom:4px;}
+.tl-emoji{font-size:30px;line-height:1;margin-bottom:6px;}
+.tl-text{font-size:13.5px;color:#d1fae5;line-height:1.65;margin-bottom:10px;}
+.tl-btn{border:1px solid #2d5a2d;border-radius:8px;padding:5px 14px;font-size:12px;color:#6b8;background:transparent;cursor:pointer;font-weight:600;}
+.tl-btn:hover{background:#0f2310;color:#4ade80;border-color:#4ade80;}
+.tl-btn.tl-finish{background:#16a34a!important;border-color:#22c55e!important;color:#fff!important;}
 /* ── SECRET REVEAL ─────────────────────────────────────────────── */
 @keyframes srIn{from{opacity:0;transform:scale(.7) rotate(-3deg)}to{opacity:1;transform:scale(1) rotate(0)}}
 #secret-reveal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:99800;justify-content:center;align-items:center;}
@@ -764,6 +774,16 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   </div>
 </div>
 
+<!-- ── TUTORIEL EN DIRECT ── -->
+<div id="tut-live">
+  <div class="tl-box">
+    <div class="tl-step" id="tl-step">Étape 1 / 6</div>
+    <div class="tl-emoji" id="tl-emoji">🌳</div>
+    <div class="tl-text" id="tl-text"></div>
+    <button class="tl-btn" id="tl-btn" onclick="skipTutLive()">⏭ Passer le tutoriel</button>
+  </div>
+</div>
+
 <!-- ── MENU PRINCIPAL ── -->
 <div id="main-menu">
   <!-- En-tête -->
@@ -862,7 +882,8 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   <div class="mm-actions">
     <button class="mbtn mbtn-sm" onclick="showLeaderboard()" style="border-color:#78350f;background:#1a0a00;color:#fbbf24;">🏆 Classement</button>
     <button class="mbtn mbtn-sm" onclick="showAchOverlay()" style="background:#071e14;border-color:#1a4a2a;color:#4ade80;">🏅 Succès &nbsp;<span id="mm-ach-count">0/0</span></button>
-    <button class="mbtn mbtn-sm" onclick="showTutorial()" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📖 Tutoriel</button>
+    <button class="mbtn mbtn-sm" onclick="startTutorialGame()" style="background:#071e07;border-color:#22c55e;color:#4ade80;">🎮 Tutoriel guidé</button>
+    <button class="mbtn mbtn-sm" onclick="showTutorial()" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📖 Règles</button>
     <button class="mbtn mbtn-sm" onclick="showNarrative()">🌌 L'Histoire</button>
     <button class="mbtn mbtn-sm disc" onclick="disconnect()">🚪 Déconnexion</button>
   </div>
@@ -1645,6 +1666,7 @@ function monsterAttack(mid){
 }
 
 function spawnWave(){
+  if(G._tutorialMode)return;
   // Hard mode jour 35 : assaut final dévastateur
   if(G.difficulty==='hard' && G.moon===35){spawnHardFinalAssault();return;}
   // Mode Infini : vagues spéciales après J35
@@ -3187,12 +3209,87 @@ function renderTuto(){
   dots.innerHTML=TUTO.map((t,i)=>`<div class="tut-dot${i===tutoStep?' active':''}${t.quiz?' quiz':''}"></div>`).join('');
   document.getElementById('tut-prev').style.visibility=tutoStep>0?'visible':'hidden';
   if(tutoStep===TUTO.length-1){
-    nextBtn.textContent='🎮 Commencer !';
-    nextBtn.onclick=()=>{localStorage.setItem('cs_tuto_seen','1');closeTutorial();if(!G||!G.cards||Object.keys(G.cards).length===0)initG();};
+    nextBtn.textContent='🎮 Tutoriel guidé';
+    nextBtn.onclick=()=>{localStorage.setItem('cs_tuto_seen','1');document.getElementById('tutorial').style.display='none';startTutorialGame();};
+    let fb=document.getElementById('tut-free');
+    if(!fb){fb=document.createElement('button');fb.id='tut-free';fb.className='tbtn';fb.style.cssText='background:#071e14;border-color:#1a4a2a;color:#86efac;';document.querySelector('.tut-nav').appendChild(fb);}
+    fb.textContent='▶️ Jouer librement';fb.style.display='';
+    fb.onclick=()=>{localStorage.setItem('cs_tuto_seen','1');closeTutorial();if(!G||!G.cards||Object.keys(G.cards).length===0)initG();};
   }else{
     nextBtn.textContent='Suivant →';
     nextBtn.onclick=nextTutoStep;
+    const fb=document.getElementById('tut-free');if(fb)fb.style.display='none';
   }
+}
+
+// ── TUTORIEL EN DIRECT ────────────────────────────────────────────────────────
+const TUT_LIVE=[
+  {e:'🌳',t:'Glisse le 🧑 Villageois sur l\'🌳 Arbre pour produire du Bois en boucle !',hl:['villager','tree'],
+   ok:()=>cardExistsT('wood')},
+  {e:'🪨',t:'Le Villageois reste sur l\'arbre et produit sans fin. Empile maintenant 🧑 sur 🪨 Pierre.',hl:['villager','rock'],
+   ok:()=>cardExistsT('stone')},
+  {e:'🔥',t:'Parfait ! Empile 🔷 Silex + 🪵 Bois pour créer un 🔥 Feu de camp. Tu en auras besoin pour cuisiner.',hl:['flint','wood'],
+   ok:()=>cardExistsT('campfire')},
+  {e:'⚔️',t:'Un monstre arrive bientôt ! Empile 🔷 Silex + 🟫 Planche + 🧑 Villageois pour forger une Épée.',hl:['flint','plank','villager'],
+   ok:()=>cardExistsT('sword'),enter:()=>{spawn('flint',210,300);spawn('plank',340,300);}},
+  {e:'🐺',t:'⚠️ Un Loup attaque ! Empile ton ⚔️ Épée sur le 🐺 Loup pour le vaincre !',hl:['sword','wolf'],
+   ok:()=>(G._stats?.kills||0)>0,enter:()=>{spawn('wolf',480,190);}},
+  {e:'🍇',t:'Monstre vaincu — l\'épée est réutilisable ! Pour finir, cuisine une 🫐 Baie + 🔥 Feu pour 3 repas au lieu d\'1.',hl:['berry','campfire'],
+   ok:()=>cardExistsT('cooked_berry'),enter:()=>{spawn('berry',80,300);}},
+  {e:'🏆',t:'🎉 Félicitations ! Tu maîtrises les bases de CardSettler. Bonne chance, Chef de Village !',hl:[],ok:null}
+];
+let _tutLiveTimer=null;
+function cardExistsT(type){return Object.values(G.cards||{}).some(c=>c.type===type);}
+function startTutorialGame(){
+  playSound('menu_click');
+  document.getElementById('tutorial').style.display='none';
+  document.getElementById('main-menu').style.display='none';
+  selectedMode='normal';
+  initG(false);
+  G._tutorialMode=true;G._tutStep=0;
+  G.moonDur=150;
+  spawn('rock',460,80);spawn('flint',590,80);
+  spawn('berry',70,200);spawn('berry',160,200);spawn('berry',250,200);
+  document.getElementById('tut-live').style.display='block';
+  renderTutLive();
+  _tutLiveTimer=setInterval(tickTutLive,700);
+}
+function renderTutLive(){
+  const s=TUT_LIVE[G._tutStep];if(!s)return;
+  const total=TUT_LIVE.length-1;
+  document.getElementById('tl-step').textContent=G._tutStep<total?`Étape ${G._tutStep+1} / ${total}`:'🏁 Terminé !';
+  document.getElementById('tl-emoji').textContent=s.e;
+  document.getElementById('tl-text').textContent=s.t;
+  const btn=document.getElementById('tl-btn');
+  if(s.ok===null){btn.textContent='▶️ Jouer librement !';btn.className='tl-btn tl-finish';btn.onclick=finishTutLive;}
+  else{btn.textContent='⏭ Passer';btn.className='tl-btn';btn.onclick=skipTutLive;}
+  updateTutHl();
+}
+function updateTutHl(){
+  document.querySelectorAll('.card').forEach(el=>el.classList.remove('tut-hl'));
+  if(!G||G._tutStep===undefined)return;
+  const s=TUT_LIVE[G._tutStep];if(!s||!s.hl.length)return;
+  Object.entries(G.cards).forEach(([idStr,c])=>{
+    if(s.hl.includes(c.type)){const el=cel(parseInt(idStr));if(el)el.classList.add('tut-hl');}
+  });
+}
+function tickTutLive(){
+  if(!G||!G._tutorialMode)return;
+  const s=TUT_LIVE[G._tutStep];
+  if(!s||!s.ok)return;
+  try{if(s.ok()){
+    G._tutStep++;
+    if(G._tutStep>=TUT_LIVE.length){finishTutLive();return;}
+    const next=TUT_LIVE[G._tutStep];if(next.enter)next.enter();
+    renderTutLive();
+  }else updateTutHl();}catch(e){}
+}
+function skipTutLive(){playSound('menu_click');finishTutLive();}
+function finishTutLive(){
+  clearInterval(_tutLiveTimer);_tutLiveTimer=null;
+  document.getElementById('tut-live').style.display='none';
+  document.querySelectorAll('.card').forEach(el=>el.classList.remove('tut-hl'));
+  if(G)G._tutorialMode=false;
 }
 
 // ── BOARD SKINS ───────────────────────────────────────────────────────────────
