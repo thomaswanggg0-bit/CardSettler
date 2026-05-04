@@ -25,8 +25,8 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 .card.dragging{box-shadow:0 10px 24px rgba(0,0,0,0.7);z-index:9999!important;cursor:grabbing;}
 .card-emoji{font-size:30px;margin-bottom:3px;pointer-events:none;}
 .card-name{font-size:10px;font-weight:700;text-align:center;padding:0 4px;line-height:1.2;pointer-events:none;}
-.card-bar{position:absolute;bottom:0;left:0;right:0;height:5px;background:rgba(0,0,0,0.2);border-radius:0 0 7px 7px;overflow:hidden;display:none;}
-.card-bar-fill{height:100%;background:#4ade80;width:0%;}
+.card-bar{position:absolute;bottom:0;left:0;right:0;height:8px;background:rgba(0,0,0,0.35);border-radius:0 0 7px 7px;overflow:hidden;display:none;}
+.card-bar-fill{height:100%;background:#4ade80;width:0%;transition:width .1s linear;box-shadow:0 0 6px rgba(74,222,128,.7);}
 /* Animations */
 @keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
 .shake{animation:shake .35s ease;}
@@ -1105,9 +1105,9 @@ let selectedMode='normal'; // 'normal' | 'infinite'
 let G={};
 let selectedDifficulty=localStorage.getItem('cs_difficulty')||'normal';
 const DIFF_PARAMS={
-  easy:  {moonDur:90,aggroMult:1.5,foodPerPop:1,packCostAdd:0,scoreMult:0.6},
-  normal:{moonDur:60,aggroMult:1.0,foodPerPop:1,packCostAdd:0,scoreMult:1},
-  hard:  {moonDur:45,aggroMult:0.6,foodPerPop:2,packCostAdd:2,scoreMult:2},
+  easy:  {moonDur:75,aggroMult:1.5,foodPerPop:1,packCostAdd:0,scoreMult:0.6},
+  normal:{moonDur:50,aggroMult:1.0,foodPerPop:1,packCostAdd:0,scoreMult:1},
+  hard:  {moonDur:38,aggroMult:0.6,foodPerPop:2,packCostAdd:2,scoreMult:2},
 };
 function setDifficulty(d){
   selectedDifficulty=d;localStorage.setItem('cs_difficulty',d);
@@ -1416,7 +1416,7 @@ function initG(infiniteMode){
   const isInf=infiniteMode||selectedMode==='infinite';
   const dp=DIFF_PARAMS[isInf?'normal':selectedDifficulty]||DIFF_PARAMS.normal;
   const startGold=(selectedDifficulty==='hard'&&!isInf?3:selectedDifficulty==='easy'&&!isInf?8:5)+(hasPermaBonus('gold')?15:0);
-  G={gold:startGold,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,_quest:null,_lastEvent:null,difficulty:isInf?'infinite':selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult,_reviveAvail:hasPermaBonus('revive'),_infiniteMode:isInf};
+  G={gold:startGold,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,_quest:null,_lastEvent:null,difficulty:isInf?'infinite':selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult,_reviveAvail:hasPermaBonus('revive'),_infiniteMode:isInf,_dayFoodEaten:0,_foodTick:0};
   const sb=document.getElementById('speed-btn');if(sb){sb.textContent='⏩ ×1';sb.className='';sb.id='speed-btn';}
   const bb=document.getElementById('bm-btn');if(bb)bb.style.display='none';
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
@@ -2035,14 +2035,16 @@ function loop(ts){
   if(!G.ts)G.ts=ts;
   const dt=((ts-G.ts)/1000)*(G.speed||1);G.ts=ts;
   G.moonProg+=dt/G.moonDur;
+  if(G.moonProg>=.33&&!(G._foodTick&1)){G._foodTick|=1;midDayFeed(.33);}
+  if(G.moonProg>=.66&&!(G._foodTick&2)){G._foodTick|=2;midDayFeed(.66);}
   if(G.moonProg>=.8&&!G._faminWarned){
     G._faminWarned=true;
     const pop=countT('villager')+countT('baby');
     const food=Object.values(G.cards).filter(c=>CD[c.type]?.food).reduce((s,c)=>s+(CD[c.type].food||0),0);
-    const needed2=pop*(G.foodPerPop||1);
-    if(food<needed2&&pop>0){log('⚠️ Famine proche ! Il faut '+needed2+' repas, tu en as '+food+' !');playSound('error');}
+    const needed2=Math.max(0,pop*(G.foodPerPop||1)-(G._dayFoodEaten||0));
+    if(food<needed2&&pop>0){log('⚠️ Famine proche ! Il faut encore '+needed2+' repas pour ce soir !');playSound('error');}
   }
-  if(G.moonProg>=1){G.moonProg=0;G.moon++;G._faminWarned=false;endMoon();if(G.over)return;}
+  if(G.moonProg>=1){G.moonProg=0;G.moon++;G._faminWarned=false;G._dayFoodEaten=0;G._foodTick=0;endMoon();if(G.over)return;}
   document.getElementById('moon-fill').style.width=(G.moonProg*100)+'%';
   const toExec=[];
   for(const [sidStr,s] of Object.entries(G.stacks)){
@@ -2079,6 +2081,27 @@ function loop(ts){
 
 // ── MOON / FOOD ───────────────────────────────────────────────────────────────
 function getWinDay(){return G._coopMode?50:G._infiniteMode?99999:WIN_DAY;}
+function midDayFeed(fraction){
+  const pop=countT('villager')+countT('baby');
+  if(pop===0)return;
+  const target=Math.floor(pop*(G.foodPerPop||1)*fraction);
+  const toEat=Math.max(0,target-(G._dayFoodEaten||0));
+  if(toEat===0)return;
+  const fCards=Object.values(G.cards).filter(c=>CD[c.type]?.food).sort((a,b)=>(CD[b.type].food||0)-(CD[a.type].food||0));
+  const total=fCards.reduce((s,c)=>s+(CD[c.type].food||0),0);
+  if(total<toEat){
+    log('😰 Faim ! Tes villageois manquent de nourriture — prépare-toi pour ce soir !');playSound('error');
+    let need=toEat;
+    for(const fc of fCards){if(need<=0)break;if(fc.sid)rmFromStack(fc.id);delCard(fc.id);need-=CD[fc.type].food;}
+    G._dayFoodEaten=(G._dayFoodEaten||0)+(toEat-Math.max(0,need));
+  }else{
+    let need=toEat;
+    for(const fc of fCards){if(need<=0)break;if(fc.sid)rmFromStack(fc.id);delCard(fc.id);need-=CD[fc.type].food;}
+    G._dayFoodEaten=(G._dayFoodEaten||0)+toEat;
+    log('🍽️ Repas — '+pop+' villageois ont mangé ('+toEat+' repas)');
+  }
+  updateHUD();
+}
 function endMoon(){
   if(G._tutorialMode){G.moon++;updateHUD();return;}
   if(!G._infiniteMode&&G.moon>getWinDay()){G.over=true;showVictory();return;}
@@ -2105,7 +2128,7 @@ function endMoon(){
   if(pop>0){
     const fCards=Object.values(G.cards).filter(c=>CD[c.type]?.food).sort((a,b)=>(CD[b.type].food||0)-(CD[a.type].food||0));
     const total=fCards.reduce((s,c)=>s+(CD[c.type].food||0),0);
-    const needed=pop*(G.foodPerPop||1);
+    const needed=Math.max(0,pop*(G.foodPerPop||1)-(G._dayFoodEaten||0));
     if(total<needed){
       if(G._reviveAvail){G._reviveAvail=false;doRevive('famine');}
       else{G.over=true;showOverFamine();}return;
@@ -2585,7 +2608,6 @@ function resumeGame(){
   launchWithFade(()=>{if(!loadGame())startNewGame();});
 }
 function goMainMenu(){
-  if(G&&!G.over)saveGame();
   G={over:true,paused:false,cards:{},stacks:{}};
   document.getElementById('pause').style.display='none';
   showMainMenu();
@@ -2599,10 +2621,9 @@ function manualSave(){
 }
 function disconnect(){
   playSound('menu_click');
-  if(G&&G.cards&&Object.keys(G.cards).length>0&&!G.over)try{saveGame();}catch(e){}
   document.body.style.transition='opacity .6s';document.body.style.opacity='0';
   setTimeout(()=>{
-    document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#071407;color:#d1fae5;font-family:Segoe UI,sans-serif;gap:20px;"><div style="font-size:72px">👋</div><div style="font-size:28px;font-weight:700;">À bientôt !</div><div style="font-size:14px;color:#4ade80;">Ta partie a été sauvegardée.</div></div>';
+    document.body.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#071407;color:#d1fae5;font-family:Segoe UI,sans-serif;gap:20px;"><div style="font-size:72px">👋</div><div style="font-size:28px;font-weight:700;">À bientôt !</div></div>';
     document.body.style.opacity='1';
   },600);
 }
@@ -3203,27 +3224,29 @@ function tidyCards(){
   // 5. Trier par catégorie puis par nom de type
   units.sort((a,b)=>a.cat!==b.cat?a.cat-b.cat:a.tn.localeCompare(b.tn));
 
-  // 6. Positionner : toutes les piles en haut (y=pad), une colonne par unité
-  //    petit espace supplémentaire entre les catégories
+  // 6. Positionner avec retour à la ligne automatique
   const tbl=document.getElementById('table').getBoundingClientRect();
-  const pad=14,gapX=CW+14,catGap=22;
-  let col=0,lastCat=-1;
+  const pad=14,gapX=CW+14;
+  const maxCols=Math.max(3,Math.floor((tbl.width-pad*2)/gapX));
+  let col=0,rowY=pad,rowMaxH=0,lastCat=-1;
   units.forEach(g=>{
-    // Espace de séparation entre catégories
     if(g.cat!==lastCat&&lastCat!==-1)col+=1;
     lastCat=g.cat;
-    const nx=pad+col*gapX,ny=pad;
+    if(col>=maxCols){col=0;rowY+=rowMaxH+20;rowMaxH=0;}
+    const nx=pad+col*gapX,ny=rowY;
+    let itemH=CH;
     if(g.k==='stack'){
       const s=G.stacks[g.sid];
-      if(s){s.rx=nx;s.ry=ny;updateSV(g.sid);}
+      if(s){itemH=CH+(s.ids.length-1)*SO;s.rx=nx;s.ry=ny;updateSV(g.sid);}
     }else{
       const c=G.cards[g.id];
       if(c){c.x=nx;c.y=ny;updateCV(g.id);}
     }
+    rowMaxH=Math.max(rowMaxH,itemH);
     col++;
   });
   playSound('menu_click');
-  log('🗂️ Rangé — piles de '+MAX_PILE+' max, toutes en haut');
+  log('🗂️ Rangé — piles de '+MAX_PILE+' max');
 }
 
 // ── PACK UNLOCK TOAST ────────────────────────────────────────────────────────
@@ -3434,82 +3457,27 @@ const TUTO = [
   {
     emoji:'🏘️',
     title:'Bienvenue dans CardSettler !',
-    text:'CardSettler est un jeu de cartes à empiler.\n\nTu gères un petit village : récolte des ressources, fabrique des objets, nourris tes villageois et repousse les vagues de monstres.\n\n🎯 Objectif NORMAL : survivre 35 jours !\n♾️ Objectif INFINI : aller le plus loin possible !\n\n➡️ Clique "Suivant" pour apprendre les règles étape par étape.'
-  },
-  {
-    emoji:'🃏',
-    title:'Empiler des cartes — Le principe de base',
-    text:'👆 GLISSE une carte sur une autre pour les empiler.\n\n✅ Barre VERTE qui apparaît = recette trouvée, craft automatique en cours !\n\n❌ Cartes qui TREMBLENT = mauvaise combinaison.\n\n💡 ASTUCE : Survole une carte pour voir ses recettes en temps réel dans le coin.\n\n📱 Sur mobile : glisse directement avec ton doigt !'
-  },
-  {
-    quiz:true,
-    emoji:'🤔',
-    title:'Quiz — Teste tes connaissances !',
-    question:'Tu veux récolter du Bois en boucle sans interruption. Que fais-tu ?',
-    choices:['🧑 Empile un Villageois sur l\'Arbre 🌳','🌳 Empile l\'Arbre sur une Pierre 🪨','🌳 Empile deux Arbres ensemble'],
-    correct:0,
-    ok:'Exact ! Le Villageois reste sur l\'arbre et produit du bois indéfiniment. C\'est la base de toute économie !',
-    wrong:['Non — Arbre + Pierre n\'a aucune recette, les cartes trembleront.','Non — deux arbres ne produisent rien. Il faut un Villageois pour travailler !']
+    text:'Tu gères un village qui doit survivre 35 jours avant que la comète ne sauve tout le monde.\n\n👆 GLISSE une carte sur une autre pour les combiner.\n✅ Barre verte sous la carte = craft en cours, attends qu\'elle se remplisse !\n❌ Cartes qui tremblent = mauvaise combinaison.\n\n📖 Bouton "Recettes" en haut = toutes les combinaisons possibles.'
   },
   {
     emoji:'🧑',
-    title:'Les Villageois — Ta main-d\'œuvre',
-    text:'Le Villageois 🧑 est ta carte la plus précieuse.\n\nEmpile-le sur une ressource pour produire EN BOUCLE :\n\n🌳 + 🧑 → Bois ♻️\n🪨 + 🧑 → Pierre ♻️\n🫐 + 🧑 → Baie ♻️\n🌾 + 🧑 → Pomme ♻️\n\nLe villageois RESTE sur la ressource et produit indéfiniment !\n\n✨ Double-clique sur un villageois pour lui donner un prénom !'
+    title:'Les Villageois & la Production',
+    text:'Le Villageois 🧑 est ta pièce maîtresse — empile-le sur une ressource pour produire EN BOUCLE :\n\n🌳 + 🧑 → Bois en continu\n🫐 + 🧑 → Baie en continu\n🪨 + 🧑 → Pierre en continu\n\n⚠️ Tes villageois mangent 3 fois par jour ! Garde toujours de la nourriture en stock.\n💡 Cuisine sur 🔥 Feu de camp : Pomme + Feu → 🍲 Ragoût (5 repas d\'un coup !)'
   },
   {
     emoji:'⚒️',
-    title:'Crafter des objets — Recettes clés',
-    text:'Combine plusieurs cartes pour fabriquer des objets :\n\n🔷 Silex + 🪵 Bois → 🔥 Feu de camp\n🪵×3 + 🧑 → 🟫 Planche\n🪨×3 + 🧑 → 🧱 Brique\n🔷 + 🟫 + 🧑 → ⚔️ Épée  ← PRIORITÉ !\n🟫×2 + 🧑 → 🛡️ Bouclier\n🧱×2 + 🟫×2 + 🧑 → 🏠 Maison\n🧱 + 🟫×2 + 🧑 → 🌾 Ferme\n\n📖 Clique "Recettes" en haut pour voir toutes les combinaisons !'
-  },
-  {
-    quiz:true,
-    emoji:'🤔',
-    title:'Quiz — Teste tes connaissances !',
-    question:'C\'est le Jour 4, un monstre approche. Tu as du Silex 🔷 et du Bois 🪵. Que fabriques-tu EN PRIORITÉ ?',
-    choices:['🛡️ Bouclier — pour bloquer les attaques','⚔️ Épée — pour tuer le monstre','🏠 Maison — pour avoir plus de villageois'],
-    correct:1,
-    ok:'Bonne décision ! L\'épée est indispensable pour éliminer les monstres. Sans épée, tu es sans défense !',
-    wrong:['Le bouclier bloque une attaque mais ne tue pas le monstre. L\'épée est prioritaire !','La maison est utile à long terme, mais les monstres arrivent maintenant. Fais l\'épée d\'abord !']
-  },
-  {
-    emoji:'🍖',
-    title:'Nourriture & Jours — Ne laisse pas mourir de faim !',
-    text:'La barre jaune en haut = temps avant la fin du jour.\n\n⚠️ À chaque fin de jour : tes villageois mangent !\n(1 repas par villageois)\n\nSi tu n\'as pas assez de nourriture → ☠️ FAMINE = partie perdue !\n\n💡 Cuisine pour multiplier l\'effet :\n🫐 Baie brute = 1 repas\n🫐 + 🔥 → 🍇 Baie cuite = 3 repas\n🍎 + 🔥 → 🍲 Ragoût = 5 repas\n\n🌾 Une Ferme + Villageois produit des Pommes en boucle !'
-  },
-  {
-    quiz:true,
-    emoji:'🤔',
-    title:'Quiz — Teste tes connaissances !',
-    question:'Tu as 3 villageois affamés, une Pomme 🍎 et un Feu de camp 🔥. Que fais-tu ?',
-    choices:['Mange la Pomme telle quelle → 1 seul repas','Empile Pomme + Feu → Ragoût 🍲 → 5 repas','Garde tout pour plus tard, ce n\'est pas urgent'],
-    correct:1,
-    ok:'Parfait ! Cuisiner multiplie la valeur nutritive. 1 Pomme → 5 repas au lieu d\'1. Toujours cuisiner !',
-    wrong:['La pomme crue ne donne qu\'1 repas sur 3 villageois affamés — ce n\'est pas suffisant !','Attendre avec des villageois affamés = FAMINE à la fin du jour. Agis maintenant !']
+    title:'Recettes essentielles',
+    text:'Voici les crafts les plus importants :\n\n🔷 Silex + 🪵 Bois → 🔥 Feu de camp\n🪵×3 + 🧑 → 🟫 Planche\n🪨×3 + 🧑 → 🧱 Brique\n🔷 + 🟫 + 🧑 → ⚔️ Épée  ← À faire avant le Jour 5 !\n🧱×2 + 🟫×2 + 🧑 → 🏠 Maison  → produit des bébés\n🧱 + 🟫×2 + 🧑 → 🌾 Ferme → produit des pommes'
   },
   {
     emoji:'⚔️',
-    title:'Les Monstres — Survie en combat !',
-    text:'Tous les 5 jours, une vague de monstres arrive !\n\n🐺 Loup = 1⚔️ en 15s   |   👺 Gobelin = 1⚔️ en 12s\n👹 Troll = 2⚔️ en 10s (ou 🗡️ seule !)\n\nPour combattre : EMPILE ⚔️ Épée sur le monstre.\n\n🔴 Barre rouge sur le monstre = temps avant attaque !\nPulse rouge = URGENT → agis tout de suite !\n\n✅ L\'épée SURVIT après le combat.\n🛡️ Bouclier : empile sur un monstre qui attaque pour bloquer !'
-  },
-  {
-    quiz:true,
-    emoji:'🤔',
-    title:'Quiz — Teste tes connaissances !',
-    question:'Un 👹 Troll surgit ! Quelle est la bonne façon de l\'éliminer ?',
-    choices:['Empile 1 ⚔️ Épée sur le Troll','Empile 2 ⚔️ Épées (ou 1 🗡️ Épée de Fer) sur le Troll','Empile 1 🛡️ Bouclier sur le Troll'],
-    correct:1,
-    ok:'Exact ! Le Troll est résistant : 1 épée normale ne suffit pas. Il faut 2 épées ou 1 épée de fer.',
-    wrong:['1 épée suffit pour les Loups et Gobelins, mais le Troll est plus coriace. Il en faut 2 !','Le bouclier bloque une attaque mais ne tue pas — le Troll reviendra attaquer. Il faut des épées !']
-  },
-  {
-    emoji:'🏆',
-    title:'Progression & Modes de jeu',
-    text:'🎯 Mode Normal : survie 35 jours → Victoire !\n💀 Mode Difficile : jours plus courts, monstres plus rapides.\n♾️ Mode Infini : aucune limite ! Nouveaux monstres :\n   💀 Squelette — 🧛 Vampire — 👻 Spectre — 🦣 Ogre\n\nPRIORITÉS en début de partie :\n1️⃣ Assigne un 🧑 à chaque ressource\n2️⃣ Fabrique une ⚔️ Épée avant le Jour 5\n3️⃣ Construis un 🔥 Feu pour cuisiner\n4️⃣ Maintiens toujours plus de 🍖 nourriture que de 👥 villageois\n\n☄️ Gagne des Poussières de Comète → débloque des cosmétiques !'
+    title:'Combattre les monstres',
+    text:'Tous les 5 jours une vague de monstres arrive !\n\nEmpile une ⚔️ Épée sur le monstre pour le tuer. L\'épée survit.\n\n🐺 Loup / 👺 Gobelin → 1 épée suffit\n👹 Troll → 2 épées ou 1 🗡️ Épée de Fer\n\n🔴 Barre rouge sur le monstre = il va attaquer bientôt !\n🛡️ Bouclier sur monstre = bloque l\'attaque suivante.'
   },
   {
     emoji:'🎮',
-    title:'Tu es prêt à jouer !',
-    text:'✅ Résumé :\n\n1️⃣ Empile 🧑 sur ressources → production en boucle\n2️⃣ Nourris tes villageois chaque jour\n3️⃣ Fabrique ⚔️ Épée avant Jour 5 !\n4️⃣ Cuisine tes aliments sur 🔥\n5️⃣ Empile épée sur monstre pour combattre\n\n💡 Conseils :\n• Clique-droit sur une carte = vendre\n• Appuie sur Échap = Pause\n• Clique 💡 Conseil pour des astuces en cours de partie\n• Tapis = tu peux acheter des Paquets 📦 en haut à droite\n\n🍀 Bonne chance, Chef de Village !'
+    title:'Prêt à jouer !',
+    text:'Priorités du début de partie :\n1️⃣ Mets un 🧑 sur l\'Arbre et sur le Buisson\n2️⃣ Fais une ⚔️ Épée avant le Jour 5\n3️⃣ Construis un 🔥 Feu pour cuisiner ta nourriture\n4️⃣ Garde toujours 2-3 repas de marge\n\n💡 Clic-droit = menu de vente   |   R = Recettes   |   Espace = Pause\n\nBonne chance !'
   },
 ];
 let tutoStep=0,tutoAnswered=false;
