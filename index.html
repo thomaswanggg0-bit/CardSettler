@@ -281,6 +281,24 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 /* ── SPAWN CARTE ── */
 @keyframes cardSpawn{0%{opacity:0;transform:scale(.3) translateY(-8px)}65%{transform:scale(1.07)}100%{opacity:1;transform:scale(1) translateY(0)}}
 .card-spawn{animation:cardSpawn .38s cubic-bezier(.17,.67,.36,1.3) forwards;}
+/* ── BURST CRAFT ── */
+@keyframes craftBurst{0%{opacity:0;transform:scale(.15);}55%{transform:scale(1.18);box-shadow:0 0 28px rgba(247,208,96,.9),0 0 8px rgba(74,222,128,.6);}85%{box-shadow:0 0 10px rgba(247,208,96,.2);}100%{opacity:1;transform:scale(1);box-shadow:none;}}
+.card-craft-burst{animation:craftBurst .55s cubic-bezier(.17,.67,.36,1.3) forwards;}
+/* ── PREVIEW RÉSULTAT CRAFT ── */
+.craft-preview{position:absolute;top:-22px;left:50%;transform:translateX(-50%);background:rgba(5,10,5,.92);color:#f7d060;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;pointer-events:none;white-space:nowrap;border:1px solid rgba(247,208,96,.35);z-index:801;letter-spacing:.3px;}
+/* ── MARQUEURS VAGUE SUR BARRE ── */
+#moon-wrap{position:relative;}
+#moon-ticks{position:absolute;inset:0;pointer-events:none;}
+.moon-tick{position:absolute;top:2px;bottom:2px;width:1px;background:rgba(255,255,255,.18);}
+.moon-tick.boss{width:2px;background:rgba(247,208,96,.6);}
+/* ── RÉSUMÉ FIN DE JOURNÉE ── */
+#day-summary{position:fixed;top:52px;left:50%;transform:translateX(-50%);background:rgba(5,15,5,.95);border:1px solid #2d5a2d;border-radius:10px;padding:7px 18px;font-size:12px;color:#86efac;z-index:8500;pointer-events:none;opacity:0;transition:opacity .25s;white-space:nowrap;text-align:center;}
+#day-summary.visible{opacity:1;}
+/* ── MENU CONTEXTUEL CARTE ── */
+#card-ctx{position:fixed;background:#0f2310;border:1px solid #2d5a2d;border-radius:9px;padding:4px;z-index:99999;box-shadow:0 6px 20px rgba(0,0,0,.7);min-width:170px;}
+.ctx-item{padding:8px 14px;font-size:12px;color:#d1fae5;cursor:pointer;border-radius:6px;white-space:nowrap;display:flex;align-items:center;gap:6px;}
+.ctx-item:hover{background:#1a3a1a;color:#4ade80;}
+.ctx-sep{height:1px;background:#1e3a1e;margin:3px 0;}
 /* ── CARTE CATEGORIE ── */
 .card-cat{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;}
 .cat-node{background:#4ade80;box-shadow:0 0 4px #4ade80;}.cat-food{background:#fb923c;box-shadow:0 0 4px #fb923c;}
@@ -544,7 +562,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 <!-- HUD -->
 <div id="hud">
   <span class="stat">📅 Jour <b id="hday">1</b><span id="hwinday">/35</span><span id="hdiff">💀 HARD</span><span id="hdiff-inf" style="display:none;font-size:11px;font-weight:800;color:#fb923c;letter-spacing:1px;margin-left:4px;">♾️ INFINI</span></span>
-  <div id="moon-wrap"><div id="moon-fill"></div></div>
+  <div id="moon-wrap"><div id="moon-fill"></div><div id="moon-ticks"></div></div>
   <span class="stat">🪙 <b id="hgold">5</b></span>
   <span class="stat" id="hfood-wrap">🍖 <b id="hfood">0</b>/<b id="hpop">0</b></span>
   <span id="hquest" onclick="showQuestDetails()" style="display:none;"></span>
@@ -1430,6 +1448,7 @@ function initG(infiniteMode){
     updateHUD();
     log('📅 DÉFI DU JOUR ! '+G._dailyConstraints.map(c=>c.label).join(' + '));
   }
+  initMoonTicks();
   requestAnimationFrame(loop);
   stopTipsRotation();stopMenuMusic();
   setTimeout(startAmbientMusic,600);
@@ -1454,7 +1473,7 @@ function createCardDOM(id,type){
   let _longPressTimer=null;
   el.addEventListener('touchstart',()=>{_longPressTimer=setTimeout(()=>sellCard(id),700);},{passive:true});
   el.addEventListener('touchend',()=>{clearTimeout(_longPressTimer);},{passive:true});
-  el.addEventListener('contextmenu',e=>{e.preventDefault();sellCard(id);});
+  el.addEventListener('contextmenu',e=>{e.preventDefault();showCardCtx(e,id);});
   el.addEventListener('mouseenter',e=>{showTooltip(e,type);if(type==='villager'){const desc=ttEl.querySelector('.tt-desc');if(desc)desc.textContent=(desc.textContent||'')+' · ✏️ Double-clic pour renommer';}});
   el.addEventListener('mouseleave',hideTooltip);
   document.getElementById('table').appendChild(el);
@@ -1512,12 +1531,19 @@ function updateSV(sid){
     if(bar)bar.style.display=(i===0&&s.recipe)?'block':'none';
     const badge=el.querySelector('.stack-badge');
     if(badge){badge.textContent='×'+n;badge.style.display=(i===0&&n>1)?'block':'none';}
+    // Craft preview label
+    let prev=el.querySelector('.craft-preview');
+    if(i===0&&s.recipe&&s.recipe.type!=='expedition'){
+      if(!prev){prev=document.createElement('div');prev.className='craft-preview';el.appendChild(prev);}
+      prev.textContent='→ '+s.recipe.o.map(t=>CD[t]?.e||t).join(' ');
+    }else{if(prev)prev.remove();}
   });
 }
 function updateCV(id){
   const c=G.cards[id],el=cel(id);if(!el||!c)return;
   el.style.left=c.x+'px';el.style.top=c.y+'px';
   el.querySelector('.card-bar').style.display='none';
+  const badge=el.querySelector('.stack-badge');if(badge)badge.style.display='none';
 }
 
 // ── RECIPES ──────────────────────────────────────────────────────────────────
@@ -1556,7 +1582,8 @@ function execRecipe(sid){
   kept.forEach(cid=>{G.cards[cid].sid=null;});
   dissolve(sid);gone.forEach(cid=>delCard(cid));
   const stackH=kept.length*SO+CH;
-  r.o.forEach((type,i)=>{spawn(type,rx+(i%3)*(CW+8),ry+stackH+16+Math.floor(i/3)*(CH+8));});
+  const newIds=r.o.map((type,i)=>spawn(type,rx+(i%3)*(CW+8),ry+stackH+16+Math.floor(i/3)*(CH+8)));
+  newIds.forEach(nid=>{const nel=cel(nid);if(nel){nel.classList.add('card-craft-burst');setTimeout(()=>nel.classList.remove('card-craft-burst'),600);}});
   if(kept.length>0){
     kept.forEach((cid,i)=>{G.cards[cid].x=rx;G.cards[cid].y=ry+i*SO;updateCV(cid);});
     if(kept.length>1){const ns=mkStack(kept);if(r.rep)checkRecipe(ns);}
@@ -1711,6 +1738,8 @@ document.addEventListener('mouseup',()=>{
 });
 document.addEventListener('touchend',()=>{if(G.drag){const fakeUp=new Event('mouseup');document.dispatchEvent(fakeUp);}},{passive:true});
 function canPotentiallyRecipe(types){
+  // Allow homogeneous piles of same non-monster resource up to 10
+  if(types.length<=10&&types.length>1&&types.every(t=>t===types[0])&&!CD[types[0]]?.monster)return true;
   const sorted=[...types].sort();
   const diff=G?.difficulty||'normal';
   const isInf=G?._infiniteMode||false;
@@ -1780,6 +1809,36 @@ function sellCard(id){
   checkAchievements();
   updateHUD();
 }
+
+function showCardCtx(e,id){
+  hideCardCtx();
+  const c=G.cards[id];if(!c||CD[c.type].monster)return;
+  const ctx=document.createElement('div');ctx.id='card-ctx';
+  const t=c.type;
+  const val=CD[t].node?0:(CD[t].sellValue||1);
+  const valStr=val>0?(' +'+val+'🪙'):'';
+  const item1=document.createElement('div');item1.className='ctx-item';
+  item1.innerHTML='💰 Vendre'+valStr;item1.onclick=()=>{hideCardCtx();sellCard(id);};
+  ctx.appendChild(item1);
+  // Count same-type cards on board
+  const sameCards=Object.values(G.cards).filter(c2=>c2.type===t&&!CD[t].monster&&!CD[t].node);
+  if(sameCards.length>1){
+    const sep=document.createElement('div');sep.className='ctx-sep';ctx.appendChild(sep);
+    const item2=document.createElement('div');item2.className='ctx-item';
+    const totalVal=sameCards.length*(CD[t].node?0:(CD[t].sellValue||1));
+    item2.innerHTML='💸 Vendre tous les '+CD[t].e+' ('+sameCards.length+')'+(totalVal>0?' +'+totalVal+'🪙':'');
+    item2.onclick=()=>{hideCardCtx();[...sameCards].forEach(c2=>sellCard(c2.id));};
+    ctx.appendChild(item2);
+  }
+  document.body.appendChild(ctx);
+  const pw=window.innerWidth,ph=window.innerHeight;
+  let lft=e.clientX+4,tp=e.clientY+4;
+  if(lft+ctx.offsetWidth>pw)lft=e.clientX-ctx.offsetWidth-4;
+  if(tp+ctx.offsetHeight>ph)tp=e.clientY-ctx.offsetHeight-4;
+  ctx.style.left=lft+'px';ctx.style.top=tp+'px';
+  setTimeout(()=>document.addEventListener('click',hideCardCtx,{once:true}),10);
+}
+function hideCardCtx(){const el=document.getElementById('card-ctx');if(el)el.remove();}
 
 // ── COMBAT ───────────────────────────────────────────────────────────────────
 function monsterAttack(mid){
@@ -2054,7 +2113,8 @@ function endMoon(){
     let need=needed;
     for(const fc of fCards){if(need<=0)break;if(fc.sid)rmFromStack(fc.id);delCard(fc.id);need-=CD[fc.type].food;}
     log('🌙 Jour '+G.moon+' — '+pop+' villageois nourris'+(G.foodPerPop>1?' (×'+G.foodPerPop+' en difficile)':'')+'!');
-  }else{log('🌙 Jour '+G.moon);}
+    showDaySummary('🌙 Nuit '+G.moon+' — '+pop+' villageois nourris');
+  }else{log('🌙 Jour '+G.moon);showDaySummary('🌙 Nuit '+G.moon);}
   if(G._coopMode){
     // Co-op: boss aux jours 40, 45, 50
     if(G.moon===40||G.moon===45||G.moon===50){spawnCoopBoss(G.moon);}
@@ -2100,6 +2160,23 @@ function endMoon(){
   updateHUD();
 }
 function countT(t){return Object.values(G.cards).filter(c=>c.type===t).length;}
+
+function initMoonTicks(){
+  const el=document.getElementById('moon-ticks');if(!el)return;
+  el.innerHTML='';
+  const winDay=getWinDay();
+  for(let d=5;d<winDay;d+=5){
+    const tick=document.createElement('div');
+    tick.className='moon-tick'+(d%10===0?' boss':'');
+    tick.style.left=(d/winDay*100)+'%';
+    el.appendChild(tick);
+  }
+}
+function showDaySummary(text){
+  const el=document.getElementById('day-summary');if(!el)return;
+  el.textContent=text;el.classList.add('visible');
+  clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove('visible'),2500);
+}
 
 // ── PACKS ────────────────────────────────────────────────────────────────────
 function buyPack(key){
@@ -2541,8 +2618,11 @@ function togglePause(){
   }else{po.style.display='none';G.ts=null;requestAnimationFrame(loop);startAmbientMusic();}
 }
 document.addEventListener('keydown',e=>{
+  if(document.activeElement.tagName==='INPUT')return;
   if(G&&G.secretReveal){closeSecretReveal();return;}
   if(e.key==='Escape'&&G&&!G.over)togglePause();
+  if((e.key==='r'||e.key==='R')&&G&&!G.over&&!G.paused)showRB();
+  if(e.key===' '&&G&&!G.over){e.preventDefault();togglePause();}
 });
 
 // ── RECIPE BOOK ───────────────────────────────────────────────────────────────
@@ -4048,24 +4128,18 @@ function showPermaShop(){showBoutique('bonuses');}
 function closePermaShop(){closeBoutique();}
 
 // ── NARRATIVE ─────────────────────────────────────────────────────────────────
-const NARRATIVE_INTRO=`<h3>⚙️ Acte I — L'Exode</h3>
-<p>Le <em>Grand Gel</em> est tombé en une nuit d'hiver sans lune. En quelques heures, les pics du Nord ont craqué, les rivières se sont figées, et les villages ont disparu sous une épaisse croûte de glace.</p>
-<p>Vos ancêtres ont fui vers le Sud — trois cents âmes épuisées, portant pour tout trésor quelques <em>cartes aux bords usés</em> et un vieux sac de vivres. Derrière eux : le silence blanc de tout ce qu'ils avaient connu.</p>
-<p>Devant eux : une vallée inconnue. Et l'hiver qui approche à nouveau.</p>
+const NARRATIVE_INTRO=`<p>⚙️ Le <em>Grand Gel</em> est tombé en une nuit d'hiver sans lune. En quelques heures, les pics du Nord ont craqué, les rivières se sont figées, et les villages ont disparu sous une épaisse croûte de glace.</p>
+<p>Vos ancêtres ont fui vers le Sud. Trois cents âmes épuisées, portant pour tout trésor quelques <em>cartes aux bords usés</em> et un vieux sac de vivres. Derrière eux, le silence blanc de tout ce qu'ils avaient connu. Devant eux, une vallée inconnue et l'hiver qui approche à nouveau.</p>
 
-<h3>🌌 Acte II — La Prophétie</h3>
-<p>Avant de disparaître dans le blizzard, la vieille sorcière du village avait murmuré quelque chose. Les survivants se le répétaient autour des feux, comme une prière :</p>
+<p>🌌 Avant de disparaître dans le blizzard, la vieille sorcière du village avait murmuré quelque chose. Les survivants se le répétaient autour des feux, comme une prière.</p>
 <blockquote>"Là où la poussière de comète touche le sol, la vie ne s'éteindra jamais. Empile les pierres, forge le fer, et les étoiles te guideront <em>35 nuits</em>."</blockquote>
-<p>Au bout de trente-cinq jours, disait-on, une pluie de comètes illuminerait le ciel — fondant le Gel, rouvrant les routes, ramenant le printemps. Il fallait <em>tenir jusque-là</em>.</p>
+<p>Au bout de trente-cinq jours, disait-on, une pluie de comètes illuminerait le ciel, fondant le Gel, rouvrant les routes, ramenant le printemps. Il fallait <em>tenir jusque-là</em>.</p>
 
-<h3>🐺 Acte III — Les Ombres qui Rôdent</h3>
-<p>Le Gel avait fracturé les montagnes. Les créatures du dedans — celles que la roche retenait depuis des siècles — rôdaient désormais à l'air libre.</p>
-<p><em>Loups</em> affamés par la famine, <em>gobelins</em> pillards attirés par l'odeur d'or, <em>trolls</em> des cavernes réveillés par les tremblements... Chaque nuit, ils se rapprochaient, guidés par la chaleur de vos feux et la faiblesse de vos murs.</p>
+<p>🐺 Le Gel avait fracturé les montagnes. Les créatures du dedans, celles que la roche retenait depuis des siècles, rôdaient désormais à l'air libre. Des <em>loups</em> affamés, des <em>gobelins</em> pillards, des <em>trolls</em> réveillés par les tremblements... Chaque nuit ils se rapprochaient, guidés par la chaleur de vos feux.</p>
 <p>La survie avait un seul prix : <em>construire plus vite qu'ils ne détruisaient</em>.</p>
 
-<h3>🏆 Acte IV — L'Espoir</h3>
-<p>Vos cartes sont vos outils. Un villageois empilé sur un arbre abat du bois. Du bois sur de la pierre forge un foyer. Un foyer nourrit un peuple. Un peuple bâtit des murs. Des murs repoussent les ombres.</p>
-<p>La <em>Poussière de Comète</em> — cette poudre d'étoile tombée lors des premières nuits — recèle un pouvoir étrange. Les anciens savaient la récolter. Vous apprendrez à l'utiliser.</p>
+<p>🏆 Vos cartes sont vos outils. Un villageois empilé sur un arbre abat du bois. Du bois sur de la pierre forge un foyer. Un foyer nourrit un peuple. Un peuple bâtit des murs. Des murs repoussent les ombres.</p>
+<p>La <em>Poussière de Comète</em>, cette poudre d'étoile tombée lors des premières nuits, recèle un pouvoir étrange. Les anciens savaient la récolter. Vous apprendrez à l'utiliser.</p>
 <p>Trente-cinq nuits. C'est tout ce qu'il vous faut. C'est tout ce qu'il vous reste.</p>
 <p style="text-align:center;margin-top:18px;color:#a78bfa;font-size:13px;">⭐ <em>Bonne chance, bâtisseur.</em> ⭐</p>`;
 
@@ -5087,6 +5161,8 @@ showMainMenu();
 
 <!-- ── FADE TRANSITION ── -->
 <div id="mm-fade"></div>
+<!-- ── RÉSUMÉ FIN DE JOURNÉE ── -->
+<div id="day-summary"></div>
 
 </body>
 </html>
