@@ -75,7 +75,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 #wave-alert{display:none;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(160,0,0,0.93);color:#fff;font-size:20px;font-weight:700;padding:14px 30px;border-radius:12px;z-index:500;pointer-events:none;text-align:center;border:2px solid #ef4444;}
 #obj{font-size:11px;color:#f7d060;white-space:nowrap;}
 /* ── MENU PRINCIPAL — Style Fortnite ──────────────────────── */
-#main-menu{display:flex;flex-direction:column;position:fixed;inset:0;background:linear-gradient(160deg,#040e04 0%,#071407 40%,#050f05 100%);z-index:99000;overflow-y:auto;}
+#main-menu{display:flex;flex-direction:column;position:fixed;inset:0;background:linear-gradient(160deg,#040e04 0%,#071407 40%,#050f05 100%);z-index:99000;overflow-y:auto;position:relative;}
 .mm-header{display:flex;align-items:center;justify-content:space-between;padding:18px 28px 14px;flex-shrink:0;background:rgba(0,0,0,.45);border-bottom:1px solid rgba(74,138,74,.25);flex-wrap:wrap;gap:10px;}
 .mm-logo{font-size:48px;line-height:1;filter:drop-shadow(0 0 20px rgba(100,200,80,.5));}
 .mm-title{font-size:38px;font-weight:900;color:#f7d060;letter-spacing:4px;text-shadow:0 0 30px rgba(247,208,96,.4);line-height:1.1;}
@@ -133,6 +133,18 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 #mm-tips-wrap{text-align:center;padding:6px 28px 10px;flex-shrink:0;border-top:1px solid rgba(74,138,74,.1);}
 #mm-tip{font-size:12px;color:#4ade80;min-height:16px;transition:opacity .35s;opacity:1;letter-spacing:.2px;}
 #mm-tip.tip-fade{opacity:0;}
+/* ── PARTICULES FOND MENU ── */
+#mm-particles{position:absolute;inset:0;pointer-events:none;overflow:hidden;z-index:0;}
+.mm-particle{position:absolute;opacity:0;animation:mm-drift linear infinite;}
+@keyframes mm-drift{0%{opacity:0;transform:translateY(0) rotate(0deg);}8%{opacity:.4;}88%{opacity:.15;}100%{opacity:0;transform:translateY(-105vh) rotate(400deg);}}
+/* ── FADE TRANSITION LANCEMENT ── */
+#mm-fade{position:fixed;inset:0;background:#050e05;opacity:0;pointer-events:none;z-index:99100;transition:opacity .38s ease;}
+#mm-fade.fading{opacity:1;pointer-events:all;}
+/* ── BADGE NOUVEAU ── */
+.mm-new-badge{display:inline-block;background:#f97316;color:#fff;font-size:8px;font-weight:800;padding:1px 5px;border-radius:6px;letter-spacing:.5px;margin-left:4px;vertical-align:middle;animation:nbpulse 1.8s ease-in-out infinite;}
+@keyframes nbpulse{0%,100%{opacity:1;}50%{opacity:.65;}}
+/* ── PARALLAXE CARTE ── */
+.mm-big-card-bg{transition:transform .12s ease-out;will-change:transform;}
 #resume-info{color:rgba(255,255,255,.6);font-size:11px;}
 /* Infini badge HUD */
 #hdiff-inf{font-size:11px;font-weight:800;color:#fb923c;letter-spacing:1px;margin-left:4px;vertical-align:middle;display:none;}
@@ -818,8 +830,11 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
     </div>
   </div>
 
+  <!-- Particules de fond -->
+  <div id="mm-particles"></div>
+
   <!-- Grille des grandes cartes -->
-  <div class="mm-cards-grid">
+  <div class="mm-cards-grid" style="position:relative;z-index:1;">
     <!-- Nouvelle Partie -->
     <div class="mm-big-card mm-card-normal" onclick="startNewGame()">
       <div class="mm-big-card-bg" style="background:linear-gradient(135deg,#062112 0%,#0d3318 50%,#1a4a2a 100%);"></div>
@@ -870,7 +885,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
       <div class="mm-big-card-content">
         <div class="mm-big-card-emoji">📅</div>
         <div class="mm-big-card-title">Défi du Jour</div>
-        <div class="mm-big-card-desc">Contraintes quotidiennes · Classement journalier · Défis uniques renouvelés chaque jour</div>
+        <div class="mm-big-card-desc" id="daily-card-desc">Contraintes quotidiennes · Classement journalier · Défis uniques renouvelés chaque jour</div>
       </div>
       <div class="mm-big-card-badge" style="color:#60a5fa;" id="btn-daily">📅 DÉFI</div>
     </div>
@@ -888,7 +903,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   </div>
 
   <!-- Actions secondaires -->
-  <div class="mm-actions">
+  <div class="mm-actions" style="position:relative;z-index:1;">
     <button class="mbtn mbtn-sm" onclick="showLeaderboard()" style="border-color:#78350f;background:#1a0a00;color:#fbbf24;">🏆 Classement</button>
     <button class="mbtn mbtn-sm" onclick="showAchOverlay()" style="background:#071e14;border-color:#1a4a2a;color:#4ade80;">🏅 Succès &nbsp;<span id="mm-ach-count">0/0</span></button>
     <button class="mbtn mbtn-sm" onclick="startTutorialGame()" style="background:#071e07;border-color:#22c55e;color:#4ade80;">🎮 Tutoriel guidé</button>
@@ -899,7 +914,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   </div>
 
   <!-- Pied de page stats -->
-  <div class="mm-footer">
+  <div class="mm-footer" style="position:relative;z-index:1;">
     <div class="mm-footer-col" id="mm-records-panel">
       <div class="mm-panel-title">📊 Mes Records</div>
       <div id="mm-records-body"></div>
@@ -909,10 +924,14 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
       <div class="mm-ach-bar-wrap"><div class="mm-ach-bar" id="mm-ach-bar" style="width:0%"></div></div>
       <div class="mm-ach-recent" id="mm-ach-recent"></div>
     </div>
+    <div class="mm-footer-col" id="mm-top3-panel">
+      <div class="mm-panel-title">🏆 Top Mondial</div>
+      <div id="mm-top3-body"><div class="mm-ach-empty">Chargement…</div></div>
+    </div>
     <div class="mm-version">CardSettler v2.1</div>
   </div>
   <!-- Tips rotatifs -->
-  <div id="mm-tips-wrap"><div id="mm-tip"></div></div>
+  <div id="mm-tips-wrap" style="position:relative;z-index:1;"><div id="mm-tip"></div></div>
 </div>
 
 <script>
@@ -1074,6 +1093,7 @@ const DIFF_PARAMS={
 };
 function setDifficulty(d){
   selectedDifficulty=d;localStorage.setItem('cs_difficulty',d);
+  if(d==='easy'){localStorage.setItem('cs_seen_easy','1');const b=document.querySelector('.mm-new-badge');if(b)b.remove();}
   document.getElementById('diff-easy').className='diff-btn'+(d==='easy'?' active-easy':'');
   document.getElementById('diff-normal').className='diff-btn'+(d==='normal'?' active-normal':'');
   document.getElementById('diff-hard').className='diff-btn'+(d==='hard'?' active-hard':'');
@@ -2268,6 +2288,68 @@ function showVictory(){
 }
 
 // ── MENU PRINCIPAL ────────────────────────────────────────────────────────────
+// ── PARTICULES FOND MENU ─────────────────────────────────────────────────────
+function spawnMenuParticles(){
+  const c=document.getElementById('mm-particles');if(!c)return;
+  c.innerHTML='';
+  const items=['✨','⭐','💫','🌟','☄️','·','·','·'];
+  for(let i=0;i<22;i++){
+    const el=document.createElement('div');el.className='mm-particle';
+    const item=items[Math.floor(Math.random()*items.length)];
+    el.textContent=item;
+    const dur=18+Math.random()*28;
+    el.style.cssText=`left:${Math.random()*100}%;bottom:${-5-Math.random()*10}%;font-size:${7+Math.random()*10}px;animation-duration:${dur}s;animation-delay:${-Math.random()*dur}s;`;
+    c.appendChild(el);
+  }
+}
+
+// ── TRANSITION FADE AU LANCEMENT ─────────────────────────────────────────────
+function launchWithFade(fn){
+  const f=document.getElementById('mm-fade');
+  if(!f){fn();return;}
+  f.classList.add('fading');
+  setTimeout(()=>{fn();setTimeout(()=>f.classList.remove('fading'),350);},400);
+}
+
+// ── BADGE NOUVEAU MODE FACILE ─────────────────────────────────────────────────
+function showEasyBadge(){
+  if(localStorage.getItem('cs_seen_easy'))return;
+  const btn=document.getElementById('diff-easy');
+  if(!btn||btn.querySelector('.mm-new-badge'))return;
+  const b=document.createElement('span');b.className='mm-new-badge';b.textContent='NEW';btn.appendChild(b);
+}
+
+// ── PARALLAXE GRANDES CARTES ──────────────────────────────────────────────────
+function initCardParallax(){
+  document.querySelectorAll('.mm-big-card').forEach(card=>{
+    card.addEventListener('mousemove',e=>{
+      const r=card.getBoundingClientRect();
+      const x=((e.clientX-r.left)/r.width-.5)*12;
+      const y=((e.clientY-r.top)/r.height-.5)*7;
+      const bg=card.querySelector('.mm-big-card-bg');
+      if(bg)bg.style.transform=`translate(${-x}px,${-y}px) scale(1.06)`;
+    });
+    card.addEventListener('mouseleave',()=>{
+      const bg=card.querySelector('.mm-big-card-bg');
+      if(bg)bg.style.transform='';
+    });
+  });
+}
+
+// ── TOP 3 MONDIAL INLINE ──────────────────────────────────────────────────────
+async function loadMenuTop3(){
+  const el=document.getElementById('mm-top3-body');if(!el)return;
+  try{
+    const scores=await fetchScores('normal');
+    if(!scores||!scores.length){el.innerHTML='<div class="mm-ach-empty">Aucun score</div>';return;}
+    el.innerHTML=scores.slice(0,3).map((s,i)=>`
+      <div class="mm-rec-row">
+        <span>${['🥇','🥈','🥉'][i]} ${(s.player_name||'Anonyme').slice(0,14)}</span>
+        <span class="mm-rec-val">${(s.score||0).toLocaleString()}</span>
+      </div>`).join('');
+  }catch{el.innerHTML='<div class="mm-ach-empty">—</div>';}
+}
+
 const MM_TIPS=[
   '💡 Empile Villageois + Arbre → Bois automatiquement toutes les 5s',
   '💡 Clic droit sur une carte pour la vendre et récupérer de l\'or',
@@ -2327,7 +2409,12 @@ function showMainMenu(){
     resumeCard.classList.toggle('disabled-card',!hasS);
     const info=document.getElementById('resume-info');
     if(info){
-      if(hasS){try{const d=JSON.parse(localStorage.getItem('stacklands_save'));info.textContent='Partie sauvegardée — Jour '+d.moon+(d.difficulty==='infinite'?' ♾️':(d.difficulty==='hard'?' 💀':''));}catch(e){info.textContent='Partie sauvegardée';}}
+      if(hasS){try{
+        const d=JSON.parse(localStorage.getItem('stacklands_save'));
+        const icon=d.difficulty==='infinite'?'♾️':d.difficulty==='hard'?'💀':d.difficulty==='easy'?'🌱':'⚔️';
+        const pop=Object.values(d.cards||{}).filter(c=>c.type==='villager'||c.type==='baby').length;
+        info.textContent=icon+' Jour '+d.moon+' · 🪙'+d.gold+' · 👥'+(pop||'?');
+      }catch(e){info.textContent='Partie sauvegardée';}}
       else{info.textContent='Aucune sauvegarde';}
     }
   }
@@ -2371,24 +2458,35 @@ function showMainMenu(){
       :'<div class="mm-ach-empty">Aucun succès débloqué pour l\'instant</div>';
   }
   checkAndUpdateStreak();
+  // Contraintes du Défi du Jour sur la carte
+  const dailyDesc=document.getElementById('daily-card-desc');
+  if(dailyDesc){const cs=getDailyConstraints();dailyDesc.textContent=cs.map(c=>c.label).join(' · ');}
+  // Badge NOUVEAU mode Facile
+  showEasyBadge();
+  // Particules de fond
+  spawnMenuParticles();
+  // Parallaxe cartes
+  initCardParallax();
+  // Top 3 mondial
+  loadMenuTop3();
   startTipsRotation();
   startMenuMusic();
 }
 let _narrativeStartGame=false;
 function startNewGame(){
   playSound('menu_click');
-  clearSave();
-  // Premier lancement : tutoriel d'abord
-  if(!localStorage.getItem('cs_tuto_seen')){
+  launchWithFade(()=>{
+    clearSave();
+    if(!localStorage.getItem('cs_tuto_seen')){
+      document.getElementById('main-menu').style.display='none';
+      tutoStep=0;renderTuto();
+      document.getElementById('tutorial').style.display='flex';
+      return;
+    }
+    _narrativeStartGame=true;
     document.getElementById('main-menu').style.display='none';
-    tutoStep=0;renderTuto();
-    document.getElementById('tutorial').style.display='flex';
-    return;
-  }
-  // Chaque nouvelle partie : afficher l'intro narrative avant de lancer
-  _narrativeStartGame=true;
-  document.getElementById('main-menu').style.display='none';
-  showNarrative();
+    showNarrative();
+  });
 }
 function _doStartGame(){
   _narrativeStartGame=false;
@@ -2397,16 +2495,17 @@ function _doStartGame(){
 }
 function startInfiniteGame(){
   playSound('menu_click');
-  clearSave();
-  selectedMode='infinite';
-  document.getElementById('main-menu').style.display='none';
-  initG(true);
+  launchWithFade(()=>{
+    clearSave();selectedMode='infinite';
+    document.getElementById('main-menu').style.display='none';
+    initG(true);
+  });
 }
 function resumeGame(){
   playSound('menu_click');
   const card=document.getElementById('btn-resume');
   if(card&&card.classList.contains('disabled-card'))return;
-  if(!loadGame())startNewGame();
+  launchWithFade(()=>{if(!loadGame())startNewGame();});
 }
 function goMainMenu(){
   if(G&&!G.over)saveGame();
@@ -4985,6 +5084,9 @@ showMainMenu();
 
 <!-- ── AUDIO DISTANT (WebRTC) ── -->
 <audio id="remote-audio" autoplay playsinline style="display:none;"></audio>
+
+<!-- ── FADE TRANSITION ── -->
+<div id="mm-fade"></div>
 
 </body>
 </html>
