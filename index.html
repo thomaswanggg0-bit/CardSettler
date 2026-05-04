@@ -129,6 +129,10 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 .mm-ach-empty{font-size:10px;color:#4b5563;font-style:italic;text-align:center;padding:4px 0;}
 .mm-boutique-badge{background:#f7d060;color:#1a0050;font-size:10px;font-weight:800;padding:2px 8px;border-radius:20px;letter-spacing:.5px;}
 .mm-version{color:#2d5a2d;font-size:10px;align-self:flex-end;margin-left:auto;}
+/* ── TIPS ── */
+#mm-tips-wrap{text-align:center;padding:6px 28px 10px;flex-shrink:0;border-top:1px solid rgba(74,138,74,.1);}
+#mm-tip{font-size:12px;color:#4ade80;min-height:16px;transition:opacity .35s;opacity:1;letter-spacing:.2px;}
+#mm-tip.tip-fade{opacity:0;}
 #resume-info{color:rgba(255,255,255,.6);font-size:11px;}
 /* Infini badge HUD */
 #hdiff-inf{font-size:11px;font-weight:800;color:#fb923c;letter-spacing:1px;margin-left:4px;vertical-align:middle;display:none;}
@@ -306,10 +310,13 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 /* ── NARRATIVE INTRO ── */
 @keyframes narIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
 #narrative-intro{display:none;position:fixed;inset:0;background:linear-gradient(160deg,#020408 0%,#050d1a 50%,#030810 100%);z-index:99700;justify-content:center;align-items:center;flex-direction:column;padding:32px 20px;}
-.nar-box{max-width:560px;width:100%;text-align:center;animation:narIn .7s ease forwards;}
-.nar-comet{font-size:80px;margin-bottom:16px;filter:drop-shadow(0 0 30px rgba(139,92,246,.6));}
-.nar-lore{font-size:15px;line-height:2;color:#c4b5fd;white-space:pre-line;margin-bottom:28px;text-shadow:0 0 20px rgba(139,92,246,.3);}
+.nar-box{max-width:580px;width:100%;text-align:center;animation:narIn .7s ease forwards;max-height:88vh;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#3b0764 transparent;}
+.nar-comet{font-size:72px;margin-bottom:10px;filter:drop-shadow(0 0 30px rgba(139,92,246,.6));}
+.nar-lore{font-size:14.5px;line-height:1.9;color:#c4b5fd;margin-bottom:24px;text-align:left;text-shadow:0 0 20px rgba(139,92,246,.2);}
 .nar-lore em{color:#f7d060;font-style:normal;font-weight:700;}
+.nar-lore h3{color:#f7d060;font-size:15px;font-weight:800;margin:22px 0 8px;letter-spacing:1.5px;text-align:center;text-shadow:0 0 14px rgba(247,208,96,.4);}
+.nar-lore p{margin-bottom:12px;}
+.nar-lore blockquote{border-left:3px solid #7c3aed;padding:8px 14px;margin:12px 0;background:rgba(124,58,237,.1);border-radius:0 8px 8px 0;font-style:italic;color:#e2d9f3;}
 .nar-btn{background:linear-gradient(135deg,#4c1d95,#7c3aed);color:#fff;border:none;border-radius:10px;padding:14px 40px;cursor:pointer;font-size:15px;font-weight:700;box-shadow:0 0 30px rgba(124,58,237,.5);letter-spacing:.5px;}
 .nar-btn:hover{background:linear-gradient(135deg,#5b21b6,#8b5cf6);}
 .nar-skip{background:transparent;border:none;color:#4b5563;font-size:11px;cursor:pointer;margin-top:12px;text-decoration:underline;}
@@ -886,6 +893,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
     <button class="mbtn mbtn-sm" onclick="showAchOverlay()" style="background:#071e14;border-color:#1a4a2a;color:#4ade80;">🏅 Succès &nbsp;<span id="mm-ach-count">0/0</span></button>
     <button class="mbtn mbtn-sm" onclick="startTutorialGame()" style="background:#071e07;border-color:#22c55e;color:#4ade80;">🎮 Tutoriel guidé</button>
     <button class="mbtn mbtn-sm" onclick="showTutorial()" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📖 Règles</button>
+    <button class="mbtn mbtn-sm" onclick="showRB(true)" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📜 Recettes</button>
     <button class="mbtn mbtn-sm" onclick="showNarrative()">🌌 L'Histoire</button>
     <button class="mbtn mbtn-sm disc" onclick="disconnect()">🚪 Déconnexion</button>
   </div>
@@ -901,8 +909,10 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
       <div class="mm-ach-bar-wrap"><div class="mm-ach-bar" id="mm-ach-bar" style="width:0%"></div></div>
       <div class="mm-ach-recent" id="mm-ach-recent"></div>
     </div>
-    <div class="mm-version">CardSettler v2.0</div>
+    <div class="mm-version">CardSettler v2.1</div>
   </div>
+  <!-- Tips rotatifs -->
+  <div id="mm-tips-wrap"><div id="mm-tip"></div></div>
 </div>
 
 <script>
@@ -1082,7 +1092,10 @@ function toggleMute(){
   _muted=!_muted;
   _masterSfxGain.gain.value=_muted?0:_sfxVol;
   if(_musicGain)_musicGain.gain.value=_muted?0:_musicVol;
-  if(_muted)stopAmbientMusic();else if(G&&!G.over&&!G.paused)startAmbientMusic();
+  const inMenu=document.getElementById('main-menu')?.style.display!=='none';
+  if(_muted){stopAmbientMusic();stopMenuMusic();}
+  else if(inMenu)startMenuMusic();
+  else if(G&&!G.over&&!G.paused)startAmbientMusic();
   const btn=document.getElementById('mute-btn');
   if(btn){btn.textContent=_muted?'🔇':'🔊';btn.className=_muted?'muted':'';}
 }
@@ -1127,6 +1140,43 @@ function stopAmbientMusic(){
   const t=AC.currentTime;
   _ambDrones.forEach(({o,g})=>{try{g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(0,t+0.8);o.stop(t+1);}catch(e){}});
   _ambDrones=[];
+}
+
+// ── MUSIQUE MENU (plus grave / mystérieuse) ──────────────────────────────────
+let _menuNodes=[],_menuNoteTimer=null;
+const _MENU_NOTES=[55.00,65.41,73.42,82.41,98.00];
+function startMenuMusic(){
+  stopMenuMusic();
+  if(_muted||!AC)return;
+  const t=AC.currentTime;
+  [[55.00,0.055],[55.12,0.04],[82.41,0.025]].forEach(([freq,vol])=>{
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.type='sine';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+4);
+    o.connect(g);g.connect(_musicGain);o.start(t);_menuNodes.push({o,g});
+  });
+  const lfo=AC.createOscillator(),lfoG=AC.createGain();
+  lfo.frequency.value=0.07;lfoG.gain.value=0.016;
+  lfo.connect(lfoG);_menuNodes.forEach(({g})=>lfoG.connect(g.gain));
+  lfo.start(t);_menuNodes.push({o:lfo,g:lfoG});
+  _schedMenuNote();
+}
+function _schedMenuNote(){
+  if(!_menuNodes.length)return;
+  const freq=_MENU_NOTES[Math.floor(Math.random()*_MENU_NOTES.length)];
+  const t=AC.currentTime;
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type='sine';o.frequency.value=freq*(Math.random()<0.3?2:1);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.016,t+2);
+  g.gain.setValueAtTime(0.016,t+4);g.gain.linearRampToValueAtTime(0,t+7);
+  o.connect(g);g.connect(_musicGain);o.start(t);o.stop(t+7.5);
+  _menuNoteTimer=setTimeout(_schedMenuNote,(12+Math.random()*16)*1000);
+}
+function stopMenuMusic(){
+  if(_menuNoteTimer){clearTimeout(_menuNoteTimer);_menuNoteTimer=null;}
+  const t=AC.currentTime;
+  _menuNodes.forEach(({o,g})=>{try{g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(0,t+1);o.stop(t+1.2);}catch(e){}});
+  _menuNodes=[];
 }
 function playSound(type){
   if(_muted||!AC)return;
@@ -1361,6 +1411,7 @@ function initG(infiniteMode){
     log('📅 DÉFI DU JOUR ! '+G._dailyConstraints.map(c=>c.label).join(' + '));
   }
   requestAnimationFrame(loop);
+  stopTipsRotation();stopMenuMusic();
   setTimeout(startAmbientMusic,600);
 }
 
@@ -2217,6 +2268,40 @@ function showVictory(){
 }
 
 // ── MENU PRINCIPAL ────────────────────────────────────────────────────────────
+const MM_TIPS=[
+  '💡 Empile Villageois + Arbre → Bois automatiquement toutes les 5s',
+  '💡 Clic droit sur une carte pour la vendre et récupérer de l\'or',
+  '💡 Le Bouclier absorbe automatiquement la prochaine attaque de monstre',
+  '💡 3 Os → 1 Or — accumule les os en combat pour les convertir',
+  '💡 La Forge rend les combats 3× plus rapides avec l\'Épée de Fer',
+  '💡 Pierre Philosophale + Villageois → Or en boucle infinie',
+  '💡 Garde un Feu de camp actif — cuit les baies (×3 nourriture) et les pommes (×5)',
+  '💡 2 Os + Silex + Villageois → Épée — chemin alternatif sans planche !',
+  '💡 Bouclier + Minerai + Villageois → Épée de Fer directement',
+  '💡 Maison + 2 Villageois → Bébé → nouveau Villageois après 10s',
+  '💡 Zone Forêt produit Bois + Baie simultanément — plus efficace qu\'un Arbre seul',
+  '💡 La Potion de Guerre rend tous les combats quasi-instantanés',
+  '💡 4 Baies + Feu → 2 Ragoûts d\'un coup — cuisine en masse !',
+  '💡 Expédition : empile 1-3 Villageois + une Épée sur l\'Entrée de Grotte',
+  '💡 3 Or + Forge → Gemme — convertis ton or en ressource rare',
+  '💡 Les paquets de cartes s\'achètent avec l\'or — investis tôt pour progresser vite',
+  '💡 Vague de monstres tous les 5 jours — prépare tes épées avant !',
+  '💡 Le Défi du Jour change chaque jour et a son propre classement mondial',
+  '💡 La Poussière de Comète s\'accumule entre les parties — dépense-la en boutique',
+];
+let _tipIdx=0,_tipTimer=null;
+function startTipsRotation(){
+  const el=document.getElementById('mm-tip');if(!el)return;
+  _tipIdx=Math.floor(Math.random()*MM_TIPS.length);
+  el.textContent=MM_TIPS[_tipIdx];el.classList.remove('tip-fade');
+  if(_tipTimer)clearInterval(_tipTimer);
+  _tipTimer=setInterval(()=>{
+    el.classList.add('tip-fade');
+    setTimeout(()=>{_tipIdx=(_tipIdx+1)%MM_TIPS.length;el.textContent=MM_TIPS[_tipIdx];el.classList.remove('tip-fade');},350);
+  },6000);
+}
+function stopTipsRotation(){if(_tipTimer){clearInterval(_tipTimer);_tipTimer=null;}}
+
 function showMainMenu(){
   stopAmbientMusic();
   ['overlay','victory','pause'].forEach(id=>document.getElementById(id).style.display='none');
@@ -2286,6 +2371,8 @@ function showMainMenu(){
       :'<div class="mm-ach-empty">Aucun succès débloqué pour l\'instant</div>';
   }
   checkAndUpdateStreak();
+  startTipsRotation();
+  startMenuMusic();
 }
 let _narrativeStartGame=false;
 function startNewGame(){
@@ -2360,9 +2447,9 @@ document.addEventListener('keydown',e=>{
 });
 
 // ── RECIPE BOOK ───────────────────────────────────────────────────────────────
-function showRB(){
-  const diff=G?.difficulty||selectedDifficulty||'normal';
-  const isInf=G._infiniteMode||false;
+function showRB(fromMenu){
+  const diff=fromMenu?(selectedDifficulty||'normal'):(G?.difficulty||selectedDifficulty||'normal');
+  const isInf=fromMenu?false:(G?._infiniteMode||false);
   const visible=RECIPES.filter(r=>{
     if(r.secret)return false;
     if(r.infinite&&!isInf)return false;
@@ -3862,12 +3949,26 @@ function showPermaShop(){showBoutique('bonuses');}
 function closePermaShop(){closeBoutique();}
 
 // ── NARRATIVE ─────────────────────────────────────────────────────────────────
-const NARRATIVE_INTRO=`<em>Le Grand Gel a dévoré les pics du Nord, emportant vos ancêtres.</em>
-Vous n'avez qu'un vieux sac de vivres et le souvenir d'une prophétie :
+const NARRATIVE_INTRO=`<h3>⚙️ Acte I — L'Exode</h3>
+<p>Le <em>Grand Gel</em> est tombé en une nuit d'hiver sans lune. En quelques heures, les pics du Nord ont craqué, les rivières se sont figées, et les villages ont disparu sous une épaisse croûte de glace.</p>
+<p>Vos ancêtres ont fui vers le Sud — trois cents âmes épuisées, portant pour tout trésor quelques <em>cartes aux bords usés</em> et un vieux sac de vivres. Derrière eux : le silence blanc de tout ce qu'ils avaient connu.</p>
+<p>Devant eux : une vallée inconnue. Et l'hiver qui approche à nouveau.</p>
 
-<em>"Là où la poussière de comète touche le sol,\nla vie ne s'éteindra jamais."</em>
+<h3>🌌 Acte II — La Prophétie</h3>
+<p>Avant de disparaître dans le blizzard, la vieille sorcière du village avait murmuré quelque chose. Les survivants se le répétaient autour des feux, comme une prière :</p>
+<blockquote>"Là où la poussière de comète touche le sol, la vie ne s'éteindra jamais. Empile les pierres, forge le fer, et les étoiles te guideront <em>35 nuits</em>."</blockquote>
+<p>Au bout de trente-cinq jours, disait-on, une pluie de comètes illuminerait le ciel — fondant le Gel, rouvrant les routes, ramenant le printemps. Il fallait <em>tenir jusque-là</em>.</p>
 
-Empilez, survivez, et levez les yeux vers le ciel.`;
+<h3>🐺 Acte III — Les Ombres qui Rôdent</h3>
+<p>Le Gel avait fracturé les montagnes. Les créatures du dedans — celles que la roche retenait depuis des siècles — rôdaient désormais à l'air libre.</p>
+<p><em>Loups</em> affamés par la famine, <em>gobelins</em> pillards attirés par l'odeur d'or, <em>trolls</em> des cavernes réveillés par les tremblements... Chaque nuit, ils se rapprochaient, guidés par la chaleur de vos feux et la faiblesse de vos murs.</p>
+<p>La survie avait un seul prix : <em>construire plus vite qu'ils ne détruisaient</em>.</p>
+
+<h3>🏆 Acte IV — L'Espoir</h3>
+<p>Vos cartes sont vos outils. Un villageois empilé sur un arbre abat du bois. Du bois sur de la pierre forge un foyer. Un foyer nourrit un peuple. Un peuple bâtit des murs. Des murs repoussent les ombres.</p>
+<p>La <em>Poussière de Comète</em> — cette poudre d'étoile tombée lors des premières nuits — recèle un pouvoir étrange. Les anciens savaient la récolter. Vous apprendrez à l'utiliser.</p>
+<p>Trente-cinq nuits. C'est tout ce qu'il vous faut. C'est tout ce qu'il vous reste.</p>
+<p style="text-align:center;margin-top:18px;color:#a78bfa;font-size:13px;">⭐ <em>Bonne chance, bâtisseur.</em> ⭐</p>`;
 
 function showNarrative(){
   const lore=document.getElementById('nar-lore');
