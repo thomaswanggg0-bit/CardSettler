@@ -564,7 +564,8 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   <span class="stat">📅 Jour <b id="hday">1</b><span id="hwinday">/35</span><span id="hdiff">💀 HARD</span><span id="hdiff-inf" style="display:none;font-size:11px;font-weight:800;color:#fb923c;letter-spacing:1px;margin-left:4px;">♾️ INFINI</span></span>
   <div id="moon-wrap"><div id="moon-fill"></div><div id="moon-ticks"></div></div>
   <span class="stat">🪙 <b id="hgold">5</b></span>
-  <span class="stat" id="hfood-wrap">🍖 <b id="hfood">0</b>/<b id="hpop">0</b></span>
+  <span class="stat" id="hfood-wrap">🍖 <b id="hfood">0</b></span>
+  <span class="stat" id="hpop-wrap">👥 <b id="hpop">0</b>/<b id="hcap">3</b></span>
   <span id="hquest" onclick="showQuestDetails()" style="display:none;"></span>
   <span id="obj"></span>
   <span id="save-badge">💾</span>
@@ -1100,10 +1101,11 @@ const PACKS = {
   ]},
 };
 
-const WIN_DAY=35, CW=82, CH=104, SO=24;
+const WIN_DAY=35, CW=82, CH=104, SO=24, MAX_HOUSES=3, BASE_POP_CAP=3;
 let selectedMode='normal'; // 'normal' | 'infinite'
 let G={};
 let selectedDifficulty=localStorage.getItem('cs_difficulty')||'normal';
+function getPopCap(){return BASE_POP_CAP+Math.min(MAX_HOUSES,countT('house'))*2;}
 const DIFF_PARAMS={
   easy:  {moonDur:75,aggroMult:1.5,foodPerPop:1,packCostAdd:0,scoreMult:0.6},
   normal:{moonDur:50,aggroMult:1.0,foodPerPop:1,packCostAdd:0,scoreMult:1},
@@ -1416,7 +1418,7 @@ function initG(infiniteMode){
   const isInf=infiniteMode||selectedMode==='infinite';
   const dp=DIFF_PARAMS[isInf?'normal':selectedDifficulty]||DIFF_PARAMS.normal;
   const startGold=(selectedDifficulty==='hard'&&!isInf?3:selectedDifficulty==='easy'&&!isInf?8:5)+(hasPermaBonus('gold')?15:0);
-  G={gold:startGold,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,_quest:null,_lastEvent:null,difficulty:isInf?'infinite':selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult,_reviveAvail:hasPermaBonus('revive'),_infiniteMode:isInf,_dayFoodEaten:0,_foodTick:0};
+  G={gold:startGold,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,_quest:null,_lastEvent:null,difficulty:isInf?'infinite':selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult,_reviveAvail:hasPermaBonus('revive'),_infiniteMode:isInf,_dayFoodEaten:0,_foodTick:0,_popCapWarned:false,_houseCapWarned:false};
   const sb=document.getElementById('speed-btn');if(sb){sb.textContent='⏩ ×1';sb.className='';sb.id='speed-btn';}
   const bb=document.getElementById('bm-btn');if(bb)bb.style.display='none';
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
@@ -1556,7 +1558,23 @@ function checkRecipe(sid){
   for(const r of RECIPES){
     if(r.hardOnly && diff!=='hard') continue;
     if(r.normalOnly && diff==='hard') continue;
-    if(arrEq(types,[...r.i].sort())){if(!s.recipe)playSound('craft_start');s.recipe=r;s.prog=0;updateSV(sid);return;}
+    if(arrEq(types,[...r.i].sort())){
+      // Cap maisons
+      if(r.o.includes('house')&&!r.coop&&countT('house')>=MAX_HOUSES){
+        if(!G._houseCapWarned){G._houseCapWarned=true;log('🏠 Maximum de '+MAX_HOUSES+' maisons atteint !');}
+        continue;
+      }
+      // Cap population (recette bébé non-coop)
+      if(r.o.includes('baby')&&!r.coop){
+        const pop=countT('villager')+countT('baby');
+        if(pop>=getPopCap()){
+          if(!G._popCapWarned){G._popCapWarned=true;log('👥 Population max atteinte ('+getPopCap()+') ! Il faut construire plus de maisons pour agrandir le village.');}
+          continue;
+        }
+        G._popCapWarned=false;
+      }
+      if(!s.recipe)playSound('craft_start');s.recipe=r;s.prog=0;updateSV(sid);return;
+    }
   }
   // Détection expédition : cave_entrance + 1-3 villageois + 0-2 épées
   if(types.includes('cave_entrance')){
@@ -1618,7 +1636,7 @@ function execRecipe(sid){
   if(r.o.includes('iron_sword'))G._stats.madeIronSword=true;
   if(r.o.includes('shield'))G._stats.madeShield=true;
   if(r.o.includes('campfire'))G._stats.madeCampfire=true;
-  if(r.o.includes('house'))G._stats.madeHouse=true;
+  if(r.o.includes('house')){G._stats.madeHouse=true;G._houseCapWarned=false;}
   if(r.o.includes('farm'))G._stats.madeFarm=true;
   if(r.o.includes('forge'))G._stats.madeForge=true;
   if(r.i.includes('bone')&&r.i.includes('flint')&&r.o.includes('sword'))G._stats.madeBoneSword=true;
@@ -2234,14 +2252,19 @@ function updateHUD(){
     sbtn.title=locked?'Vitesse ×'+next+' — débloque dans la Boutique ('+((next===2)?6000:15000)+' ☄️)':'';
   }
   const pop=countT('villager')+countT('baby');
+  const cap=getPopCap();
   const food=Object.values(G.cards).filter(c=>CD[c.type]?.food).reduce((s,c)=>s+(CD[c.type].food||0),0);
   document.getElementById('hday').textContent=G.moon;
   document.getElementById('hgold').textContent=G.gold;
   document.getElementById('hfood').textContent=food;
   document.getElementById('hpop').textContent=pop;
+  const hcapEl=document.getElementById('hcap');if(hcapEl)hcapEl.textContent=cap;
   const foodWrap=document.getElementById('hfood-wrap');
-  foodWrap.style.color=food>=pop?'#86efac':'#fca5a5';
-  if(food<pop&&pop>0)foodWrap.classList.add('famine-warn');else foodWrap.classList.remove('famine-warn');
+  const remainingNeeded=Math.max(0,pop*(G.foodPerPop||1)-(G._dayFoodEaten||0));
+  foodWrap.style.color=food>=remainingNeeded||pop===0?'#86efac':'#fca5a5';
+  if(food<remainingNeeded&&pop>0)foodWrap.classList.add('famine-warn');else foodWrap.classList.remove('famine-warn');
+  const popWrap=document.getElementById('hpop-wrap');
+  if(popWrap)popWrap.style.color=pop>=cap?'#fca5a5':'#86efac';
   const winDay=getWinDay();
   const hwinday=document.getElementById('hwinday');if(hwinday)hwinday.textContent=G._infiniteMode?' ♾️':'/'+winDay;
   let objText;
