@@ -1077,16 +1077,57 @@ let _muted=false;
 let _sfxVol=parseFloat(localStorage.getItem('cs_sfx_vol')??'0.8');
 let _musicVol=parseFloat(localStorage.getItem('cs_music_vol')??'0.5');
 function setSfxVol(v){_sfxVol=parseFloat(v);localStorage.setItem('cs_sfx_vol',v);_masterSfxGain.gain.value=_sfxVol;const e=document.getElementById('sfx-vol');if(e)e.value=v;}
-function setMusicVol(v){_musicVol=parseFloat(v);localStorage.setItem('cs_music_vol',v);}
+function setMusicVol(v){_musicVol=parseFloat(v);localStorage.setItem('cs_music_vol',v);if(_musicGain)_musicGain.gain.value=_muted?0:_musicVol;}
 function toggleMute(){
   _muted=!_muted;
   _masterSfxGain.gain.value=_muted?0:_sfxVol;
+  if(_musicGain)_musicGain.gain.value=_muted?0:_musicVol;
+  if(_muted)stopAmbientMusic();else if(G&&!G.over&&!G.paused)startAmbientMusic();
   const btn=document.getElementById('mute-btn');
   if(btn){btn.textContent=_muted?'🔇':'🔊';btn.className=_muted?'muted':'';}
 }
 const AC=new(window.AudioContext||window.webkitAudioContext)();
 const _masterSfxGain=AC.createGain();_masterSfxGain.gain.value=_sfxVol;_masterSfxGain.connect(AC.destination);
+const _musicGain=AC.createGain();_musicGain.gain.value=_musicVol;_musicGain.connect(AC.destination);
 document.addEventListener('mousedown',()=>{if(AC.state==='suspended')AC.resume();},{passive:true});
+
+// ── MUSIQUE AMBIANTE (procédurale) ───────────────────────────────────────────
+let _ambTimer=null,_ambDrones=[];
+const _AMB_NOTES=[130.81,155.56,174.61,196.00,220.00,261.63,311.13,349.23,392.00,440.00];
+function startAmbientMusic(){
+  stopAmbientMusic();
+  if(_muted||!AC)return;
+  const t=AC.currentTime;
+  [[65.41,0.045],[65.60,0.035],[98.00,0.022]].forEach(([freq,vol])=>{
+    const o=AC.createOscillator(),g=AC.createGain();
+    o.type='sine';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+3);
+    o.connect(g);g.connect(_musicGain);o.start(t);
+    _ambDrones.push({o,g});
+  });
+  const lfo=AC.createOscillator(),lfoG=AC.createGain();
+  lfo.frequency.value=0.1;lfoG.gain.value=0.012;
+  lfo.connect(lfoG);_ambDrones.forEach(({g})=>lfoG.connect(g.gain));
+  lfo.start(t);_ambDrones.push({o:lfo,g:lfoG});
+  _schedMelody();
+}
+function _schedMelody(){
+  if(!G||G.over||G.paused||!_ambDrones.length)return;
+  const freq=_AMB_NOTES[Math.floor(Math.random()*_AMB_NOTES.length)]*(Math.random()<0.28?2:1);
+  const t=AC.currentTime;
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type='sine';o.frequency.value=freq;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.022,t+0.9);
+  g.gain.setValueAtTime(0.022,t+2);g.gain.linearRampToValueAtTime(0,t+3.8);
+  o.connect(g);g.connect(_musicGain);o.start(t);o.stop(t+4.2);
+  _ambTimer=setTimeout(_schedMelody,(5+Math.random()*8)*1000);
+}
+function stopAmbientMusic(){
+  if(_ambTimer){clearTimeout(_ambTimer);_ambTimer=null;}
+  const t=AC.currentTime;
+  _ambDrones.forEach(({o,g})=>{try{g.gain.setValueAtTime(g.gain.value,t);g.gain.linearRampToValueAtTime(0,t+0.8);o.stop(t+1);}catch(e){}});
+  _ambDrones=[];
+}
 function playSound(type){
   if(_muted||!AC)return;
   try{
@@ -1320,6 +1361,7 @@ function initG(infiniteMode){
     log('📅 DÉFI DU JOUR ! '+G._dailyConstraints.map(c=>c.label).join(' + '));
   }
   requestAnimationFrame(loop);
+  setTimeout(startAmbientMusic,600);
 }
 
 // ── CARDS ────────────────────────────────────────────────────────────────────
@@ -1481,6 +1523,10 @@ function execRecipe(sid){
   if(r.o.includes('house'))G._stats.madeHouse=true;
   if(r.o.includes('farm'))G._stats.madeFarm=true;
   if(r.o.includes('forge'))G._stats.madeForge=true;
+  if(r.i.includes('bone')&&r.i.includes('flint')&&r.o.includes('sword'))G._stats.madeBoneSword=true;
+  if(r.i.includes('shield')&&r.o.includes('iron_sword'))G._stats.madeShieldSword=true;
+  if(r.i.includes('forge')&&r.i.filter(t=>t==='gold').length>=3&&r.o.includes('gem'))G._stats.madeForgeGem=true;
+  if(r.i.filter(t=>t==='berry').length>=4&&r.o.filter(t=>t==='stew').length>=2)G._stats.madeMassCook=true;
   spawnParticles(rx,ry);
   // Secret card reveal
   r.o.forEach(type=>{
@@ -2172,6 +2218,7 @@ function showVictory(){
 
 // ── MENU PRINCIPAL ────────────────────────────────────────────────────────────
 function showMainMenu(){
+  stopAmbientMusic();
   ['overlay','victory','pause'].forEach(id=>document.getElementById(id).style.display='none');
   setDifficulty(selectedDifficulty);
   // Stats globales
@@ -2304,8 +2351,8 @@ function togglePause(){
   if(G.paused){
     const nextWave=G.moon%5===0?G.moon+5:Math.ceil(G.moon/5)*5;
     document.getElementById('pause-info').textContent='Jour '+G.moon+(G._infiniteMode?' ♾️ Infini':' / '+(G._coopMode?50:WIN_DAY))+(G._infiniteMode?'':' — Prochaine vague : Jour '+Math.min(nextWave,getWinDay()));
-    po.style.display='flex';
-  }else{po.style.display='none';G.ts=null;requestAnimationFrame(loop);}
+    po.style.display='flex';stopAmbientMusic();
+  }else{po.style.display='none';G.ts=null;requestAnimationFrame(loop);startAmbientMusic();}
 }
 document.addEventListener('keydown',e=>{
   if(G&&G.secretReveal){closeSecretReveal();return;}
@@ -2979,6 +3026,11 @@ const ACHIEVEMENTS=[
   {id:'inf_kill_ogre',  n:'Tueur d\'Ogres',          d:'Tue un Ogre en Mode Infini',                     e:'🦣'},
   {id:'inf_kill_vampire',n:'Chasseur de Vampires',   d:'Tue 5 Vampires en Mode Infini',                  e:'🧛'},
   {id:'inf_kill30_inf', n:'Exterminateur Infini',    d:'Tue 30 monstres en Mode Infini',                 e:'☠️', rare:1},
+  // ── Recettes alternatives ─────────────────────────────────────────────────
+  {id:'bone_sword',    n:'Ingénieux',               d:'Fabrique une épée à partir d\'os',               e:'🦴'},
+  {id:'shield_sword',  n:'Recycleur',               d:'Transforme un bouclier en épée de fer',          e:'♻️'},
+  {id:'forge_gem',     n:'Orfèvre',                 d:'Forge une gemme à partir d\'or',                 e:'💍'},
+  {id:'mass_cook',     n:'Chef Cuisinier',           d:'Cuisine 4 baies en 2 ragoûts d\'un coup',        e:'👨‍🍳'},
 ];
 function getAchievements(){try{return JSON.parse(localStorage.getItem('stacklands_achievements')||'[]');}catch(e){return[];}}
 function hasAchievement(id){return getAchievements().includes(id);}
@@ -3033,6 +3085,10 @@ function checkAchievements(){
   c('expedition3',    (s.expeditions||0)>=3);
   c('bone5',          countT('bone')>=5);
   c('block1',         (s.blocks||0)>=1);
+  c('bone_sword',     s.madeBoneSword||false);
+  c('shield_sword',   s.madeShieldSword||false);
+  c('forge_gem',      s.madeForgeGem||false);
+  c('mass_cook',      s.madeMassCook||false);
   // ── Succès Mode Infini ────────────────────────────────────────────────
   c('inf_first',      G._infiniteMode||false);
   c('inf_day50',      G._infiniteMode&&G.moon>=50);
