@@ -1190,14 +1190,15 @@ document.addEventListener('mousedown',()=>{if(AC.state==='suspended')AC.resume()
 
 // ── MUSIQUE AMBIANTE (procédurale) ───────────────────────────────────────────
 let _ambTimer=null,_ambDrones=[];
-// Pentatonic major C4-C6 — warm, cheerful village feel
-const _AMB_NOTES=[261.63,293.66,329.63,392.00,440.00,523.25,587.33,659.25,784.00,880.00];
+// Mélodie in-game : pentatonique majeure C4-C6, notes légères
+const _AMB_MELODY=[261.63,293.66,329.63,392.00,440.00,523.25,440.00,392.00,329.63,293.66,329.63,392.00,523.25,440.00,392.00,329.63];
+let _ambMelIdx=0;
 function startAmbientMusic(){
   stopAmbientMusic();
   if(_muted||!AC)return;
   const t=AC.currentTime;
   // C4/E4/G4 major chord drones — warm and bright
-  [[261.63,0.030],[329.63,0.022],[392.00,0.018]].forEach(([freq,vol])=>{
+  [[261.63,0.022],[329.63,0.016],[392.00,0.013]].forEach(([freq,vol])=>{
     const o=AC.createOscillator(),g=AC.createGain();
     o.type='triangle';o.frequency.value=freq;
     g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+3);
@@ -1205,21 +1206,23 @@ function startAmbientMusic(){
     _ambDrones.push({o,g});
   });
   const lfo=AC.createOscillator(),lfoG=AC.createGain();
-  lfo.frequency.value=0.15;lfoG.gain.value=0.007;
+  lfo.frequency.value=0.18;lfoG.gain.value=0.005;
   lfo.connect(lfoG);_ambDrones.forEach(({g})=>lfoG.connect(g.gain));
   lfo.start(t);_ambDrones.push({o:lfo,g:lfoG});
-  _schedMelody();
+  _ambMelIdx=0;_schedMelody();
 }
 function _schedMelody(){
   if(!G||G.over||G.paused||!_ambDrones.length)return;
-  const freq=_AMB_NOTES[Math.floor(Math.random()*_AMB_NOTES.length)];
+  const freq=_AMB_MELODY[_ambMelIdx%_AMB_MELODY.length];
+  _ambMelIdx++;
   const t=AC.currentTime;
   const o=AC.createOscillator(),g=AC.createGain();
   o.type='triangle';o.frequency.value=freq;
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.018,t+0.6);
-  g.gain.setValueAtTime(0.018,t+1.5);g.gain.linearRampToValueAtTime(0,t+2.8);
-  o.connect(g);g.connect(_musicGain);o.start(t);o.stop(t+3.2);
-  _ambTimer=setTimeout(_schedMelody,(3+Math.random()*5)*1000);
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.020,t+0.05);
+  g.gain.setValueAtTime(0.020,t+0.28);g.gain.linearRampToValueAtTime(0,t+0.65);
+  o.connect(g);g.connect(_musicGain);o.start(t);o.stop(t+0.8);
+  const delay=_ambMelIdx%_AMB_MELODY.length===0?1200+Math.random()*800:400+Math.random()*60;
+  _ambTimer=setTimeout(_schedMelody,delay);
 }
 function stopAmbientMusic(){
   if(_ambTimer){clearTimeout(_ambTimer);_ambTimer=null;}
@@ -1228,35 +1231,44 @@ function stopAmbientMusic(){
   _ambDrones=[];
 }
 
-// ── MUSIQUE MENU (plus grave / mystérieuse) ──────────────────────────────────
+// ── MUSIQUE MENU (douce, chaleureuse) ─────────────────────────────────────────
 let _menuNodes=[],_menuNoteTimer=null;
-const _MENU_NOTES=[55.00,65.41,73.42,82.41,98.00];
+// Mélodie pentatonique majeure G3-G5 — pastorale, accueillante
+const _MENU_NOTES=[196.00,220.00,246.94,293.66,329.63,392.00,440.00,493.88,587.33,659.25,784.00];
+// Motif mélodique simple qui se répète (do-ré-mi-sol-la en G)
+const _MENU_MELODY=[196,220,246.94,293.66,246.94,220,196,220,293.66,329.63,293.66,246.94,220,196];
+let _menuMelIdx=0;
 function startMenuMusic(){
   stopMenuMusic();
   if(_muted||!AC)return;
   const t=AC.currentTime;
-  [[55.00,0.055],[55.12,0.04],[82.41,0.025]].forEach(([freq,vol])=>{
+  // Drones G3/B3/D4 — accord sol majeur, doux
+  [[196.00,0.022],[246.94,0.016],[293.66,0.013]].forEach(([freq,vol])=>{
     const o=AC.createOscillator(),g=AC.createGain();
-    o.type='sine';o.frequency.value=freq;
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+4);
+    o.type='triangle';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+3);
     o.connect(g);g.connect(_musicGain);o.start(t);_menuNodes.push({o,g});
   });
   const lfo=AC.createOscillator(),lfoG=AC.createGain();
-  lfo.frequency.value=0.07;lfoG.gain.value=0.016;
+  lfo.frequency.value=0.2;lfoG.gain.value=0.005;
   lfo.connect(lfoG);_menuNodes.forEach(({g})=>lfoG.connect(g.gain));
   lfo.start(t);_menuNodes.push({o:lfo,g:lfoG});
-  _schedMenuNote();
+  _menuMelIdx=0;_schedMenuNote();
 }
 function _schedMenuNote(){
   if(!_menuNodes.length)return;
-  const freq=_MENU_NOTES[Math.floor(Math.random()*_MENU_NOTES.length)];
+  // Joue le motif mélodique en boucle, notes courtes et légères
+  const freq=_MENU_MELODY[_menuMelIdx%_MENU_MELODY.length];
+  _menuMelIdx++;
   const t=AC.currentTime;
   const o=AC.createOscillator(),g=AC.createGain();
-  o.type='sine';o.frequency.value=freq*(Math.random()<0.3?2:1);
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.016,t+2);
-  g.gain.setValueAtTime(0.016,t+4);g.gain.linearRampToValueAtTime(0,t+7);
-  o.connect(g);g.connect(_musicGain);o.start(t);o.stop(t+7.5);
-  _menuNoteTimer=setTimeout(_schedMenuNote,(12+Math.random()*16)*1000);
+  o.type='triangle';o.frequency.value=freq;
+  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.025,t+0.05);
+  g.gain.setValueAtTime(0.025,t+0.3);g.gain.linearRampToValueAtTime(0,t+0.7);
+  o.connect(g);g.connect(_musicGain);o.start(t);o.stop(t+0.9);
+  // Notes plus fréquentes, tempo agréable (~160bpm sur les croches)
+  const delay=_menuMelIdx%_MENU_MELODY.length===0?900+Math.random()*600:375+Math.random()*50;
+  _menuNoteTimer=setTimeout(_schedMenuNote,delay);
 }
 function stopMenuMusic(){
   if(_menuNoteTimer){clearTimeout(_menuNoteTimer);_menuNoteTimer=null;}
@@ -4891,7 +4903,7 @@ async function createCoopRoom(){
     setTimeout(()=>startRoleSelection(),800);
   })
   .on('broadcast',{event:'role_picked'},({payload})=>{COOP.partnerRole=payload.role;updateRoleUI();})
-  .on('broadcast',{event:'role_ready'},({payload})=>{startCoopGameBothReady(payload);})
+  .on('broadcast',{event:'role_ready'},({payload})=>{onPartnerRoleReady(payload);})
   .on('broadcast',{event:'action'},({payload})=>{if(COOP.active)applyCoopAction(payload);})
   .on('broadcast',{event:'cursor'},({payload})=>{updatePartnerCursor(payload.x,payload.y,payload.name);})
   .on('broadcast',{event:'pause'},({payload})=>{syncCoopPause(payload.paused);})
@@ -4910,8 +4922,8 @@ async function joinCoopRoom(){
   COOP.roomCode=code;COOP.isHost=false;
   setCoopStatus('join','<span class="coop-wait">⏳ Connexion…</span>');
   const ch=sb.channel('coop_'+code,{config:{broadcast:{self:false}}});
-  ch.on('broadcast',{event:'game_start'},({payload})=>{receiveCoopGameStart(payload);})
-  .on('broadcast',{event:'role_picked'},({payload})=>{COOP.partnerRole=payload.role;updateRoleUI();})
+  ch.on('broadcast',{event:'role_picked'},({payload})=>{COOP.partnerRole=payload.role;updateRoleUI();})
+  .on('broadcast',{event:'role_ready'},({payload})=>{onPartnerRoleReady(payload);})
   .on('broadcast',{event:'state'},({payload})=>{if(!COOP.isHost&&COOP.active)applyCoopState(payload);})
   .on('broadcast',{event:'action'},({payload})=>{if(COOP.active)applyCoopAction(payload);})
   .on('broadcast',{event:'cursor'},({payload})=>{updatePartnerCursor(payload.x,payload.y,payload.name);})
@@ -4959,7 +4971,7 @@ function setCoopStatus(panel,html,isErr){
 function startRoleSelection(){
   document.getElementById('coop-lobby').style.display='none';
   document.getElementById('role-select').style.display='flex';
-  COOP._selectedRole=null;
+  COOP._selectedRole=null;COOP._coopLaunching=false;
   document.getElementById('role-confirm-btn').disabled=true;
   updateRoleUI();
 }
@@ -4982,23 +4994,25 @@ function updateRoleUI(){
     document.getElementById('role-confirm-btn').disabled=true;
   }else{
     document.getElementById('role-status').innerHTML='';
-    document.getElementById('role-confirm-btn').disabled=!COOP._selectedRole;
+    document.getElementById('role-confirm-btn').disabled=!COOP._selectedRole||!!COOP.role;
   }
 }
 async function confirmRole(){
-  if(!COOP._selectedRole)return;
+  if(!COOP._selectedRole||COOP.role)return;
   COOP.role=COOP._selectedRole;
-  document.getElementById('role-status').innerHTML='<span class="coop-ok">✅ Rôle confirmé !</span>';
+  document.getElementById('role-status').innerHTML='<span class="coop-ok">✅ Rôle confirmé ! En attente de l\'allié…</span>';
   document.getElementById('role-confirm-btn').disabled=true;
   if(COOP.channel)await COOP.channel.send({type:'broadcast',event:'role_ready',payload:{role:COOP.role,name:localStorage.getItem('cs_player_name')||'Joueur'}});
-  if(COOP.isHost&&COOP.partnerRole)launchCoopGame();
+  // Launch immediately if partner already confirmed
+  if(COOP.partnerRole&&!COOP._coopLaunching){COOP._coopLaunching=true;launchCoopGame();}
 }
-function startCoopGameBothReady(payload){
-  if(!COOP.role)COOP.partnerRole=payload.role;
-  if(COOP.isHost)return;
-  launchCoopGame();
+function onPartnerRoleReady(payload){
+  COOP.partnerRole=payload.role;
+  if(payload.name)COOP.partnerName=payload.name;
+  updateRoleUI();
+  // Launch if I also confirmed
+  if(COOP.role&&!COOP._coopLaunching){COOP._coopLaunching=true;launchCoopGame();}
 }
-function receiveCoopGameStart(payload){COOP.role=COOP.role||'builder';launchCoopGame();}
 
 function launchCoopGame(){
   document.getElementById('role-select').style.display='none';
