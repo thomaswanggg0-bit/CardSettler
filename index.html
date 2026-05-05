@@ -556,6 +556,20 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 /* ── RECETTES CO-OP (brillance) ── */
 .coop-recipe-glow{animation:coop-glow .8s infinite alternate;}
 @keyframes coop-glow{from{box-shadow:0 0 6px rgba(165,180,252,.5)}to{box-shadow:0 0 18px rgba(99,102,241,.9),0 0 36px rgba(99,102,241,.3)}}
+/* ── PARAMÈTRES / KEYBINDS ── */
+#settings-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:99800;justify-content:center;align-items:center;}
+#settings-box{background:#0a1a0a;border:1px solid #2d5a2d;border-radius:16px;padding:28px 32px;width:420px;max-width:95vw;color:#fff;box-shadow:0 8px 40px rgba(0,0,0,.7);}
+#settings-box h2{font-size:20px;font-weight:900;color:#f7d060;margin-bottom:6px;text-align:center;}
+#settings-box .kb-subtitle{text-align:center;font-size:11px;color:#6b8;margin-bottom:18px;}
+.kb-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #1a3a1a;gap:12px;}
+.kb-row:last-of-type{border-bottom:none;}
+.kb-label{font-size:13px;color:#d1fae5;flex:1;}
+.kb-key{background:#1a3a1a;border:1px solid #2d5a2d;border-radius:7px;padding:5px 14px;font-size:13px;font-weight:700;color:#f7d060;min-width:72px;text-align:center;cursor:pointer;transition:all .15s;user-select:none;}
+.kb-key:hover{background:#265226;border-color:#4a8a4a;}
+.kb-key.recording{background:#3b0a00;border-color:#f97316;color:#fb923c;}
+@keyframes kb-blink{0%,100%{opacity:1}50%{opacity:.4}}
+.kb-key.recording{animation:kb-blink .6s infinite;}
+.kb-footer{display:flex;gap:10px;margin-top:20px;justify-content:center;}
 </style>
 </head>
 <body>
@@ -666,6 +680,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
     <button class="obtn" onclick="showConseilPopup()" style="background:#1a1a0a;border-color:#78716c;color:#fde68a;">💡 Conseil</button>
   </div>
   <div class="btn-row">
+    <button class="obtn" onclick="openSettings()" style="background:#0a0a1a;border-color:#3b3b8a;color:#a5b4fc;">⚙️ Paramètres</button>
     <button class="obtn red" onclick="confirmRestart()">🔄 Recommencer</button>
     <button class="obtn" onclick="confirmMenu()">🏠 Menu Principal</button>
   </div>
@@ -929,6 +944,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
     <button class="mbtn mbtn-sm" onclick="showTutorial()" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📖 Règles</button>
     <button class="mbtn mbtn-sm" onclick="showRB(true)" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📜 Recettes</button>
     <button class="mbtn mbtn-sm" onclick="showNarrative()">🌌 L'Histoire</button>
+    <button class="mbtn mbtn-sm" onclick="openSettings()" style="background:#0a0a1a;border-color:#3b3b8a;color:#a5b4fc;">⚙️ Paramètres</button>
   </div>
 
   <!-- Pied de page stats -->
@@ -1481,8 +1497,8 @@ function createCardDOM(id,type){
   el.addEventListener('touchstart',()=>{_longPressTimer=setTimeout(()=>sellCard(id),700);},{passive:true});
   el.addEventListener('touchend',()=>{clearTimeout(_longPressTimer);},{passive:true});
   el.addEventListener('contextmenu',e=>{e.preventDefault();showCardCtx(e,id);});
-  el.addEventListener('mouseenter',e=>{showTooltip(e,type);if(type==='villager'){const desc=ttEl.querySelector('.tt-desc');if(desc)desc.textContent=(desc.textContent||'')+' · ✏️ Double-clic pour renommer';}});
-  el.addEventListener('mouseleave',hideTooltip);
+  el.addEventListener('mouseenter',e=>{_hoveredCardId=id;showTooltip(e,type);if(type==='villager'){const desc=ttEl.querySelector('.tt-desc');if(desc)desc.textContent=(desc.textContent||'')+' · ✏️ Double-clic pour renommer';}});
+  el.addEventListener('mouseleave',()=>{_hoveredCardId=null;hideTooltip();});
   document.getElementById('table').appendChild(el);
 }
 function spawn(type,x,y){
@@ -2670,13 +2686,71 @@ function togglePause(){
     po.style.display='flex';stopAmbientMusic();
   }else{po.style.display='none';G.ts=null;requestAnimationFrame(loop);startAmbientMusic();}
 }
+// ── KEYBINDS ─────────────────────────────────────────────────────────────────
+const KB_ACTIONS=[
+  {id:'pause',   label:'Pause / Reprendre'},
+  {id:'recipes', label:'Livre de Recettes'},
+  {id:'tidy',    label:'Ranger les cartes'},
+  {id:'save',    label:'Sauvegarder'},
+  {id:'conseil', label:'Conseil'},
+  {id:'sell',    label:'Vendre (carte survolée)'},
+];
+const DEFAULT_KEYBINDS={pause:'Escape',recipes:'r',tidy:'t',save:'s',conseil:'c',sell:'x'};
+let _keybinds={...DEFAULT_KEYBINDS};
+let _hoveredCardId=null;
+let _recordingAction=null;
+function loadKeybinds(){try{const k=JSON.parse(localStorage.getItem('cs_keybinds'));if(k)_keybinds={...DEFAULT_KEYBINDS,...k};}catch(e){}}
+function saveKeybinds(){localStorage.setItem('cs_keybinds',JSON.stringify(_keybinds));}
+function resetKeybinds(){_keybinds={...DEFAULT_KEYBINDS};saveKeybinds();renderKeybinds();}
+function keyDisplay(k){
+  if(!k)return'—';
+  if(k==='Escape')return'Échap';
+  if(k===' '||k==='Space')return'Espace';
+  if(k==='ArrowUp')return'↑';if(k==='ArrowDown')return'↓';if(k==='ArrowLeft')return'←';if(k==='ArrowRight')return'→';
+  if(k==='Enter')return'Entrée';if(k==='Tab')return'Tab';if(k==='Backspace')return'Retour';
+  if(k.length===1)return k.toUpperCase();
+  return k;
+}
+function renderKeybinds(){
+  const list=document.getElementById('kb-list');if(!list)return;
+  list.innerHTML=KB_ACTIONS.map(a=>`
+    <div class="kb-row">
+      <span class="kb-label">${a.label}</span>
+      <span class="kb-key${_recordingAction===a.id?' recording':''}" data-action="${a.id}" onclick="startRebind('${a.id}')">${_recordingAction===a.id?'…':keyDisplay(_keybinds[a.id])}</span>
+    </div>`).join('');
+}
+function startRebind(action){_recordingAction=action;renderKeybinds();}
+function cancelRebind(){_recordingAction=null;renderKeybinds();}
+function openSettings(){loadKeybinds();renderKeybinds();document.getElementById('settings-overlay').style.display='flex';}
+function closeSettings(){cancelRebind();document.getElementById('settings-overlay').style.display='none';}
+// Capture key for rebind (capture phase = fires before other listeners)
+document.addEventListener('keydown',e=>{
+  if(!_recordingAction)return;
+  e.preventDefault();e.stopPropagation();
+  if(e.key==='Escape'){cancelRebind();return;}
+  _keybinds[_recordingAction]=e.key;
+  _recordingAction=null;
+  saveKeybinds();renderKeybinds();
+},true);
+// Main keydown with custom bindings
 document.addEventListener('keydown',e=>{
   if(document.activeElement.tagName==='INPUT')return;
+  if(_recordingAction)return;
   if(G&&G.secretReveal){closeSecretReveal();return;}
-  if(e.key==='Escape'&&G&&!G.over)togglePause();
-  if((e.key==='r'||e.key==='R')&&G&&!G.over&&!G.paused)showRB();
-  if(e.key===' '&&G&&!G.over){e.preventDefault();togglePause();}
+  const k=e.key;
+  const kl=k.toLowerCase();
+  // Escape always pauses
+  if(k==='Escape'&&G&&!G.over){togglePause();return;}
+  if(!G||G.over)return;
+  const bind=id=>_keybinds[id]?.toLowerCase();
+  if(kl===bind('pause')&&k!=='Escape'){e.preventDefault();togglePause();}
+  else if(kl===bind('recipes')&&!G.paused){showRB();}
+  else if(kl===bind('tidy')&&!G.paused){tidyCards();}
+  else if(kl===bind('save')){manualSave();}
+  else if(kl===bind('conseil')&&!G.paused){showConseilPopup();}
+  else if(kl===bind('sell')&&!G.paused&&_hoveredCardId){sellCard(_hoveredCardId);}
 });
+loadKeybinds();
 
 // ── RECIPE BOOK ───────────────────────────────────────────────────────────────
 function showRB(fromMenu){
@@ -5168,6 +5242,19 @@ showMainMenu();
 <div id="mm-fade"></div>
 <!-- ── RÉSUMÉ FIN DE JOURNÉE ── -->
 <div id="day-summary"></div>
+
+<!-- ── PARAMÈTRES ── -->
+<div id="settings-overlay" onclick="if(event.target===this)closeSettings()">
+  <div id="settings-box">
+    <h2>⚙️ Paramètres</h2>
+    <p class="kb-subtitle">Clique sur une touche pour la changer — Échap pour annuler</p>
+    <div id="kb-list"></div>
+    <div class="kb-footer">
+      <button class="obtn" onclick="resetKeybinds()" style="font-size:12px;padding:7px 16px;">↺ Par défaut</button>
+      <button class="obtn green" onclick="closeSettings()" style="font-size:12px;padding:7px 16px;">✓ Fermer</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
