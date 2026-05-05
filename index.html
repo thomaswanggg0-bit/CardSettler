@@ -929,7 +929,6 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
     <button class="mbtn mbtn-sm" onclick="showTutorial()" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📖 Règles</button>
     <button class="mbtn mbtn-sm" onclick="showRB(true)" style="background:#071e07;border-color:#1a3a1a;color:#86efac;">📜 Recettes</button>
     <button class="mbtn mbtn-sm" onclick="showNarrative()">🌌 L'Histoire</button>
-    <button class="mbtn mbtn-sm disc" onclick="disconnect()">🚪 Déconnexion</button>
   </div>
 
   <!-- Pied de page stats -->
@@ -4131,20 +4130,20 @@ function showPermaShop(){showBoutique('bonuses');}
 function closePermaShop(){closeBoutique();}
 
 // ── NARRATIVE ─────────────────────────────────────────────────────────────────
-const NARRATIVE_INTRO=`<p>⚙️ Le <em>Grand Gel</em> est tombé en une nuit d'hiver sans lune. En quelques heures, les pics du Nord ont craqué, les rivières se sont figées, et les villages ont disparu sous une épaisse croûte de glace.</p>
+const NARRATIVE_INTRO=`<p>Le <em>Grand Gel</em> est tombé en une nuit d'hiver sans lune. En quelques heures, les pics du Nord ont craqué, les rivières se sont figées, et les villages ont disparu sous une épaisse croûte de glace.</p>
 <p>Vos ancêtres ont fui vers le Sud. Trois cents âmes épuisées, portant pour tout trésor quelques <em>cartes aux bords usés</em> et un vieux sac de vivres. Derrière eux, le silence blanc de tout ce qu'ils avaient connu. Devant eux, une vallée inconnue et l'hiver qui approche à nouveau.</p>
 
-<p>🌌 Avant de disparaître dans le blizzard, la vieille sorcière du village avait murmuré quelque chose. Les survivants se le répétaient autour des feux, comme une prière.</p>
+<p>Avant de disparaître dans le blizzard, la vieille sorcière du village avait murmuré quelque chose. Les survivants se le répétaient autour des feux, comme une prière.</p>
 <blockquote>"Là où la poussière de comète touche le sol, la vie ne s'éteindra jamais. Empile les pierres, forge le fer, et les étoiles te guideront <em>35 nuits</em>."</blockquote>
 <p>Au bout de trente-cinq jours, disait-on, une pluie de comètes illuminerait le ciel, fondant le Gel, rouvrant les routes, ramenant le printemps. Il fallait <em>tenir jusque-là</em>.</p>
 
-<p>🐺 Le Gel avait fracturé les montagnes. Les créatures du dedans, celles que la roche retenait depuis des siècles, rôdaient désormais à l'air libre. Des <em>loups</em> affamés, des <em>gobelins</em> pillards, des <em>trolls</em> réveillés par les tremblements... Chaque nuit ils se rapprochaient, guidés par la chaleur de vos feux.</p>
+<p>Le Gel avait fracturé les montagnes. Les créatures du dedans, celles que la roche retenait depuis des siècles, rôdaient désormais à l'air libre. Des <em>loups</em> affamés, des <em>gobelins</em> pillards, des <em>trolls</em> réveillés par les tremblements... Chaque nuit ils se rapprochaient, guidés par la chaleur de vos feux.</p>
 <p>La survie avait un seul prix : <em>construire plus vite qu'ils ne détruisaient</em>.</p>
 
-<p>🏆 Vos cartes sont vos outils. Un villageois empilé sur un arbre abat du bois. Du bois sur de la pierre forge un foyer. Un foyer nourrit un peuple. Un peuple bâtit des murs. Des murs repoussent les ombres.</p>
+<p>Vos cartes sont vos outils. Un villageois empilé sur un arbre abat du bois. Du bois sur de la pierre forge un foyer. Un foyer nourrit un peuple. Un peuple bâtit des murs. Des murs repoussent les ombres.</p>
 <p>La <em>Poussière de Comète</em>, cette poudre d'étoile tombée lors des premières nuits, recèle un pouvoir étrange. Les anciens savaient la récolter. Vous apprendrez à l'utiliser.</p>
 <p>Trente-cinq nuits. C'est tout ce qu'il vous faut. C'est tout ce qu'il vous reste.</p>
-<p style="text-align:center;margin-top:18px;color:#a78bfa;font-size:13px;">⭐ <em>Bonne chance, bâtisseur.</em> ⭐</p>`;
+<p style="text-align:center;margin-top:18px;color:#a78bfa;font-size:13px;"><em>Bonne chance, bâtisseur.</em></p>`;
 
 function showNarrative(){
   const lore=document.getElementById('nar-lore');
