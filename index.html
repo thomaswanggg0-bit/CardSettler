@@ -2642,6 +2642,7 @@ function goMainMenu(){
   showMainMenu();
 }
 function manualSave(){
+  if(G&&G._tutorialMode)return;
   saveGame();playSound('save');
   const t=document.createElement('div');
   t.style.cssText='position:fixed;top:56px;left:50%;transform:translateX(-50%);background:#16a34a;color:#fff;padding:10px 24px;border-radius:8px;font-size:14px;z-index:99999;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.4);';
@@ -3617,6 +3618,7 @@ function startTutorialGame(){
   initG(false);
   G._tutorialMode=true;G._tutStep=0;
   G.moonDur=150;
+  const saveBtn=document.querySelector('#pause .obtn[onclick="manualSave()"]');if(saveBtn)saveBtn.style.display='none';
   spawn('rock',460,80);spawn('flint',590,80);
   spawn('berry',70,200);spawn('berry',160,200);spawn('berry',250,200);
   document.getElementById('tut-live').style.display='block';
@@ -3659,6 +3661,7 @@ function finishTutLive(){
   document.getElementById('tut-live').style.display='none';
   document.querySelectorAll('.card').forEach(el=>el.classList.remove('tut-hl'));
   if(G)G._tutorialMode=false;
+  const saveBtn=document.querySelector('#pause .obtn[onclick="manualSave()"]');if(saveBtn)saveBtn.style.display='';
 }
 
 // ── BOARD SKINS ───────────────────────────────────────────────────────────────
