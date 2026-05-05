@@ -1337,7 +1337,7 @@ function showTooltip(e,type){
   }else if(uses.length>0){
     ttEl.querySelector('.tt-label').textContent='Recettes :';
     ttEl.querySelector('.tt-r').innerHTML=uses.slice(0,4).map(r=>
-      r.i.map(t=>CD[t]?.e||t).join('+')+' → '+r.o.map(t=>CD[t]?.e||t).join(',')+'<span style="color:#888"> ('+r.t+'s'+(r.rep?' 🔄':'')+')</span>'
+      r.i.map(t=>CD[t]?.e||t).join('+')+' → '+(()=>{const g={};r.o.forEach(t=>{g[t]=(g[t]||0)+1;});return Object.entries(g).map(([t,c])=>(CD[t]?.e||t)+(c>1?' ×'+c:'')).join(',');})()+' <span style="color:#888">('+r.t+'s'+(r.rep?' 🔄':'')+')</span>'
     ).join('<br>');
   }else{ttEl.querySelector('.tt-label').textContent='';ttEl.querySelector('.tt-r').textContent='';}
   const sellEl=ttEl.querySelector('.tt-sell');
@@ -1530,7 +1530,9 @@ function dissolve(sid){
   delete G.stacks[sid];
 }
 function addToStack(sid,cid){
-  rmFromStack(cid);const s=G.stacks[sid];s.ids.push(cid);G.cards[cid].sid=sid;
+  rmFromStack(cid);const s=G.stacks[sid];
+  if(s.compressed){s.compressed=false;s.ids.forEach(id=>{const e=cel(id);if(e)e.style.display='';});}
+  s.ids.push(cid);G.cards[cid].sid=sid;
   s.recipe=null;s.prog=0;updateSV(sid);checkRecipe(sid);
 }
 function rmFromStack(cid){
@@ -1546,21 +1548,55 @@ function rmFromStack(cid){
 function updateSV(sid){
   const s=G.stacks[sid];if(!s)return;
   const n=s.ids.length;
+  if(s.compressed){
+    s.ids.forEach((cid,i)=>{
+      const el=cel(cid);if(!el)return;
+      el.style.left=s.rx+'px';el.style.top=s.ry+'px';
+      el.style.zIndex=10+i;el.style.display=i===0?'':'none';
+      G.cards[cid].x=s.rx;G.cards[cid].y=s.ry;
+      if(i===0){
+        const bar=el.querySelector('.card-bar');if(bar)bar.style.display='none';
+        const badge=el.querySelector('.stack-badge');
+        if(badge){badge.textContent='×'+n;badge.style.display=n>1?'block':'none';}
+        const prev=el.querySelector('.craft-preview');if(prev)prev.remove();
+      }
+    });
+    return;
+  }
   s.ids.forEach((cid,i)=>{
     const el=cel(cid);if(!el)return;
+    el.style.display='';
     el.style.left=s.rx+'px';el.style.top=(s.ry+i*SO)+'px';el.style.zIndex=10+i;
     G.cards[cid].x=s.rx;G.cards[cid].y=s.ry+i*SO;
     const bar=el.querySelector('.card-bar');
     if(bar)bar.style.display=(i===0&&s.recipe)?'block':'none';
     const badge=el.querySelector('.stack-badge');
     if(badge){badge.textContent='×'+n;badge.style.display=(i===0&&n>1)?'block':'none';}
-    // Craft preview label
     let prev=el.querySelector('.craft-preview');
     if(i===0&&s.recipe&&s.recipe.type!=='expedition'){
       if(!prev){prev=document.createElement('div');prev.className='craft-preview';el.appendChild(prev);}
-      prev.textContent='→ '+s.recipe.o.map(t=>CD[t]?.e||t).join(' ');
+      // Show "→ or ×3" instead of "→ or or or"
+      const grouped={};s.recipe.o.forEach(t=>{grouped[t]=(grouped[t]||0)+1;});
+      prev.textContent='→ '+Object.entries(grouped).map(([t,c])=>(CD[t]?.e||t)+(c>1?' ×'+c:'')).join(' ');
     }else{if(prev)prev.remove();}
   });
+}
+function extractFromCompressed(sid){
+  const s=G.stacks[sid];if(!s||!s.compressed)return;
+  if(s.ids.length<=1){s.compressed=false;updateSV(sid);return;}
+  const cid=s.ids.pop();
+  G.cards[cid].sid=null;
+  const el=cel(cid);if(el){el.style.display='';el.style.zIndex=9999;}
+  G.cards[cid].x=s.rx+(CW+10);G.cards[cid].y=s.ry;
+  updateCV(cid);
+  if(s.ids.length===1){
+    const last=s.ids[0];
+    G.cards[last].x=s.rx;G.cards[last].y=s.ry;
+    G.cards[last].sid=null;
+    const le=cel(last);if(le){le.style.display='';}
+    dissolve(sid);updateCV(last);
+  }else{updateSV(sid);}
+  playSound('menu_click');
 }
 function updateCV(id){
   const c=G.cards[id],el=cel(id);if(!el||!c)return;
@@ -1594,7 +1630,10 @@ function checkRecipe(sid){
         }
         G._popCapWarned=false;
       }
-      if(!s.recipe)playSound('craft_start');s.recipe=r;s.prog=0;updateSV(sid);return;
+      if(!s.recipe)playSound('craft_start');
+      s.recipe=r;s.prog=0;
+      if(s.compressed){s.compressed=false;s.ids.forEach(id=>{const e=cel(id);if(e)e.style.display='';});}
+      updateSV(sid);return;
     }
   }
   // Détection expédition : cave_entrance + 1-3 villageois + 0-2 épées
@@ -1605,7 +1644,9 @@ function checkRecipe(sid){
     if(vCount>=1&&vCount<=3&&sCount<=2&&others.length===0){
       if(!s.recipe)playSound('craft_start');
       s.recipe={type:'expedition',t:40,vCount,sCount,keep:[]};
-      s.prog=0;updateSV(sid);return;
+      s.prog=0;
+      if(s.compressed){s.compressed=false;s.ids.forEach(id=>{const e=cel(id);if(e)e.style.display='';});}
+      updateSV(sid);return;
     }
   }
   s.recipe=null;updateSV(sid);
@@ -1674,7 +1715,8 @@ function execRecipe(sid){
   });
   checkAchievements();
   playSound('craft_done');
-  log('✨ '+r.o.map(t=>CD[t].e+CD[t].n).join(', ')+' créé !');
+  const grpO={};r.o.forEach(t=>{grpO[t]=(grpO[t]||0)+1;});
+  log('✨ '+Object.entries(grpO).map(([t,c])=>CD[t].e+CD[t].n+(c>1?' ×'+c:'')).join(', ')+' créé !');
   updateHUD();
 }
 
@@ -1687,13 +1729,13 @@ function startDrag(e,id){
   // Drag de pile entière si on clique sur la carte racine (ids[0])
   if(c.sid&&G.stacks[c.sid]?.ids[0]===id){
     const s=G.stacks[c.sid];
-    G.drag={id,sid:c.sid,stackDrag:true,ox:e.clientX-er.left,oy:e.clientY-er.top,tl:tr.left,tt:tr.top};
+    G.drag={id,sid:c.sid,stackDrag:true,ox:e.clientX-er.left,oy:e.clientY-er.top,tl:tr.left,tt:tr.top,sx:e.clientX,sy:e.clientY};
     s.ids.forEach((cid,i)=>{const e2=cel(cid);if(e2){e2.classList.add('dragging');e2.style.zIndex=9990+i;}});
     return;
   }
   // Carte individuelle — extraire de la pile
   if(c.sid)rmFromStack(id);
-  G.drag={id,ox:e.clientX-er.left,oy:e.clientY-er.top,tl:tr.left,tt:tr.top};
+  G.drag={id,ox:e.clientX-er.left,oy:e.clientY-er.top,tl:tr.left,tt:tr.top,sx:e.clientX,sy:e.clientY};
   el.classList.add('dragging');el.style.zIndex=9999;
 }
 function _handleDragMove(cx,cy){
@@ -1716,10 +1758,22 @@ function _handleDragMove(cx,cy){
 }
 document.addEventListener('mousemove',e=>_handleDragMove(e.clientX,e.clientY));
 document.addEventListener('touchmove',e=>{if(G.drag){e.preventDefault();const t=e.touches[0];_handleDragMove(t.clientX,t.clientY);}},{passive:false});
-document.addEventListener('mouseup',()=>{
+document.addEventListener('mouseup',e=>{
   if(!G.drag)return;
   if(G.drag.stackDrag){
-    const dragSid=G.drag.sid;G.drag=null;
+    const dragSid=G.drag.sid;
+    const moved=Math.hypot((e.clientX||0)-(G.drag.sx||0),(e.clientY||0)-(G.drag.sy||0))>5;
+    // Click on compressed stack → extract one card
+    if(!moved&&G.stacks[dragSid]?.compressed){
+      G.stacks[dragSid].ids.forEach((cid,i)=>{const e2=cel(cid);if(e2){e2.classList.remove('dragging');e2.style.zIndex=10+i;}});
+      G.drag=null;extractFromCompressed(dragSid);updateHUD();return;
+    }
+    // Dragging a compressed stack → un-compress first
+    if(G.stacks[dragSid]?.compressed){
+      const cs=G.stacks[dragSid];cs.compressed=false;
+      cs.ids.forEach((cid,i)=>{const e2=cel(cid);if(e2){e2.style.display='';e2.style.top=(cs.ry+i*SO)+'px';}G.cards[cid].y=cs.ry+i*SO;});
+    }
+    G.drag=null;
     const s=G.stacks[dragSid];
     if(s){
       s.ids.forEach((cid,i)=>{const el=cel(cid);if(el){el.classList.remove('dragging');el.style.zIndex=10+i;}});
@@ -2083,7 +2137,12 @@ function loop(ts){
     const needed2=Math.max(0,pop*(G.foodPerPop||1)-(G._dayFoodEaten||0));
     if(food<needed2&&pop>0){log('⚠️ Famine proche ! Il faut encore '+needed2+' repas pour ce soir !');playSound('error');}
   }
-  if(G.moonProg>=1){G.moonProg=0;G.moon++;G._faminWarned=false;G._dayFoodEaten=0;G._foodTick=0;endMoon();if(G.over)return;}
+  if(G.moonProg>=1){G.moonProg=0;G.moon++;G._faminWarned=false;G._dayFoodEaten=0;G._foodTick=0;G._midMonsterDone=false;endMoon();if(G.over)return;}
+  // Auto-start baby→villager recipe for free babies
+  G._babyCheckT=(G._babyCheckT||0)+dt;
+  if(G._babyCheckT>=4){G._babyCheckT=0;for(const id in G.cards){const c=G.cards[id];if(c.type==='baby'&&!c.sid)mkStack([parseInt(id)]);}}
+  // Mid-day monster spawn from day 20
+  if(G.moon>=20&&!G._midMonsterDone&&G.moonProg>=0.5){G._midMonsterDone=true;spawnMidDayMonster();}
   document.getElementById('moon-fill').style.width=(G.moonProg*100)+'%';
   const toExec=[];
   for(const [sidStr,s] of Object.entries(G.stacks)){
@@ -2246,16 +2305,36 @@ function buyPack(key){
   const cost=p.cost+(G.packCostAdd||0);
   if(G.gold<cost)return;
   G.gold-=cost;
-  // Réduire le poids des villageois en fonction des bébés grandis (rareté croissante)
   const grown=G._babiesGrown||0;
-  const adjPool=p.pool.map(e=>e.t==='villager'?{...e,w:Math.max(1,e.w-grown*2)}:e);
+  const atCap=(countT('villager')+countT('baby'))>=getPopCap();
+  // Réduire le poids des villageois selon bébés grandis + cap population
+  const adjPool=p.pool.map(e=>(e.t==='villager'||e.t==='baby')
+    ?{...e,w:atCap?0:Math.max(1,e.w-grown*2)}:e);
   const tbl=document.getElementById('table').getBoundingClientRect();
   const cx=tbl.width/2,cy=tbl.height/2;
   for(let i=0;i<p.cnt;i++){
     const type=wRand(adjPool);
     spawn(type,Math.max(4,cx+(Math.random()-.5)*220-CW/2),Math.max(4,cy+(Math.random()-.5)*160-CH/2));
   }
-  playSound('buy_pack');log('📦 Ouvert : '+p.n+(grown>0?' (villageois plus rares : '+grown+' bébés grandis)':''));updateHUD();
+  playSound('buy_pack');
+  const note=atCap?' (population max — plus de villageois)':grown>0?' (villageois plus rares : '+grown+' bébés grandis)':'';
+  log('📦 Ouvert : '+p.n+note);updateHUD();
+}
+function spawnMidDayMonster(){
+  if(G._tutorialMode)return;
+  const day=G.moon;
+  const chance=day>=25?0.55:0.35;
+  if(Math.random()>chance)return;
+  const tbl=document.getElementById('table').getBoundingClientRect();
+  const type=day>=25?(Math.random()<0.4?'troll':Math.random()<0.5?'goblin':'wolf'):Math.random()<0.55?'wolf':'goblin';
+  spawn(type,40+Math.random()*(tbl.width-180),40+Math.random()*(tbl.height-180));
+  const wa=document.getElementById('wave-alert');
+  wa.style.background='rgba(60,10,10,.92)';
+  wa.textContent='🌕 Pleine lune ! '+CD[type].e+' '+CD[type].n+' surgit des ténèbres !';
+  wa.style.display='block';
+  setTimeout(()=>{wa.style.display='none';wa.style.background='';},3000);
+  log('🌕 Pleine lune J'+day+' — '+CD[type].n+' surgit !');
+  playSound(type==='wolf'?'wolf_appear':type==='goblin'?'goblin_appear':'troll_appear');
 }
 function wRand(pool){
   const tot=pool.reduce((s,e)=>s+e.w,0);if(tot<=0)return pool[pool.length-1].t;
@@ -2768,7 +2847,7 @@ function showRB(fromMenu){
     <div style="font-size:13px;padding:6px 0;border-bottom:1px solid #1e3a1e;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <span>${r.i.map(t=>CD[t]?.e+'&nbsp;'+(CD[t]?.n||t)).join(' + ')}</span>
       <span style="color:#888">→</span>
-      <span>${r.o.map(t=>CD[t]?.e+'&nbsp;'+(CD[t]?.n||t)).join(', ')}</span>
+      <span>${(()=>{const g={};r.o.forEach(t=>{g[t]=(g[t]||0)+1;});return Object.entries(g).map(([t,c])=>(CD[t]?.e||t)+'&nbsp;'+(CD[t]?.n||t)+(c>1?' ×'+c:'')).join(', ');})()}</span>
       <span style="color:#888;font-size:11px;">${r.t}s${r.rep?' 🔄':''}</span>
     </div>`).join('');
   document.getElementById('rb').style.display='flex';
@@ -3037,6 +3116,16 @@ function execExpedition(sid){
   loot.forEach((type,i)=>{spawn(type,rx+(i%4)*(CW+10),ry+CH+48+Math.floor(i/4)*(CH+10));});
   spawnParticles(rx,ry);
   G._stats.expeditions=(G._stats.expeditions||0)+1;
+  // Chance de rapporter un monstre (40% <J20, 70% J20+, 100% J25+)
+  const day=G.moon;
+  const monChance=day>=25?1.0:day>=20?0.7:0.4;
+  if(Math.random()<monChance){
+    const mType=hasIronSword?'troll':sCount>0?'goblin':'wolf';
+    const tbl2=document.getElementById('table').getBoundingClientRect();
+    spawn(mType,Math.min(rx+(CW+12),tbl2.width-CW-10),ry);
+    log('⚠️ L\'expédition a réveillé un '+CD[mType].n+' ! Il vous suit !');
+    playSound(mType==='troll'?'troll_appear':mType==='goblin'?'goblin_appear':'wolf_appear');
+  }
   // Chance de marché noir
   const bmChance=(G._stats.expeditions<=1)?0.55:0.38;
   if(!G.blackMarket&&Math.random()<bmChance)generateBlackMarket();
@@ -3198,33 +3287,62 @@ function closeEventPopup(){
 }
 
 // ── QUÊTES JOURNALIÈRES ───────────────────────────────────────────────────────
+// tier: 1=débutant (J1-8), 2=intermédiaire (J8-18), 3=avancé (J18-28), 4=expert (J28+)
 const QUESTS_DEF=[
-  {id:'q_wood',  e:'🪵', desc:'Stocke 5 Bois',         reward:3, check:()=>countT('wood')>=5},
-  {id:'q_stone', e:'🪨', desc:'Stocke 4 Pierres',       reward:2, check:()=>countT('stone')>=4},
-  {id:'q_food',  e:'🍖', desc:'10 repas en réserve',    reward:3, check:()=>Object.values(G.cards).filter(c=>CD[c.type]?.food).reduce((s,c)=>s+(CD[c.type].food||0),0)>=10},
-  {id:'q_kill',  e:'⚔️', desc:'Tue 1 monstre',          reward:5, check:()=>(G._stats.kills||0)-(G._quest?.sk||0)>=1},
-  {id:'q_craft', e:'⚒️', desc:'Crafte 4 objets',        reward:3, check:()=>(G._stats.crafts||0)-(G._quest?.sc||0)>=4},
-  {id:'q_pop',   e:'👥', desc:'3 villageois vivants',   reward:3, check:()=>countT('villager')>=3},
-  {id:'q_gold',  e:'🪙', desc:'Accumule 8 Or',           reward:2, check:()=>G.gold>=8},
-  {id:'q_plank', e:'🟫', desc:'Stocke 2 Planches',      reward:2, check:()=>countT('plank')>=2},
-  {id:'q_baby',  e:'👶', desc:'Obtiens un Bébé',         reward:5, check:()=>countT('baby')>=1},
-  {id:'q_exp',   e:'⛏️', desc:'Lance une Expédition',   reward:7, check:()=>(G._stats.expeditions||0)-(G._quest?.se||0)>=1},
-  {id:'q_iron',  e:'🗡️', desc:'Forge une Épée de Fer',  reward:6, check:()=>(G._stats.madeIronSword||countT('iron_sword')>0)},
-  {id:'q_gem',   e:'🔮', desc:'Ramasse 1 Gemme',         reward:4, check:()=>countT('gem')>=1},
+  // Tier 1 — Débutant
+  {id:'q_wood',    e:'🪵', tier:1, desc:'Stocke 5 Bois',             reward:2, check:()=>countT('wood')>=5},
+  {id:'q_stone',   e:'🪨', tier:1, desc:'Stocke 4 Pierres',           reward:2, check:()=>countT('stone')>=4},
+  {id:'q_plank',   e:'🟫', tier:1, desc:'Fabrique 2 Planches',        reward:3, check:()=>countT('plank')>=2},
+  {id:'q_food5',   e:'🍎', tier:1, desc:'5 repas en réserve',         reward:2, check:()=>Object.values(G.cards).filter(c=>CD[c.type]?.food).reduce((s,c)=>s+(CD[c.type].food||0),0)>=5},
+  {id:'q_gold5',   e:'🪙', tier:1, desc:'Accumule 5 Or',              reward:2, check:()=>G.gold>=5},
+  {id:'q_kill1',   e:'⚔️', tier:1, desc:'Tue 1 monstre',              reward:4, check:()=>(G._stats.kills||0)-(G._quest?.sk||0)>=1},
+  {id:'q_craft4',  e:'⚒️', tier:1, desc:'Crafte 4 objets',            reward:3, check:()=>(G._stats.crafts||0)-(G._quest?.sc||0)>=4},
+  {id:'q_pop2',    e:'👥', tier:1, desc:'2 villageois vivants',        reward:2, check:()=>countT('villager')>=2},
+  {id:'q_sword1',  e:'⚔️', tier:1, desc:'Fabrique une Épée',          reward:4, check:()=>G._stats.madeSword||countT('sword')>0},
+  // Tier 2 — Intermédiaire
+  {id:'q_baby',    e:'👶', tier:2, desc:'Fais naître un Bébé',        reward:5, check:()=>(G._stats.babies||0)-(G._quest?.sb||0)>=1},
+  {id:'q_house',   e:'🏠', tier:2, desc:'Construis une Maison',       reward:5, check:()=>G._stats.madeHouse||countT('house')>0},
+  {id:'q_farm',    e:'🌾', tier:2, desc:'Construis une Ferme',        reward:5, check:()=>G._stats.madeFarm||countT('farm')>0},
+  {id:'q_food12',  e:'🍖', tier:2, desc:'12 repas en réserve',        reward:4, check:()=>Object.values(G.cards).filter(c=>CD[c.type]?.food).reduce((s,c)=>s+(CD[c.type].food||0),0)>=12},
+  {id:'q_kill3',   e:'💀', tier:2, desc:'Tue 3 monstres',             reward:7, check:()=>(G._stats.kills||0)-(G._quest?.sk||0)>=3},
+  {id:'q_craft8',  e:'⚒️', tier:2, desc:'Crafte 8 objets',            reward:5, check:()=>(G._stats.crafts||0)-(G._quest?.sc||0)>=8},
+  {id:'q_pop3',    e:'👥', tier:2, desc:'3 villageois en vie',         reward:4, check:()=>countT('villager')>=3},
+  {id:'q_gold10',  e:'🪙', tier:2, desc:'Accumule 10 Or',              reward:3, check:()=>G.gold>=10},
+  {id:'q_gem',     e:'🔮', tier:2, desc:'Ramasse 1 Gemme',             reward:5, check:()=>countT('gem')>=1},
+  {id:'q_campfire',e:'🔥', tier:2, desc:'Construis un Feu de camp',   reward:4, check:()=>G._stats.madeCampfire||countT('campfire')>0},
+  // Tier 3 — Avancé
+  {id:'q_exp1',    e:'⛏️', tier:3, desc:'Lance 1 Expédition',         reward:7, check:()=>(G._stats.expeditions||0)-(G._quest?.se||0)>=1},
+  {id:'q_iron',    e:'🗡️', tier:3, desc:'Forge une Épée de Fer',      reward:7, check:()=>G._stats.madeIronSword||countT('iron_sword')>0},
+  {id:'q_forge',   e:'🔨', tier:3, desc:'Construis une Forge',        reward:6, check:()=>G._stats.madeForge||countT('forge')>0},
+  {id:'q_kill6',   e:'💀', tier:3, desc:'Tue 6 monstres',             reward:9, check:()=>(G._stats.kills||0)-(G._quest?.sk||0)>=6},
+  {id:'q_pop5',    e:'👥', tier:3, desc:'5 villageois en vie',         reward:7, check:()=>countT('villager')>=5},
+  {id:'q_food20',  e:'🍖', tier:3, desc:'20 repas en réserve',        reward:6, check:()=>Object.values(G.cards).filter(c=>CD[c.type]?.food).reduce((s,c)=>s+(CD[c.type].food||0),0)>=20},
+  {id:'q_2exp',    e:'⛏️', tier:3, desc:'Fais 2 expéditions',         reward:10, check:()=>(G._stats.expeditions||0)-(G._quest?.se||0)>=2},
+  {id:'q_2houses', e:'🏠', tier:3, desc:'Construis 2 Maisons',        reward:8, check:()=>countT('house')>=2},
+  {id:'q_gem3',    e:'🔮', tier:3, desc:'Accumule 3 Gemmes',           reward:7, check:()=>countT('gem')>=3},
+  // Tier 4 — Expert
+  {id:'q_kill12',  e:'💀', tier:4, desc:'Tue 12 monstres',            reward:14, check:()=>(G._stats.kills||0)-(G._quest?.sk||0)>=12},
+  {id:'q_3exp',    e:'⛏️', tier:4, desc:'Fais 3 expéditions',         reward:13, check:()=>(G._stats.expeditions||0)-(G._quest?.se||0)>=3},
+  {id:'q_pop7',    e:'👥', tier:4, desc:'7 villageois en vie',         reward:12, check:()=>countT('villager')>=7},
+  {id:'q_gold20',  e:'🪙', tier:4, desc:'Accumule 20 Or',              reward:8, check:()=>G.gold>=20},
+  {id:'q_food30',  e:'🍖', tier:4, desc:'30 repas en réserve',        reward:10, check:()=>Object.values(G.cards).filter(c=>CD[c.type]?.food).reduce((s,c)=>s+(CD[c.type].food||0),0)>=30},
+  {id:'q_3exp2',   e:'⚔️', tier:4, desc:'Tue 2 boss (gob. roi, dragon)',reward:15, check:()=>(G._stats.killedGoblinKing?1:0)+(G._stats.killedDragon?1:0)>=2},
+  {id:'q_craftmaster',e:'⚒️',tier:4,desc:'Crafte 20 objets',          reward:12, check:()=>(G._stats.crafts||0)-(G._quest?.sc||0)>=20},
+  {id:'q_golden',  e:'🥇', tier:4, desc:'Fabrique un Lingot d\'Or',   reward:10, check:()=>countT('golden_bar')>=1},
 ];
 function newDailyQuest(){
-  const diff=G.difficulty||'normal';
-  const available=QUESTS_DEF.filter(q=>{
-    if(q.id==='q_baby'&&G.moon<6)return false;
-    if(q.id==='q_exp'&&G.moon<9)return false;
-    if(q.id==='q_iron'&&G.moon<8)return false;
-    if(q.id==='q_gem'&&G.moon<8)return false;
-    return true;
-  });
-  const def=available[Math.floor(Math.random()*available.length)];
-  G._quest={def,done:false,sk:G._stats.kills||0,sc:G._stats.crafts||0,se:G._stats.expeditions||0};
+  const day=G.moon;
+  // Choisir le tier selon le jour
+  let tier;
+  if(day<=8)tier=1;
+  else if(day<=18)tier=Math.random()<0.6?2:1;
+  else if(day<=28)tier=Math.random()<0.6?3:2;
+  else tier=Math.random()<0.6?4:3;
+  const pool=QUESTS_DEF.filter(q=>q.tier===tier);
+  const def=pool[Math.floor(Math.random()*pool.length)];
+  G._quest={def,done:false,sk:G._stats.kills||0,sc:G._stats.crafts||0,se:G._stats.expeditions||0,sb:G._stats.babies||0};
   updateQuestHUD();
-  log('📋 Quête : '+def.e+' '+def.desc+' → +'+def.reward+'🪙');
+  log('📋 Mission J'+day+' : '+def.e+' '+def.desc+' → +'+def.reward+'🪙');
 }
 function checkDailyQuest(){
   if(!G._quest||G._quest.done)return;
@@ -3276,61 +3394,53 @@ function cardCategory(type){
 }
 function tidyCards(){
   if(G.over||G.paused)return;
-  const MAX_PILE=10;
 
-  // 1. Repérer les piles actives (craft/expédition en cours) → intouchables
+  // 1. Repérer les piles actives (craft/expédition) → on ne les touche PAS
   const activeSids=new Set();
   for(const sid in G.stacks){if(G.stacks[sid].recipe)activeSids.add(Number(sid));}
 
-  // 2. Casser toutes les piles INACTIVES et libérer leurs cartes
+  // 2. Casser toutes les piles INACTIVES
   for(const sid in G.stacks){
-    const s=G.stacks[sid];
     if(activeSids.has(Number(sid)))continue;
+    const s=G.stacks[sid];
     s.ids.forEach(cid=>{if(G.cards[cid])G.cards[cid].sid=null;});
     delete G.stacks[sid];
   }
 
-  // 3. Grouper les cartes libres par type (monstres = individuels)
+  // 3. Grouper les cartes libres par type
   const byType={};
-  const monsters=[];
+  const freeVillagers=[];
+  const freeMonsters=[];
   for(const idStr in G.cards){
     const c=G.cards[idStr];
-    if(c.sid)continue; // dans pile active
-    if(CD[c.type]&&CD[c.type].monster){monsters.push(Number(idStr));continue;}
+    if(c.sid)continue;
+    const d=CD[c.type];if(!d)continue;
+    if(d.monster){freeMonsters.push(Number(idStr));continue;}
+    if(c.type==='villager'||c.type==='baby'){freeVillagers.push(Number(idStr));continue;}
     if(!byType[c.type])byType[c.type]=[];
     byType[c.type].push(Number(idStr));
   }
 
-  // 4. Construire les unités à positionner
+  // 4. Construire les unités à positionner (seulement cartes libres)
   const units=[];
-  // Piles actives en tête
-  for(const sid of activeSids){
-    const s=G.stacks[sid];if(!s)continue;
-    const t=G.cards[s.ids[0]]?.type||'';
-    units.push({k:'stack',sid,cat:cardCategory(t),tn:t});
-  }
-  // Créer des piles de max MAX_PILE cartes par type
   for(const type in byType){
     const ids=byType[type];
-    for(let i=0;i<ids.length;i+=MAX_PILE){
-      const grp=ids.slice(i,i+MAX_PILE);
-      if(grp.length<2){
-        units.push({k:'card',id:grp[0],cat:cardCategory(type),tn:type});
-      }else{
-        const sid=G.nid++;
-        G.stacks[sid]={id:sid,ids:grp.slice(),rx:0,ry:0,recipe:null,prog:0};
-        grp.forEach(cid=>{if(G.cards[cid])G.cards[cid].sid=sid;});
-        units.push({k:'stack',sid,cat:cardCategory(type),tn:type});
-      }
+    if(ids.length===1){
+      units.push({k:'card',id:ids[0],cat:cardCategory(type),tn:type});
+    }else{
+      const sid=G.nid++;
+      G.stacks[sid]={id:sid,ids:ids.slice(),rx:0,ry:0,recipe:null,prog:0,compressed:true};
+      ids.forEach(cid=>{if(G.cards[cid])G.cards[cid].sid=sid;});
+      units.push({k:'cstack',sid,cat:cardCategory(type),tn:type});
     }
   }
-  // Monstres à la fin
-  monsters.forEach(id=>{const t=G.cards[id]?.type||'';units.push({k:'card',id,cat:5,tn:t});});
+  freeVillagers.forEach(id=>{const t=G.cards[id]?.type||'villager';units.push({k:'card',id,cat:0,tn:t});});
+  freeMonsters.forEach(id=>{const t=G.cards[id]?.type||'';units.push({k:'card',id,cat:5,tn:t});});
 
-  // 5. Trier par catégorie puis par nom de type
+  // 5. Trier par catégorie puis type
   units.sort((a,b)=>a.cat!==b.cat?a.cat-b.cat:a.tn.localeCompare(b.tn));
 
-  // 6. Positionner avec retour à la ligne automatique
+  // 6. Positionner uniquement les cartes libres (piles actives restent en place)
   const tbl=document.getElementById('table').getBoundingClientRect();
   const pad=14,gapX=CW+14;
   const maxCols=Math.max(3,Math.floor((tbl.width-pad*2)/gapX));
@@ -3340,19 +3450,18 @@ function tidyCards(){
     lastCat=g.cat;
     if(col>=maxCols){col=0;rowY+=rowMaxH+20;rowMaxH=0;}
     const nx=pad+col*gapX,ny=rowY;
-    let itemH=CH;
-    if(g.k==='stack'){
+    if(g.k==='cstack'){
       const s=G.stacks[g.sid];
-      if(s){itemH=CH+(s.ids.length-1)*SO;s.rx=nx;s.ry=ny;updateSV(g.sid);}
+      if(s){s.rx=nx;s.ry=ny;updateSV(g.sid);}
     }else{
       const c=G.cards[g.id];
       if(c){c.x=nx;c.y=ny;updateCV(g.id);}
     }
-    rowMaxH=Math.max(rowMaxH,itemH);
+    rowMaxH=Math.max(rowMaxH,CH);
     col++;
   });
   playSound('menu_click');
-  log('🗂️ Rangé — piles de '+MAX_PILE+' max');
+  log('🗂️ Rangé — cliquez une pile pour extraire une carte');
 }
 
 // ── PACK UNLOCK TOAST ────────────────────────────────────────────────────────
