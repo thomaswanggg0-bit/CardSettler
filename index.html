@@ -1378,6 +1378,8 @@ function loadGame(){
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
   clearLog();
   ['overlay','victory','pause','main-menu'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('hud').style.display='flex';
+  document.getElementById('rb').style.display='none';
   buildShop();applyBoardSkin();
   // Cartes
   Object.values(data.cards).forEach(c=>{
@@ -1424,6 +1426,8 @@ function initG(infiniteMode){
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
   clearLog();
   ['overlay','victory','pause','main-menu'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('hud').style.display='flex';
+  document.getElementById('rb').style.display='none';
   buildShop();applyBoardSkin();
   spawn('berry_bush',70,70);spawn('tree',200,70);spawn('villager',330,70);
   if(hasPermaBonus('pop'))spawn('villager',460,70);
@@ -2510,6 +2514,8 @@ function stopTipsRotation(){if(_tipTimer){clearInterval(_tipTimer);_tipTimer=nul
 function showMainMenu(){
   stopAmbientMusic();
   ['overlay','victory','pause'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('hud').style.display='none';
+  document.getElementById('rb').style.display='none';
   setDifficulty(selectedDifficulty);
   // Stats globales
   const gs=getGlobalStats();
@@ -4744,6 +4750,8 @@ function initCoopGame(){
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
   clearLog();
   ['overlay','victory','pause','main-menu'].forEach(id=>document.getElementById(id).style.display='none');
+  document.getElementById('hud').style.display='flex';
+  document.getElementById('rb').style.display='none';
   buildShop();applyBoardSkin();
   // Spawn initial — plus de ressources pour 2 joueurs
   spawn('berry_bush',70,70);spawn('berry_bush',200,70);
