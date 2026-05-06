@@ -1193,35 +1193,33 @@ let _ambTimer=null,_ambDrones=[];
 // Mélodie in-game : pentatonique majeure C4-C6, notes légères
 const _AMB_MELODY=[261.63,293.66,329.63,392.00,440.00,523.25,440.00,392.00,329.63,293.66,329.63,392.00,523.25,440.00,392.00,329.63];
 let _ambMelIdx=0;
+function _pianoNote(freq,vol,dur,dest){
+  const t=AC.currentTime;
+  const g=AC.createGain();g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(vol*0.001,t+dur);
+  const o=AC.createOscillator();o.type='sine';o.frequency.value=freq;
+  o.connect(g);g.connect(dest);o.start(t);o.stop(t+dur+0.05);
+  const g2=AC.createGain();g2.gain.setValueAtTime(vol*0.25,t);g2.gain.exponentialRampToValueAtTime(vol*0.0001,t+dur*0.5);
+  const o2=AC.createOscillator();o2.type='sine';o2.frequency.value=freq*2;
+  o2.connect(g2);g2.connect(dest);o2.start(t);o2.stop(t+dur*0.5+0.05);
+}
 function startAmbientMusic(){
   stopAmbientMusic();
   if(_muted||!AC)return;
   const t=AC.currentTime;
-  // C4/E4/G4 major chord drones — warm and bright
-  [[261.63,0.022],[329.63,0.016],[392.00,0.013]].forEach(([freq,vol])=>{
+  [[261.63,0.010],[329.63,0.007],[392.00,0.006]].forEach(([freq,vol])=>{
     const o=AC.createOscillator(),g=AC.createGain();
-    o.type='triangle';o.frequency.value=freq;
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+3);
-    o.connect(g);g.connect(_musicGain);o.start(t);
-    _ambDrones.push({o,g});
+    o.type='sine';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+4);
+    o.connect(g);g.connect(_musicGain);o.start(t);_ambDrones.push({o,g});
   });
-  const lfo=AC.createOscillator(),lfoG=AC.createGain();
-  lfo.frequency.value=0.18;lfoG.gain.value=0.005;
-  lfo.connect(lfoG);_ambDrones.forEach(({g})=>lfoG.connect(g.gain));
-  lfo.start(t);_ambDrones.push({o:lfo,g:lfoG});
   _ambMelIdx=0;_schedMelody();
 }
 function _schedMelody(){
   if(!G||G.over||G.paused||!_ambDrones.length)return;
   const freq=_AMB_MELODY[_ambMelIdx%_AMB_MELODY.length];
   _ambMelIdx++;
-  const t=AC.currentTime;
-  const o=AC.createOscillator(),g=AC.createGain();
-  o.type='triangle';o.frequency.value=freq;
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.020,t+0.05);
-  g.gain.setValueAtTime(0.020,t+0.28);g.gain.linearRampToValueAtTime(0,t+0.65);
-  o.connect(g);g.connect(_musicGain);o.start(t);o.stop(t+0.8);
-  const delay=_ambMelIdx%_AMB_MELODY.length===0?1200+Math.random()*800:400+Math.random()*60;
+  _pianoNote(freq,0.022,1.4,_musicGain);
+  const delay=_ambMelIdx%_AMB_MELODY.length===0?1400+Math.random()*600:420+Math.random()*60;
   _ambTimer=setTimeout(_schedMelody,delay);
 }
 function stopAmbientMusic(){
@@ -1242,32 +1240,20 @@ function startMenuMusic(){
   stopMenuMusic();
   if(_muted||!AC)return;
   const t=AC.currentTime;
-  // Drones G3/B3/D4 — accord sol majeur, doux
-  [[196.00,0.022],[246.94,0.016],[293.66,0.013]].forEach(([freq,vol])=>{
+  [[196.00,0.008],[246.94,0.006],[293.66,0.005]].forEach(([freq,vol])=>{
     const o=AC.createOscillator(),g=AC.createGain();
-    o.type='triangle';o.frequency.value=freq;
-    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+3);
+    o.type='sine';o.frequency.value=freq;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+4);
     o.connect(g);g.connect(_musicGain);o.start(t);_menuNodes.push({o,g});
   });
-  const lfo=AC.createOscillator(),lfoG=AC.createGain();
-  lfo.frequency.value=0.2;lfoG.gain.value=0.005;
-  lfo.connect(lfoG);_menuNodes.forEach(({g})=>lfoG.connect(g.gain));
-  lfo.start(t);_menuNodes.push({o:lfo,g:lfoG});
   _menuMelIdx=0;_schedMenuNote();
 }
 function _schedMenuNote(){
   if(!_menuNodes.length)return;
-  // Joue le motif mélodique en boucle, notes courtes et légères
   const freq=_MENU_MELODY[_menuMelIdx%_MENU_MELODY.length];
   _menuMelIdx++;
-  const t=AC.currentTime;
-  const o=AC.createOscillator(),g=AC.createGain();
-  o.type='triangle';o.frequency.value=freq;
-  g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.025,t+0.05);
-  g.gain.setValueAtTime(0.025,t+0.3);g.gain.linearRampToValueAtTime(0,t+0.7);
-  o.connect(g);g.connect(_musicGain);o.start(t);o.stop(t+0.9);
-  // Notes plus fréquentes, tempo agréable (~160bpm sur les croches)
-  const delay=_menuMelIdx%_MENU_MELODY.length===0?900+Math.random()*600:375+Math.random()*50;
+  _pianoNote(freq,0.028,1.6,_musicGain);
+  const delay=_menuMelIdx%_MENU_MELODY.length===0?1100+Math.random()*500:390+Math.random()*50;
   _menuNoteTimer=setTimeout(_schedMenuNote,delay);
 }
 function stopMenuMusic(){
@@ -1484,7 +1470,7 @@ function initG(infiniteMode){
   const bb=document.getElementById('bm-btn');if(bb)bb.style.display='none';
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
   clearLog();
-  ['overlay','victory','pause','main-menu'].forEach(id=>document.getElementById(id).style.display='none');
+  ['overlay','victory','pause','main-menu','coop-hud','role-select'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('hud').style.display='flex';
   document.getElementById('table').style.display='block';
   document.getElementById('rb').style.display='none';
@@ -1788,11 +1774,11 @@ function _handleDragMove(cx,cy){
     const nx=cx-G.drag.tl-G.drag.ox;
     const ny=cy-G.drag.tt-G.drag.oy;
     s.rx=nx;s.ry=ny;
-    s.ids.forEach((cid,i)=>{
-      if(!G.cards[cid])return;
-      G.cards[cid].x=nx;G.cards[cid].y=ny+i*SO;
-      const el=cel(cid);if(el){el.style.left=nx+'px';el.style.top=(ny+i*SO)+'px';}
-    });
+    if(s.compressed){
+      s.ids.forEach((cid,i)=>{if(!G.cards[cid])return;G.cards[cid].x=nx;G.cards[cid].y=ny;const el=cel(cid);if(el){el.style.left=nx+'px';el.style.top=ny+'px';}});
+    }else{
+      s.ids.forEach((cid,i)=>{if(!G.cards[cid])return;G.cards[cid].x=nx;G.cards[cid].y=ny+i*SO;const el=cel(cid);if(el){el.style.left=nx+'px';el.style.top=(ny+i*SO)+'px';}});
+    }
     return;
   }
   const c=G.cards[G.drag.id],el=cel(G.drag.id);if(!c||!el)return;
@@ -1811,10 +1797,10 @@ document.addEventListener('mouseup',e=>{
       G.stacks[dragSid].ids.forEach((cid,i)=>{const e2=cel(cid);if(e2){e2.classList.remove('dragging');e2.style.zIndex=10+i;}});
       G.drag=null;extractFromCompressed(dragSid);updateHUD();return;
     }
-    // Dragging a compressed stack → un-compress first
-    if(G.stacks[dragSid]?.compressed){
-      const cs=G.stacks[dragSid];cs.compressed=false;
-      cs.ids.forEach((cid,i)=>{const e2=cel(cid);if(e2){e2.style.display='';e2.style.top=(cs.ry+i*SO)+'px';}G.cards[cid].y=cs.ry+i*SO;});
+    // Dragging a compressed stack → keep compressed, finalize position
+    if(moved&&G.stacks[dragSid]?.compressed){
+      G.stacks[dragSid].ids.forEach((cid,i)=>{const e2=cel(cid);if(e2){e2.classList.remove('dragging');e2.style.zIndex=10+i;}});
+      G.drag=null;updateSV(dragSid);updateHUD();return;
     }
     G.drag=null;
     const s=G.stacks[dragSid];
@@ -2185,7 +2171,7 @@ function loop(ts){
   G._babyCheckT=(G._babyCheckT||0)+dt;
   if(G._babyCheckT>=4){G._babyCheckT=0;for(const id in G.cards){const c=G.cards[id];if(c.type==='baby'&&!c.sid)mkStack([parseInt(id)]);}}
   // Mid-day monster spawn from day 20
-  if(G.moon>=20&&!G._midMonsterDone&&G.moonProg>=0.5){G._midMonsterDone=true;spawnMidDayMonster();}
+  if(G.moon>=10&&!G._midMonsterDone&&G.moonProg>=0.5){G._midMonsterDone=true;spawnMidDayMonster();}
   document.getElementById('moon-fill').style.width=(G.moonProg*100)+'%';
   const toExec=[];
   for(const [sidStr,s] of Object.entries(G.stacks)){
@@ -2193,7 +2179,9 @@ function loop(ts){
     const isExp=s.recipe.type==='expedition';
     const rootEl=cel(s.ids[0]);
     if(rootEl){isExp?rootEl.classList.add('expedition-active'):rootEl.classList.remove('expedition-active');}
+    const barEl=rootEl?.querySelector('.card-bar');
     const fill=rootEl?.querySelector('.card-bar-fill');
+    if(barEl)barEl.style.display='block';
     if(fill){fill.style.background=isExp?'#8b5cf6':'#4ade80';fill.style.width=(Math.min(s.prog,1)*100)+'%';}
     if(s.prog>=1){s.prog=0;toExec.push(parseInt(sidStr));}
   }
@@ -2285,7 +2273,8 @@ function endMoon(){
     // Co-op: monstres chaque jour dès le jour 6 (hors boss)
     else if(G.moon>=6){spawnCoopDailyMonsters(G.moon);}
   }else{
-    if(G.moon%5===0)spawnWave();
+    if(G.moon%5===0){spawnWave();}
+    else if(G.moon>=5){spawnDailyMonster(G.moon);}  // Daily monster every non-wave night from day 5
     // Hard mode : assauts nocturnes quotidiens jours 31–34
     if(G.difficulty==='hard'&&G.moon>=31&&G.moon<=34)spawnHardDailyWave(G.moon);
     // Hard mode : gobelin pillard (jours 5–30, hors vague, 35% de chance)
@@ -2363,21 +2352,41 @@ function buyPack(key){
   const note=atCap?' (population max — plus de villageois)':grown>0?' (villageois plus rares : '+grown+' bébés grandis)':'';
   log('📦 Ouvert : '+p.n+note);updateHUD();
 }
+function _dailyMonType(day){
+  if(day>=25)return Math.random()<0.4?'troll':Math.random()<0.5?'goblin':'wolf';
+  if(day>=15)return Math.random()<0.5?'goblin':'wolf';
+  return 'wolf';
+}
+function _spawnAlert(msg,bg){
+  const wa=document.getElementById('wave-alert');
+  wa.style.background=bg;wa.textContent=msg;wa.style.display='block';
+  setTimeout(()=>{wa.style.display='none';wa.style.background='';},3000);
+}
+function spawnDailyMonster(day){
+  if(G._tutorialMode)return;
+  const tbl=document.getElementById('table').getBoundingClientRect();
+  // Day 5-14: 1 wolf; day 15-24: 1 goblin/wolf; day 25+: 2 monsters
+  const count=day>=25?2:1;
+  const types=[];for(let i=0;i<count;i++)types.push(_dailyMonType(day));
+  types.forEach(t=>spawn(t,40+Math.random()*(tbl.width-180),40+Math.random()*(tbl.height-180)));
+  _spawnAlert('🌙 Rôdeurs nocturnes ! '+types.map(t=>CD[t].e+' '+CD[t].n).join(', ')+'!','rgba(50,10,10,.9)');
+  log('🌙 J'+day+' — '+types.map(t=>CD[t].n).join(' + ')+' rôde la nuit !');
+  playSound(types[0]==='troll'?'troll_appear':types[0]==='goblin'?'goblin_appear':'wolf_appear');
+}
 function spawnMidDayMonster(){
   if(G._tutorialMode)return;
   const day=G.moon;
-  const chance=day>=25?0.55:0.35;
-  if(Math.random()>chance)return;
+  // Day 10-14: 50% chance wolf; day 15-19: 70%; day 20+: guaranteed; day 25+: 1-2
+  const roll=Math.random();
+  if(day<15&&roll>0.5)return;
+  if(day<20&&roll>0.7)return;
   const tbl=document.getElementById('table').getBoundingClientRect();
-  const type=day>=25?(Math.random()<0.4?'troll':Math.random()<0.5?'goblin':'wolf'):Math.random()<0.55?'wolf':'goblin';
-  spawn(type,40+Math.random()*(tbl.width-180),40+Math.random()*(tbl.height-180));
-  const wa=document.getElementById('wave-alert');
-  wa.style.background='rgba(60,10,10,.92)';
-  wa.textContent='🌕 Pleine lune ! '+CD[type].e+' '+CD[type].n+' surgit des ténèbres !';
-  wa.style.display='block';
-  setTimeout(()=>{wa.style.display='none';wa.style.background='';},3000);
-  log('🌕 Pleine lune J'+day+' — '+CD[type].n+' surgit !');
-  playSound(type==='wolf'?'wolf_appear':type==='goblin'?'goblin_appear':'troll_appear');
+  const count=day>=25&&roll<0.5?2:1;
+  const types=[];for(let i=0;i<count;i++)types.push(_dailyMonType(day));
+  types.forEach(t=>spawn(t,40+Math.random()*(tbl.width-180),40+Math.random()*(tbl.height-180)));
+  _spawnAlert('☀️ Attaque en plein jour ! '+types.map(t=>CD[t].e+' '+CD[t].n).join(', ')+'!','rgba(60,10,10,.92)');
+  log('☀️ J'+day+' — Attaque en plein jour : '+types.map(t=>CD[t].n).join(' + ')+'!');
+  playSound(types[0]==='troll'?'troll_appear':types[0]==='goblin'?'goblin_appear':'wolf_appear');
 }
 function wRand(pool){
   const tot=pool.reduce((s,e)=>s+e.w,0);if(tot<=0)return pool[pool.length-1].t;
@@ -2700,7 +2709,7 @@ function toggleLang(){
 
 function showMainMenu(){
   stopAmbientMusic();
-  ['overlay','victory','pause'].forEach(id=>document.getElementById(id).style.display='none');
+  ['overlay','victory','pause','coop-hud','role-select'].forEach(id=>document.getElementById(id).style.display='none');
   document.getElementById('hud').style.display='none';
   document.getElementById('table').style.display='none';
   document.getElementById('rb').style.display='none';
@@ -2826,6 +2835,11 @@ function resumeGame(){
   launchWithFade(()=>{if(!loadGame())startNewGame();});
 }
 function goMainMenu(){
+  cleanupVoice();
+  if(COOP.channel){try{COOP.channel.unsubscribe();}catch(e){}COOP.channel=null;}
+  COOP.active=false;
+  if(COOP._readyRetry){clearInterval(COOP._readyRetry);COOP._readyRetry=null;}
+  if(COOP._launchPoller){clearInterval(COOP._launchPoller);COOP._launchPoller=null;}
   G={over:true,paused:false,cards:{},stacks:{}};
   document.getElementById('pause').style.display='none';
   showMainMenu();
@@ -3503,12 +3517,14 @@ function tidyCards(){
   const byType={};
   const freeVillagers=[];
   const freeMonsters=[];
+  const freeNodes=[];
   for(const idStr in G.cards){
     const c=G.cards[idStr];
     if(c.sid)continue;
     const d=CD[c.type];if(!d)continue;
     if(d.monster){freeMonsters.push(Number(idStr));continue;}
     if(c.type==='villager'||c.type==='baby'){freeVillagers.push(Number(idStr));continue;}
+    if(d.node){freeNodes.push(Number(idStr));continue;}  // Workbenches never compressed
     if(!byType[c.type])byType[c.type]=[];
     byType[c.type].push(Number(idStr));
   }
@@ -3527,6 +3543,7 @@ function tidyCards(){
     }
   }
   freeVillagers.forEach(id=>{const t=G.cards[id]?.type||'villager';units.push({k:'card',id,cat:0,tn:t});});
+  freeNodes.forEach(id=>{const t=G.cards[id]?.type||'';units.push({k:'card',id,cat:1,tn:t});});
   freeMonsters.forEach(id=>{const t=G.cards[id]?.type||'';units.push({k:'card',id,cat:5,tn:t});});
 
   // 5. Trier par catégorie puis type
@@ -4675,7 +4692,7 @@ function confirmRestart(){
   else startNewGame();
 }
 function confirmMenu(){
-  if(G&&!G.over)showConfirm('Retourner au menu ?','Ta partie sera sauvegardée.',()=>goMainMenu());
+  if(G&&!G.over)showConfirm('Quitter sans sauvegarder ?','Ta partie en cours sera perdue. La dernière sauvegarde reste intacte.',()=>goMainMenu());
   else goMainMenu();
 }
 
@@ -4971,7 +4988,15 @@ function setCoopStatus(panel,html,isErr){
 function startRoleSelection(){
   document.getElementById('coop-lobby').style.display='none';
   document.getElementById('role-select').style.display='flex';
-  COOP._selectedRole=null;COOP._coopLaunching=false;
+  // Reset only local state — partnerRole may already be set from early broadcasts
+  COOP._selectedRole=null;COOP._coopLaunching=false;COOP.role=null;
+  if(COOP._readyRetry){clearInterval(COOP._readyRetry);COOP._readyRetry=null;}
+  if(COOP._launchPoller){clearInterval(COOP._launchPoller);COOP._launchPoller=null;}
+  // Polling safety net: once both roles confirmed, launch
+  COOP._launchPoller=setInterval(()=>{
+    if(COOP._coopLaunching){clearInterval(COOP._launchPoller);COOP._launchPoller=null;return;}
+    if(COOP.role&&COOP.partnerRole){COOP._coopLaunching=true;clearInterval(COOP._launchPoller);COOP._launchPoller=null;clearInterval(COOP._readyRetry);COOP._readyRetry=null;launchCoopGame();}
+  },500);
   document.getElementById('role-confirm-btn').disabled=true;
   updateRoleUI();
 }
@@ -5002,16 +5027,16 @@ async function confirmRole(){
   COOP.role=COOP._selectedRole;
   document.getElementById('role-status').innerHTML='<span class="coop-ok">✅ Rôle confirmé ! En attente de l\'allié…</span>';
   document.getElementById('role-confirm-btn').disabled=true;
-  if(COOP.channel)await COOP.channel.send({type:'broadcast',event:'role_ready',payload:{role:COOP.role,name:localStorage.getItem('cs_player_name')||'Joueur'}});
-  // Launch immediately if partner already confirmed
-  if(COOP.partnerRole&&!COOP._coopLaunching){COOP._coopLaunching=true;launchCoopGame();}
+  const sendReady=async()=>{if(!COOP.channel||COOP._coopLaunching)return;await COOP.channel.send({type:'broadcast',event:'role_ready',payload:{role:COOP.role,name:localStorage.getItem('cs_player_name')||'Joueur'}});};
+  await sendReady();
+  COOP._readyRetry=setInterval(async()=>{if(COOP._coopLaunching){clearInterval(COOP._readyRetry);COOP._readyRetry=null;return;}await sendReady();},2000);
+  if(COOP.partnerRole&&!COOP._coopLaunching){COOP._coopLaunching=true;clearInterval(COOP._readyRetry);COOP._readyRetry=null;launchCoopGame();}
 }
 function onPartnerRoleReady(payload){
   COOP.partnerRole=payload.role;
   if(payload.name)COOP.partnerName=payload.name;
   updateRoleUI();
-  // Launch if I also confirmed
-  if(COOP.role&&!COOP._coopLaunching){COOP._coopLaunching=true;launchCoopGame();}
+  if(COOP.role&&!COOP._coopLaunching){COOP._coopLaunching=true;clearInterval(COOP._readyRetry);COOP._readyRetry=null;launchCoopGame();}
 }
 
 function launchCoopGame(){
@@ -5160,15 +5185,26 @@ function syncCoopPause(paused){
 
 // ── VOIX WEBRTC ───────────────────────────────────────────────────────────────
 const STUN={iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun1.l.google.com:19302'}]};
+function cleanupVoice(){
+  if(COOP.localStream){COOP.localStream.getTracks().forEach(t=>t.stop());COOP.localStream=null;}
+  if(COOP.peerConn){try{COOP.peerConn.close();}catch(e){}COOP.peerConn=null;}
+  COOP.voiceOn=false;COOP._pendingVoice=[];
+  const vi=document.getElementById('voice-indicator');if(vi)vi.style.display='none';
+  updateMicBtn(false);
+}
 async function initVoiceChat(){
+  COOP._pendingVoice=COOP._pendingVoice||[];
   try{
     COOP.localStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false},video:false});
     COOP.peerConn=new RTCPeerConnection(STUN);
     COOP.localStream.getTracks().forEach(t=>COOP.peerConn.addTrack(t,COOP.localStream));
-    COOP.peerConn.ontrack=e=>{const a=document.getElementById('remote-audio');if(a)a.srcObject=e.streams[0];};
+    COOP.peerConn.ontrack=e=>{const a=document.getElementById('remote-audio');if(a){a.srcObject=e.streams[0];a.play().catch(()=>{});}};
     COOP.peerConn.onicecandidate=e=>{
       if(e.candidate&&COOP.channel)COOP.channel.send({type:'broadcast',event:'voice_signal',payload:{type:'ice',candidate:e.candidate}});
     };
+    // Process any signals that arrived before peerConn was ready
+    for(const sig of COOP._pendingVoice)await _processVoiceSignal(sig);
+    COOP._pendingVoice=[];
     if(COOP.isHost){
       const offer=await COOP.peerConn.createOffer();
       await COOP.peerConn.setLocalDescription(offer);
@@ -5176,23 +5212,27 @@ async function initVoiceChat(){
     }
     COOP.voiceOn=true;
     updateMicBtn(true);
-    document.getElementById('voice-indicator').style.display='block';
+    const vi=document.getElementById('voice-indicator');if(vi)vi.style.display='block';
     log('🎤 Vocal activé ! Appuie sur M pour couper le micro.');
   }catch(err){
     log('❌ Micro non disponible ('+err.message+'). Vocal désactivé.');
   }
 }
-async function handleVoiceSignal(p){
+async function _processVoiceSignal(p){
   if(!COOP.peerConn)return;
   try{
     if(p.type==='offer'){
-      await COOP.peerConn.setRemoteDescription(p.sdp);
+      await COOP.peerConn.setRemoteDescription(new RTCSessionDescription(p.sdp));
       const ans=await COOP.peerConn.createAnswer();
       await COOP.peerConn.setLocalDescription(ans);
-      COOP.channel.send({type:'broadcast',event:'voice_signal',payload:{type:'answer',sdp:ans}});
-    }else if(p.type==='answer'){await COOP.peerConn.setRemoteDescription(p.sdp);}
-    else if(p.type==='ice'){await COOP.peerConn.addIceCandidate(p.candidate);}
+      if(COOP.channel)COOP.channel.send({type:'broadcast',event:'voice_signal',payload:{type:'answer',sdp:ans}});
+    }else if(p.type==='answer'){await COOP.peerConn.setRemoteDescription(new RTCSessionDescription(p.sdp));}
+    else if(p.type==='ice'&&p.candidate){await COOP.peerConn.addIceCandidate(new RTCIceCandidate(p.candidate));}
   }catch(e){}
+}
+async function handleVoiceSignal(p){
+  if(!COOP.peerConn){COOP._pendingVoice=COOP._pendingVoice||[];COOP._pendingVoice.push(p);return;}
+  await _processVoiceSignal(p);
 }
 function toggleMic(){
   if(!COOP.localStream)return;
