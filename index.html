@@ -7,10 +7,52 @@
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;user-select:none;-webkit-tap-highlight-color:transparent;}
-body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:column;touch-action:none;}
+body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height:100vh;display:flex;flex-direction:row;touch-action:none;}
+
+/* === STACKLANDS LAYOUT === */
+#sidebar{width:270px;min-width:270px;height:100vh;background:#f5f0e3;display:none;flex-direction:column;border-right:2px solid #d4c9b0;z-index:200;font-family:'Segoe UI',sans-serif;transition:width .2s;}
+#sidebar.collapsed{width:0;min-width:0;overflow:hidden;}
+#game-wrap{flex:1;display:flex;flex-direction:column;height:100vh;min-width:0;position:relative;}
+#sb-tabs{display:flex;align-items:center;border-bottom:2px solid #d4c9b0;background:#ede8da;}
+.sb-tab-btn{flex:1;padding:10px 6px;font-size:13px;font-weight:700;border:none;background:transparent;cursor:pointer;color:#5a4a3a;border-bottom:3px solid transparent;transition:all .15s;}
+.sb-tab-btn.active{color:#2d1a0a;border-bottom:3px solid #8b5e3c;}
+#sb-collapse{width:32px;padding:0;border:none;background:transparent;cursor:pointer;font-size:16px;color:#8b7355;}
+#sb-search{padding:6px 10px;border:none;border-bottom:1px solid #d4c9b0;background:#f5f0e3;font-size:12px;color:#3a2a1a;outline:none;width:100%;}
+#sb-body{flex:1;overflow-y:auto;padding:6px 0;}
+#sb-body::-webkit-scrollbar{width:4px;}#sb-body::-webkit-scrollbar-thumb{background:#c4b49a;border-radius:2px;}
+.sb-cat{font-size:11px;font-weight:800;color:#5a4a3a;text-transform:uppercase;letter-spacing:.5px;padding:8px 12px 2px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;}
+.sb-cat-toggle{font-size:12px;color:#8b7355;}
+.sb-cat-items{padding:0 0 4px;}
+.sb-item{padding:4px 12px 4px 20px;font-size:13px;color:#2d1a0a;cursor:pointer;border-radius:4px;margin:1px 4px;line-height:1.4;}
+.sb-item:hover{background:#e8dfc8;}
+.sb-item.done{color:#888;text-decoration:line-through;}
+.sb-item .sb-progress{font-size:10px;color:#8b7355;margin-left:4px;}
+#sb-info{border-top:2px solid #d4c9b0;padding:10px 12px;background:#ede8da;min-height:80px;font-size:12px;color:#2d1a0a;}
+#sb-info-title{font-size:14px;font-weight:800;text-transform:uppercase;margin-bottom:4px;color:#1a0d00;}
+#sb-info-ingr{color:#5a4a3a;margin-bottom:4px;line-height:1.5;}
+#sb-info-desc{color:#8b7355;font-style:italic;}
+
+/* === TOP PACK BAR === */
+#top-bar{display:flex;align-items:center;background:#1a1a1a;height:76px;flex-shrink:0;padding:0 8px;gap:6px;overflow:hidden;}
+#pack-bar{display:flex;align-items:center;gap:5px;flex:1;overflow-x:auto;padding:6px 0;scrollbar-width:none;}
+#pack-bar::-webkit-scrollbar{display:none;}
+.pcard{background:#111;color:#fff;border:1px solid #333;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:700;min-width:80px;text-align:center;line-height:1.3;transition:all .15s;flex-shrink:0;}
+.pcard:hover:not(:disabled){background:#222;border-color:#555;}
+.pcard:disabled{opacity:.45;cursor:not-allowed;}
+.pcard .pc-cost{font-size:11px;color:#f7d060;margin-top:2px;}
+.pcard.sell-card{background:#1a1200;border-color:#8b6914;color:#f7d060;min-width:70px;}
+.pcard.sell-card:hover{background:#2a1e00;}
+.pcard.bm-card{background:#0d0020;border-color:#7c3aed;color:#a78bfa;}
+
+/* === COMPACT HUD === */
+#hud-compact{display:none;align-items:center;gap:8px;flex-shrink:0;padding:0 8px;color:#ccc;font-size:12px;white-space:nowrap;}
+#hud-compact b{color:#fff;}
+#moon-mini-wrap{width:80px;height:8px;background:#111;border-radius:4px;overflow:hidden;border:1px solid #333;margin-left:4px;}
+#moon-mini-fill{height:100%;width:0%;background:linear-gradient(90deg,#f7d060,#e94560);}
+#hud-compact .hc-sep{color:#444;margin:0 2px;}
 @media(max-width:600px){#hud{gap:7px;padding:5px 8px;font-size:11px;}.stat{font-size:11px;}#log{width:180px;display:none;}#shop{bottom:8px;right:8px;}.pbtn{font-size:11px;padding:6px 10px;}}
-/* HUD */
-#hud{background:#0f2310;border-bottom:2px solid #2d5a2d;padding:8px 14px;display:none;align-items:center;gap:14px;flex-shrink:0;z-index:100;flex-wrap:wrap;}
+/* HUD (legacy — replaced by #hud-compact, keep hidden always) */
+#hud{display:none!important;}
 #moon-wrap{flex:1;min-width:80px;height:18px;background:#0a1a0a;border-radius:9px;overflow:hidden;border:1px solid #2d5a2d;}
 #moon-fill{height:100%;width:0%;background:linear-gradient(90deg,#f7d060,#e94560);border-radius:9px;}
 .stat{color:#ccc;font-size:13px;white-space:nowrap;}.stat b{color:#fff;}
@@ -38,8 +80,8 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 #tooltip .tt-desc{color:#9ca;margin-bottom:5px;font-size:11px;}
 #tooltip .tt-r{color:#f7d060;font-size:11px;line-height:1.6;}
 #tooltip .tt-label{color:#6b8;font-size:10px;margin-bottom:2px;text-transform:uppercase;letter-spacing:.5px;}
-/* Shop */
-#shop{position:absolute;bottom:12px;right:12px;display:flex;flex-direction:column;gap:7px;z-index:100;}
+/* Shop (legacy — replaced by #pack-bar, keep hidden) */
+#shop{display:none!important;}
 .pbtn{background:#c0392b;color:#fff;border:none;border-radius:8px;padding:8px 14px;cursor:pointer;font-size:13px;font-weight:700;box-shadow:0 4px 8px rgba(0,0,0,0.4);line-height:1.3;text-align:left;}
 .pbtn:hover{background:#a93226;}.pbtn:disabled{background:#555;cursor:not-allowed;}
 .pbtn small{display:block;font-size:10px;font-weight:400;opacity:.75;margin-top:1px;}
@@ -598,7 +640,7 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 </style>
 </head>
 <body>
-<!-- HUD -->
+<!-- HUD (legacy — hidden always, kept for DOM ID compatibility) -->
 <div id="hud">
   <span class="stat">📅 Jour <b id="hday">1</b><span id="hwinday">/35</span><span id="hdiff">💀 HARD</span><span id="hdiff-inf" style="display:none;font-size:11px;font-weight:800;color:#fb923c;letter-spacing:1px;margin-left:4px;">♾️ INFINI</span></span>
   <div id="moon-wrap"><div id="moon-fill"></div><div id="moon-ticks"></div></div>
@@ -607,26 +649,64 @@ body{background:#1a3a1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   <span class="stat" id="hpop-wrap">👥 <b id="hpop">0</b>/<b id="hcap">3</b></span>
   <span id="hquest" onclick="showQuestDetails()" style="display:none;"></span>
   <span id="obj"></span>
-  <span id="save-badge">💾</span>
-  <button onclick="showRB()" style="background:#1a4a1a;color:#8f8;border:1px solid #4a8a4a;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">📖 Recettes</button>
-  <button onclick="tidyCards()" style="background:#1a2a4a;color:#93c5fd;border:1px solid #2d4a8a;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">🗂️ Ranger</button>
-  <button onclick="showConseilPopup()" style="background:#1a1a0a;color:#fde68a;border:1px solid #78716c;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">💡 Conseil</button>
-  <button id="bm-btn" onclick="showBlackMarket()" style="display:none;background:#07000f;color:#a78bfa;border:1px solid #7c3aed;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;">🏴‍☠️ Marché</button>
-  <button id="speed-btn" onclick="toggleSpeed()">⏩ ×1</button>
-  <button id="mute-btn" onclick="toggleMute()">🔊</button>
-  <button onclick="togglePause()" style="background:#1a1a2a;color:#a5b4fc;border:1px solid #3b3b8a;border-radius:6px;padding:4px 10px;cursor:pointer;font-size:12px;" title="Pause / Paramètres">⚙️</button>
-  <span id="hcomet" title="Poussières de Comète">☄️ <b id="hcomet-val">0</b></span>
+  <button id="bm-btn" onclick="showBlackMarket()" style="display:none;">🏴‍☠️ Marché</button>
 </div>
 
-<div id="day-flash"></div>
-<div id="coop-banner" class="p1">👤 Tour du Joueur 1</div>
-<!-- Table de jeu -->
-<div id="table"><div id="wave-alert"></div></div>
-<div id="shop"></div>
-<div id="log">
-  <div id="log-header" onclick="toggleLogCollapse()">📋 Journal<button id="log-clear" onclick="event.stopPropagation();clearLog()">×</button></div>
-  <div id="log-body"></div>
+<!-- ══ STACKLANDS SIDEBAR ══ -->
+<div id="sidebar">
+  <div id="sb-tabs">
+    <button class="sb-tab-btn active" id="sbt-quests" onclick="showSBTab('quests')">Quêtes <span id="sb-quest-badge" style="display:none;color:#ef4444">!</span></button>
+    <button class="sb-tab-btn" id="sbt-ideas" onclick="showSBTab('ideas')">Idées</button>
+    <button id="sb-collapse" onclick="toggleSidebar()">◀</button>
+  </div>
+  <input id="sb-search" placeholder="Rechercher…" oninput="filterSBIdeas(this.value)" style="display:none;">
+  <div id="sb-body">
+    <div id="sb-quests-panel"></div>
+    <div id="sb-ideas-panel" style="display:none;"></div>
+  </div>
+  <div id="sb-info">
+    <div id="sb-info-title">—</div>
+    <div id="sb-info-ingr"></div>
+    <div id="sb-info-desc"></div>
+  </div>
 </div>
+
+<!-- ══ GAME WRAP ══ -->
+<div id="game-wrap">
+  <!-- TOP BAR: packs + compact HUD -->
+  <div id="top-bar" style="display:none;">
+    <div id="pack-bar">
+      <button class="pcard sell-card" onclick="sellCard(_hoveredCardId||null)">🪙 Vendre</button>
+    </div>
+    <div id="hud-compact">
+      <span>👥 <b id="hc-pop">0</b>/<b id="hc-cap">3</b></span>
+      <span class="hc-sep">·</span>
+      <span>🪙 <b id="hc-gold">5</b></span>
+      <span class="hc-sep">·</span>
+      <span id="hc-food-wrap">🍖 <b id="hc-food">0</b></span>
+      <span class="hc-sep">·</span>
+      <span>📅 Jour <b id="hc-day">1</b></span>
+      <div id="moon-mini-wrap"><div id="moon-mini-fill"></div></div>
+      <button onclick="togglePause()" style="background:#1a1a2a;color:#a5b4fc;border:1px solid #3b3b8a;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:11px;margin-left:4px;">⚙️</button>
+      <button onclick="tidyCards()" style="background:#1a2a4a;color:#93c5fd;border:1px solid #2d4a8a;border-radius:5px;padding:3px 8px;cursor:pointer;font-size:11px;">🗂️</button>
+      <button id="speed-btn" onclick="toggleSpeed()" style="font-size:11px;padding:3px 8px;">⏩×1</button>
+      <button id="mute-btn" onclick="toggleMute()" style="font-size:11px;padding:3px 8px;">🔊</button>
+      <span id="hcomet" title="Poussières de Comète" style="font-size:11px;">☄️<b id="hcomet-val">0</b></span>
+      <span id="save-badge">💾</span>
+    </div>
+  </div>
+
+  <div id="day-flash"></div>
+  <div id="coop-banner" class="p1">👤 Tour du Joueur 1</div>
+  <!-- Table de jeu -->
+  <div id="table"><div id="wave-alert"></div></div>
+  <div id="shop" style="display:none;"></div>
+  <div id="log">
+    <div id="log-header" onclick="toggleLogCollapse()">📋 Journal<button id="log-clear" onclick="event.stopPropagation();clearLog()">×</button></div>
+    <div id="log-body"></div>
+  </div>
+</div><!-- end #game-wrap -->
+
 <div id="tooltip"><div class="tt-name"></div><div class="tt-desc"></div><div class="tt-label"></div><div class="tt-r"></div><div class="tt-sell"></div></div>
 <div id="rename-wrap"><input id="rename-input" maxlength="11" placeholder="Prénom…" autocomplete="off"><div class="rename-hint">↵ Valider &nbsp;·&nbsp; Échap Annuler &nbsp;·&nbsp; max 10 car.</div></div>
 
@@ -1449,15 +1529,21 @@ function loadGame(){
 
 // ── SHOP ─────────────────────────────────────────────────────────────────────
 function buildShop(){
-  const el=document.getElementById('shop');el.innerHTML='';
+  const bar=document.getElementById('pack-bar');
+  // Remove previous pack cards (keep the sell button which is the first child)
+  Array.from(bar.querySelectorAll('.pcard:not(.sell-card)')).forEach(b=>b.remove());
   for(const [key,p] of Object.entries(PACKS)){
     const btn=document.createElement('button');
-    btn.className='pbtn';btn.id='b-'+key;btn.onclick=()=>buyPack(key);
+    btn.className='pcard';btn.id='b-'+key;btn.onclick=()=>buyPack(key);
     const dispCost=p.cost+(G.packCostAdd||0);
-    btn.innerHTML=p.n+' — '+dispCost+'🪙<small>'+p.hint+'</small>';
-    btn.style.display=(p.unlock>0)?'none':'block';
-    el.appendChild(btn);
+    btn.innerHTML=p.n+'<div class="pc-cost">'+dispCost+'🪙</div>';
+    btn.style.display=(p.unlock>0)?'none':'flex';
+    btn.style.flexDirection='column';
+    btn.style.alignItems='center';
+    bar.appendChild(btn);
   }
+  // Legacy: also clear #shop to avoid stale buttons
+  const shop=document.getElementById('shop');if(shop)shop.innerHTML='';
 }
 
 // ── STATE ────────────────────────────────────────────────────────────────────
@@ -1466,14 +1552,18 @@ function initG(infiniteMode){
   const dp=DIFF_PARAMS[isInf?'normal':selectedDifficulty]||DIFF_PARAMS.normal;
   const startGold=(selectedDifficulty==='hard'&&!isInf?3:selectedDifficulty==='easy'&&!isInf?8:5)+(hasPermaBonus('gold')?15:0);
   G={gold:startGold,moon:1,moonProg:0,moonDur:dp.moonDur,cards:{},stacks:{},nid:1,drag:null,ts:null,over:false,paused:false,secretReveal:false,_stats:{crafts:0,kills:0,sells:0,blocks:0,babies:0},_faminWarned:false,_unlockedPacks:new Set(),speed:1,blackMarket:null,_babiesGrown:0,_quest:null,_lastEvent:null,difficulty:isInf?'infinite':selectedDifficulty,aggroMult:dp.aggroMult,foodPerPop:dp.foodPerPop,packCostAdd:dp.packCostAdd,scoreMult:dp.scoreMult,_reviveAvail:hasPermaBonus('revive'),_infiniteMode:isInf,_dayFoodEaten:0,_foodTick:0,_popCapWarned:false,_houseCapWarned:false};
-  const sb=document.getElementById('speed-btn');if(sb){sb.textContent='⏩ ×1';sb.className='';sb.id='speed-btn';}
+  const sb=document.getElementById('speed-btn');if(sb){sb.textContent='⏩×1';sb.className='';sb.id='speed-btn';}
   const bb=document.getElementById('bm-btn');if(bb)bb.style.display='none';
+  const pbm=document.getElementById('bm-pcard');if(pbm)pbm.remove();
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
   clearLog();
   ['overlay','victory','pause','main-menu','coop-hud','role-select'].forEach(id=>document.getElementById(id).style.display='none');
-  document.getElementById('hud').style.display='flex';
+  document.getElementById('hud').style.display='none';
   document.getElementById('table').style.display='block';
   document.getElementById('rb').style.display='none';
+  document.getElementById('sidebar').style.display='flex';
+  document.getElementById('top-bar').style.display='flex';
+  document.getElementById('hud-compact').style.display='flex';
   buildShop();applyBoardSkin();
   spawn('berry_bush',70,70);spawn('tree',200,70);spawn('villager',330,70);
   if(hasPermaBonus('pop'))spawn('villager',460,70);
@@ -2302,6 +2392,7 @@ function endMoon(){
   if(G.blackMarket&&G.moon>G.blackMarket.expiresDay){
     G.blackMarket=null;
     const bb=document.getElementById('bm-btn');if(bb)bb.style.display='none';
+    const pbm=document.getElementById('bm-pcard');if(pbm)pbm.remove();
     document.getElementById('bm-overlay').style.display='none';
     log('🏴‍☠️ Le Marché Noir a fermé ses portes.');
   }
@@ -2445,6 +2536,16 @@ function updateHUD(){
   if(hdinf)hdinf.style.display=G._infiniteMode?'inline':'none';
   Object.keys(PACKS).forEach(k=>{const b=document.getElementById('b-'+k);if(b)b.disabled=G.gold<(PACKS[k].cost+(G.packCostAdd||0));});
   updateQuestHUD();
+  // === COMPACT HUD (Stacklands top-bar) ===
+  const hcDay=document.getElementById('hc-day');if(hcDay)hcDay.textContent=G.moon;
+  const hcGold=document.getElementById('hc-gold');if(hcGold)hcGold.textContent=G.gold;
+  const hcFood=document.getElementById('hc-food');if(hcFood)hcFood.textContent=food;
+  const hcPop=document.getElementById('hc-pop');if(hcPop)hcPop.textContent=pop;
+  const hcCap=document.getElementById('hc-cap');if(hcCap)hcCap.textContent=cap;
+  const hcFoodWrap=document.getElementById('hc-food-wrap');
+  if(hcFoodWrap){hcFoodWrap.style.color=food>=remainingNeeded||pop===0?'#86efac':'#fca5a5';}
+  const mmFill=document.getElementById('moon-mini-fill');if(mmFill)mmFill.style.width=(G.moonProg*100)+'%';
+  updateSBQuests();
 }
 
 // ── LOG ───────────────────────────────────────────────────────────────────────
@@ -2713,6 +2814,9 @@ function showMainMenu(){
   document.getElementById('hud').style.display='none';
   document.getElementById('table').style.display='none';
   document.getElementById('rb').style.display='none';
+  document.getElementById('sidebar').style.display='none';
+  document.getElementById('top-bar').style.display='none';
+  document.getElementById('hud-compact').style.display='none';
   setDifficulty(selectedDifficulty);
   // Stats globales
   const gs=getGlobalStats();
@@ -3011,6 +3115,13 @@ function generateBlackMarket(){
   const items=pool.slice(0,4).map(it=>({...it,sold:false}));
   G.blackMarket={items,tier,expiresDay:G.moon+1};
   const bb=document.getElementById('bm-btn');if(bb)bb.style.display='block';
+  // Add to pack-bar
+  const pbar=document.getElementById('pack-bar');
+  if(pbar&&!document.getElementById('bm-pcard')){
+    const pbm=document.createElement('button');pbm.className='pcard bm-card';pbm.id='bm-pcard';
+    pbm.innerHTML='🏴‍☠️ Marché<div class="pc-cost">Gemmes/Or</div>';pbm.onclick=showBlackMarket;
+    pbar.appendChild(pbm);
+  }
   log('🏴‍☠️ Un Marché Noir s\'est ouvert ! Disponible 1 jour.');
   playSound('secret');
 }
@@ -3448,6 +3559,7 @@ function newDailyQuest(){
   const def=pool[Math.floor(Math.random()*pool.length)];
   G._quest={def,done:false,sk:G._stats.kills||0,sc:G._stats.crafts||0,se:G._stats.expeditions||0,sb:G._stats.babies||0};
   updateQuestHUD();
+  updateSBQuests();
   log('📋 Mission J'+day+' : '+def.e+' '+def.desc+' → +'+def.reward+'🪙');
 }
 function checkDailyQuest(){
@@ -3456,7 +3568,11 @@ function checkDailyQuest(){
     G._quest.done=true;
     G.gold+=G._quest.def.reward;
     playSound('achievement');
+    // Track completed quests for sidebar
+    if(!G._completedQuests)G._completedQuests=[];
+    G._completedQuests.push({e:G._quest.def.e,desc:G._quest.def.desc});
     updateQuestHUD();
+    updateSBQuests();
     showAchievementToast({e:G._quest.def.e,n:'Quête accomplie !',d:G._quest.def.desc+' (+'+G._quest.def.reward+'🪙)'});
     log('✅ Quête accomplie ! +'+G._quest.def.reward+'🪙');
     addCometDust(5);
@@ -5057,9 +5173,12 @@ function initCoopGame(){
   document.getElementById('table').innerHTML='<div id="wave-alert"></div>';
   clearLog();
   ['overlay','victory','pause','main-menu'].forEach(id=>document.getElementById(id).style.display='none');
-  document.getElementById('hud').style.display='flex';
+  document.getElementById('hud').style.display='none';
   document.getElementById('table').style.display='block';
   document.getElementById('rb').style.display='none';
+  document.getElementById('sidebar').style.display='flex';
+  document.getElementById('top-bar').style.display='flex';
+  document.getElementById('hud-compact').style.display='flex';
   buildShop();applyBoardSkin();
   // Spawn initial — plus de ressources pour 2 joueurs
   spawn('berry_bush',70,70);spawn('berry_bush',200,70);
@@ -5375,6 +5494,151 @@ function showCoopToast(msg){
   t.style.cssText='position:fixed;top:70px;left:50%;transform:translateX(-50%);background:#1e1b4b;border:1px solid #4f46e5;color:#c7d2fe;padding:9px 18px;border-radius:10px;font-size:13px;font-weight:700;z-index:99999;box-shadow:0 4px 14px rgba(0,0,0,.5);animation:toastIn .3s ease;';
   t.textContent=msg;document.body.appendChild(t);
   setTimeout(()=>{t.style.animation='toastOut .3s ease forwards';setTimeout(()=>t.remove(),300);},2500);
+}
+
+// ── STACKLANDS SIDEBAR ────────────────────────────────────────────────────────
+let _sbTab='quests';
+let _sbCollapsed=false;
+
+function showSBTab(tab){
+  _sbTab=tab;
+  document.getElementById('sb-quests-panel').style.display=tab==='quests'?'block':'none';
+  document.getElementById('sb-ideas-panel').style.display=tab==='ideas'?'block':'none';
+  document.getElementById('sb-search').style.display=tab==='ideas'?'block':'none';
+  document.getElementById('sbt-quests').classList.toggle('active',tab==='quests');
+  document.getElementById('sbt-ideas').classList.toggle('active',tab==='ideas');
+  if(tab==='ideas')updateSBIdeas();
+}
+
+function toggleSidebar(){
+  _sbCollapsed=!_sbCollapsed;
+  const sb=document.getElementById('sidebar');
+  sb.classList.toggle('collapsed',_sbCollapsed);
+  document.getElementById('sb-collapse').textContent=_sbCollapsed?'▶':'◀';
+}
+
+// Organize recipes into categories for Ideas tab
+const IDEAS_CATS=[
+  {id:'simple',name:'Simple'},
+  {id:'food',name:'Nourriture'},
+  {id:'combat',name:'Combat'},
+  {id:'buildings',name:'Bâtiments'},
+  {id:'advanced',name:'Avancé'},
+];
+const _COMBAT_TYPES=['sword','iron_sword','shield','bone_sword','arrow','bow'];
+const _ADV_TYPES=['golden_bar','gem','iron_ingot','crystal','phil_stone','philosopher_stone'];
+
+function _sbItemCat(t){
+  const d=CD[t];if(!d)return null;
+  if(d.food)return 'food';
+  if(_COMBAT_TYPES.includes(t))return 'combat';
+  if(d.node)return 'buildings';
+  if(_ADV_TYPES.includes(t))return 'advanced';
+  return 'simple';
+}
+
+function updateSBIdeas(filter){
+  const panel=document.getElementById('sb-ideas-panel');if(!panel)return;
+  panel.innerHTML='';
+  const q=(filter||'').toLowerCase();
+  // Build map of output-type → recipe
+  const byOut={};
+  if(typeof RECIPES!=='undefined'){
+    RECIPES.forEach(r=>{
+      if(!r.o||!r.i)return;
+      const outs=Array.isArray(r.o)?r.o:[r.o];
+      outs.forEach(otype=>{if(!byOut[otype])byOut[otype]=r;});
+    });
+  }
+  IDEAS_CATS.forEach(cat=>{
+    const items=Object.keys(byOut).filter(t=>{
+      const d=CD[t];if(!d)return false;
+      if(q&&!(d.n||'').toLowerCase().includes(q)&&!(d.e||'').toLowerCase().includes(q))return false;
+      return _sbItemCat(t)===cat.id;
+    });
+    if(items.length===0)return;
+    const catDiv=document.createElement('div');
+    const header=document.createElement('div');
+    header.className='sb-cat';
+    header.innerHTML=cat.name+'<span class="sb-cat-toggle">−</span>';
+    let collapsed=false;
+    const itemsDiv=document.createElement('div');
+    itemsDiv.className='sb-cat-items';
+    header.onclick=()=>{collapsed=!collapsed;itemsDiv.style.display=collapsed?'none':'block';header.querySelector('.sb-cat-toggle').textContent=collapsed?'+':'−';};
+    items.forEach(t=>{
+      const d=CD[t];if(!d)return;
+      const r=byOut[t];
+      const el=document.createElement('div');
+      el.className='sb-item';
+      el.textContent='• '+(d.e||'')+(d.e?' ':'')+d.n;
+      el.onclick=()=>showSBInfo(t,r);
+      itemsDiv.appendChild(el);
+    });
+    catDiv.appendChild(header);catDiv.appendChild(itemsDiv);
+    panel.appendChild(catDiv);
+  });
+  if(panel.innerHTML===''){
+    const empty=document.createElement('div');
+    empty.style.cssText='padding:12px;font-size:12px;color:#8b7355;text-align:center;';
+    empty.textContent=q?'Aucun résultat':'Aucune recette disponible';
+    panel.appendChild(empty);
+  }
+}
+
+function filterSBIdeas(q){updateSBIdeas(q);}
+
+function showSBInfo(type,recipe){
+  const d=CD[type];if(!d)return;
+  document.getElementById('sb-info-title').textContent=(d.e||'')+' '+(d.n||'').toUpperCase();
+  if(recipe&&recipe.i){
+    const grp={};
+    const inputs=Array.isArray(recipe.i)?recipe.i:[recipe.i];
+    inputs.forEach(t=>{grp[t]=(grp[t]||0)+1;});
+    const ingr=Object.entries(grp).map(([t,c])=>(c>1?c+'× ':'')+((CD[t]?(CD[t].e?CD[t].e+' ':'')+CD[t].n:t))).join(', ');
+    document.getElementById('sb-info-ingr').textContent='🔧 '+ingr;
+  }else{document.getElementById('sb-info-ingr').textContent='';}
+  document.getElementById('sb-info-desc').textContent=d.desc||d.hint||'';
+}
+
+function updateSBQuests(){
+  const panel=document.getElementById('sb-quests-panel');if(!panel)return;
+  panel.innerHTML='';
+  if(typeof G==='undefined'||!G)return;
+  // Current quest
+  if(G._quest){
+    const catDiv=document.createElement('div');
+    const header=document.createElement('div');
+    header.className='sb-cat';header.textContent='Quête du jour';
+    const itemsDiv=document.createElement('div');itemsDiv.className='sb-cat-items';
+    const q=G._quest;
+    const el=document.createElement('div');
+    el.className='sb-item'+(q.done?' done':'');
+    if(q.done){el.textContent='✅ '+q.def.desc;}
+    else{el.textContent='• '+(q.def.e||'')+(q.def.e?' ':'')+q.def.desc+' (+'+q.def.reward+'🪙)';}
+    el.onclick=()=>showQuestDetails&&showQuestDetails();
+    itemsDiv.appendChild(el);
+    catDiv.appendChild(header);catDiv.appendChild(itemsDiv);
+    panel.appendChild(catDiv);
+  }else{
+    const empty=document.createElement('div');
+    empty.style.cssText='padding:12px;font-size:12px;color:#8b7355;text-align:center;';
+    empty.textContent='Aucune quête active';
+    panel.appendChild(empty);
+  }
+  // Completed quests from this session (last 5)
+  if(G._completedQuests&&G._completedQuests.length>0){
+    const catDiv=document.createElement('div');
+    const header=document.createElement('div');header.className='sb-cat';header.textContent='Terminées';
+    const itemsDiv=document.createElement('div');itemsDiv.className='sb-cat-items';
+    G._completedQuests.slice(-5).forEach(q=>{
+      const el=document.createElement('div');el.className='sb-item done';
+      el.textContent='✅ '+(q.e||'')+(q.e?' ':'')+q.desc;itemsDiv.appendChild(el);
+    });
+    catDiv.appendChild(header);catDiv.appendChild(itemsDiv);panel.appendChild(catDiv);
+  }
+  // Badge on tab button
+  const badge=document.getElementById('sb-quest-badge');
+  if(badge)badge.style.display=(G._quest&&!G._quest.done)?'inline':'none';
 }
 
 // ── START ─────────────────────────────────────────────────────────────────────
